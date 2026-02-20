@@ -5,8 +5,6 @@ import { Layout } from './layout.js';
 import { Visuals } from './visuals.js';
 import { ColorSchemes } from './colorSchemes.js';
 import { Utils } from './utils.js';
-import { Clock } from './clock.js';
-import { getCurrentOffsetTime } from './utils.js';
 
 export const Appearance = {
     attachListeners: function() {
@@ -25,7 +23,6 @@ export const Appearance = {
             const plusBtn = wrapper.querySelector('.num-btn.plus');
             // Check for input and crucially data-pref
             if (!input || !input.dataset || !input.dataset.pref || !minusBtn || !plusBtn) {
-                // console.warn("Skipping number input wrapper: Missing input or data-pref.", wrapper);
                 return;
             }
 
@@ -52,17 +49,24 @@ export const Appearance = {
                     input.value = parsedValue;
                     Layout.applyFontAndSizePreferences();
 
-                    // If a sandbar setting changed, re-initialize visuals/physics
+                    // If a physics fill setting changed, re-initialize active fill animation.
                     if (['sandWidth', 'sandHeight', 'sandParticleSize'].includes(prefKey)) {
-                        console.log(`Sandbar pref changed (${prefKey}), triggering physics setup...`);
-                        const currentPeriod = Clock.getCurrentPeriodInfo(getCurrentOffsetTime());
-                        requestAnimationFrame(() => { Visuals.setupPhysicsSandBars(currentPeriod); });
+                        console.log(`Physics fill pref changed (${prefKey}), triggering physics setup...`);
+                        requestAnimationFrame(() => { Visuals.handleDisplayToggle(); });
                     }
 
                     Settings.save();
                 }
             };
-            const startRepeating = (step) => { updatePreference(parseInt(input.value, 10) + step); stopRepeating(); timeoutId = setTimeout(() => { intervalId = setInterval(() => { updatePreference(parseInt(input.value, 10) + step); }, HOLD_INTERVAL); }, HOLD_DELAY); };
+            const startRepeating = (stepValue) => {
+                updatePreference(parseInt(input.value, 10) + stepValue);
+                stopRepeating();
+                timeoutId = setTimeout(() => {
+                    intervalId = setInterval(() => {
+                        updatePreference(parseInt(input.value, 10) + stepValue);
+                    }, HOLD_INTERVAL);
+                }, HOLD_DELAY);
+            };
             const stopRepeating = () => { clearTimeout(timeoutId); clearInterval(intervalId); timeoutId = intervalId = null; };
             input.addEventListener("change", () => updatePreference(input.value));
             minusBtn.addEventListener("mousedown", () => startRepeating(-(parseInt(input.step) || 1)));
@@ -88,20 +92,46 @@ export const Appearance = {
 
         Settings.preferences[prefName] = this.checked;
 
-        // Mutual exclusivity
-        if (prefName === 'showSandBars' && this.checked && Settings.preferences.showProgressBar) {
-            Settings.preferences.showProgressBar = false;
-            const progressBarCheckbox = DOM.displayElementsChecklist?.querySelector('#pref-show-progress-bar');
-            if (progressBarCheckbox) progressBarCheckbox.checked = false;
-        } else if (prefName === 'showProgressBar' && this.checked && Settings.preferences.showSandBars) {
-            Settings.preferences.showSandBars = false;
-            const sandBarsCheckbox = DOM.displayElementsChecklist?.querySelector('#pref-show-sand-bars');
-            if (sandBarsCheckbox) sandBarsCheckbox.checked = false;
+        const progressBarCheckbox = DOM.displayElementsChecklist?.querySelector('#pref-show-progress-bar');
+        const sandBarsCheckbox = DOM.displayElementsChecklist?.querySelector('#pref-show-sand-bars');
+        const waterFillCheckbox = DOM.displayElementsChecklist?.querySelector('#pref-show-water-fill');
+
+        const disableProgressBar = () => {
+            if (Settings.preferences.showProgressBar) {
+                Settings.preferences.showProgressBar = false;
+                if (progressBarCheckbox) progressBarCheckbox.checked = false;
+            }
+        };
+
+        const disableSandBars = () => {
+            if (Settings.preferences.showSandBars) {
+                Settings.preferences.showSandBars = false;
+                if (sandBarsCheckbox) sandBarsCheckbox.checked = false;
+            }
+        };
+
+        const disableWaterFill = () => {
+            if (Settings.preferences.showWaterFill) {
+                Settings.preferences.showWaterFill = false;
+                if (waterFillCheckbox) waterFillCheckbox.checked = false;
+            }
+        };
+
+        // Mutual exclusivity across the three fill/display modes.
+        if (prefName === 'showSandBars' && this.checked) {
+            disableProgressBar();
+            disableWaterFill();
+        } else if (prefName === 'showWaterFill' && this.checked) {
+            disableProgressBar();
+            disableSandBars();
+        } else if (prefName === 'showProgressBar' && this.checked) {
+            disableSandBars();
+            disableWaterFill();
         }
 
-        // Show/Hide Sand Bar Options section
+        // Show/Hide Physics Fill Options section
         const sandBarOptionsSection = document.getElementById('sand-bar-options');
-        sandBarOptionsSection?.classList.toggle('element-hidden', !Settings.preferences.showSandBars);
+        sandBarOptionsSection?.classList.toggle('element-hidden', !(Settings.preferences.showSandBars || Settings.preferences.showWaterFill));
 
         Layout.update();
         Visuals.handleDisplayToggle();
@@ -127,17 +157,17 @@ export const Appearance = {
             }
         });
 
-        // Update Sand Bar Specific Inputs
+        // Update Physics Fill Specific Inputs
         const sandBarOptionsSection = document.getElementById('sand-bar-options');
         if (sandBarOptionsSection) {
-            sandBarOptionsSection.classList.toggle('element-hidden', !Settings.preferences.showSandBars);
+            sandBarOptionsSection.classList.toggle('element-hidden', !(Settings.preferences.showSandBars || Settings.preferences.showWaterFill));
             const widthInput = sandBarOptionsSection.querySelector('#pref-sand-width');
             const heightInput = sandBarOptionsSection.querySelector('#pref-sand-height');
             const sizeInput = sandBarOptionsSection.querySelector('#pref-sand-particle-size');
 
-            if(widthInput) widthInput.value = Settings.preferences.sandWidth;
-            if(heightInput) heightInput.value = Settings.preferences.sandHeight;
-            if(sizeInput) sizeInput.value = Settings.preferences.sandParticleSize;
+            if (widthInput) widthInput.value = Settings.preferences.sandWidth;
+            if (heightInput) heightInput.value = Settings.preferences.sandHeight;
+            if (sizeInput) sizeInput.value = Settings.preferences.sandParticleSize;
         }
     },
 
@@ -158,7 +188,7 @@ export const Appearance = {
     },
 
     resetSandBarDefaults: function() {
-         if (confirm("Reset Sand Bar settings to defaults?")) {
+         if (confirm("Reset Physics Fill settings to defaults?")) {
              if (!Settings.preferences || !Settings.defaultPreferences) return;
              // Reset relevant prefs
              Settings.preferences.sandWidth = Settings.defaultPreferences.sandWidth;
@@ -167,9 +197,8 @@ export const Appearance = {
 
              Appearance.updateInputs();
 
-             if (Settings.preferences.showSandBars) {
-                  const currentPeriod = Clock.getCurrentPeriodInfo(getCurrentOffsetTime());
-                  requestAnimationFrame(() => { Visuals.setupPhysicsSandBars(currentPeriod); });
+             if (Settings.preferences.showSandBars || Settings.preferences.showWaterFill) {
+                  requestAnimationFrame(() => { Visuals.handleDisplayToggle(); });
              }
              Settings.save();
              Utils.showButtonFeedback(document.getElementById('reset-sandbar-defaults'), "Reset!");

@@ -13,7 +13,9 @@ function queryElements() {
         progressEl: document.getElementById("progress"),
         timeLeftEl: document.getElementById("time-left"),
         sandBarsContainerEl: document.getElementById("sand-bars-container"),
-        sandBarsCanvas: document.getElementById('sand-bars-canvas'), // Canvas for physics
+        sandBarsCanvas: document.getElementById('sand-bars-canvas'), // Canvas for sand physics
+        waterFillContainerEl: document.getElementById("water-fill-container"),
+        waterFillCanvas: document.getElementById('water-fill-canvas'), // Canvas for water physics
         alertModal: document.getElementById('alert-modal'),
         alertModalTitle: document.getElementById('modal-title'),
         alertModalBody: document.getElementById('modal-body'),

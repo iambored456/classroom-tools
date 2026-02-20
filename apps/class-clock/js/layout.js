@@ -24,7 +24,7 @@ export const Layout = {
         });
 
         // Determine visibility of the period info container
-        const showPeriodInfo = prefs.showScheduleLabel || prefs.showProgressBar || prefs.showSandBars;
+        const showPeriodInfo = prefs.showScheduleLabel || prefs.showProgressBar || prefs.showSandBars || prefs.showWaterFill;
         DOM.periodContainerEl?.classList.toggle('element-hidden', !showPeriodInfo);
 
         // Manage visibility of elements *within* the period container
@@ -36,16 +36,20 @@ export const Layout = {
             DOM.periodLabelEl?.classList.add('element-hidden');
         }
 
-        // Handle mutually exclusive Progress Bar vs Sand Bars visibility
-        const showProgress = prefs.showProgressBar && !prefs.showSandBars;
+        // Handle mutually exclusive Progress Bar vs Physics Fill visibility
+        const showProgress = prefs.showProgressBar && !prefs.showSandBars && !prefs.showWaterFill;
         const showSand = prefs.showSandBars;
+        const showWater = prefs.showWaterFill;
         DOM.progressBarEl?.classList.toggle('element-hidden', !showProgress);
         DOM.sandBarsContainerEl?.classList.toggle('element-hidden', !showSand);
+        DOM.waterFillContainerEl?.classList.toggle('element-hidden', !showWater);
 
         // Explicitly manage canvas display style along with container
         if (DOM.sandBarsCanvas) {
-             // Canvas should only be display:block (or similar) when sand bars are shown
              DOM.sandBarsCanvas.style.display = showSand ? 'block' : 'none';
+        }
+        if (DOM.waterFillCanvas) {
+             DOM.waterFillCanvas.style.display = showWater ? 'block' : 'none';
         }
 
         // Apply font sizes after visibility is set
@@ -64,7 +68,7 @@ export const Layout = {
         if (prefs.showTime && DOM.timeEl) DOM.timeEl.style.fontSize = prefs.timeFontSize + "px";
         if (prefs.showScheduleLabel && DOM.periodLabelEl) DOM.periodLabelEl.style.fontSize = prefs.scheduleLabelFontSize + "px";
         // Apply only if standard progress bar is active
-        if (prefs.showProgressBar && !prefs.showSandBars) {
+        if (prefs.showProgressBar && !prefs.showSandBars && !prefs.showWaterFill) {
              if (DOM.timeLeftEl) DOM.timeLeftEl.style.fontSize = prefs.timeLeftFontSize + "px";
              if (DOM.progressBarEl) DOM.progressBarEl.style.height = prefs.progressBarHeight + "px";
         }

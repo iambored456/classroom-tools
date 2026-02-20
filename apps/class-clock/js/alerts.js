@@ -234,8 +234,8 @@ export const Alerts = {
             if (DOM.timeEl && Settings.preferences.showTime) DOM.timeEl.style.color = currentText;
             if (DOM.dateEl && Settings.preferences.showDate) DOM.dateEl.style.color = currentText;
             if (DOM.periodLabelEl && Settings.preferences.showScheduleLabel) DOM.periodLabelEl.style.color = currentText;
-            if (DOM.progressEl && Settings.preferences.showProgressBar && !Settings.preferences.showSandBars) DOM.progressEl.style.backgroundColor = currentText;
-            if (DOM.timeLeftEl && Settings.preferences.showProgressBar && !Settings.preferences.showSandBars) DOM.timeLeftEl.style.color = currentText;
+            if (DOM.progressEl && Settings.preferences.showProgressBar && !Settings.preferences.showSandBars && !Settings.preferences.showWaterFill) DOM.progressEl.style.backgroundColor = currentText;
+            if (DOM.timeLeftEl && Settings.preferences.showProgressBar && !Settings.preferences.showSandBars && !Settings.preferences.showWaterFill) DOM.timeLeftEl.style.color = currentText;
             if (DOM.scheduleCirclesDisplayEl && Settings.preferences.showScheduleCircles) {
                 // Just update active circle colors during flash
                 DOM.scheduleCirclesDisplayEl.querySelectorAll('.schedule-circle-symbol.active').forEach(span => span.style.color = currentText);
@@ -266,8 +266,8 @@ export const Alerts = {
         if (DOM.timeEl && Settings.preferences.showTime) DOM.timeEl.style.color = scheme.text;
         if (DOM.dateEl && Settings.preferences.showDate) DOM.dateEl.style.color = scheme.text;
         if (DOM.periodLabelEl && Settings.preferences.showScheduleLabel) DOM.periodLabelEl.style.color = scheme.text;
-        if (DOM.progressEl && Settings.preferences.showProgressBar && !Settings.preferences.showSandBars) DOM.progressEl.style.backgroundColor = scheme.text;
-        if (DOM.timeLeftEl && Settings.preferences.showProgressBar && !Settings.preferences.showSandBars) DOM.timeLeftEl.style.color = scheme.text;
+        if (DOM.progressEl && Settings.preferences.showProgressBar && !Settings.preferences.showSandBars && !Settings.preferences.showWaterFill) DOM.progressEl.style.backgroundColor = scheme.text;
+        if (DOM.timeLeftEl && Settings.preferences.showProgressBar && !Settings.preferences.showSandBars && !Settings.preferences.showWaterFill) DOM.timeLeftEl.style.color = scheme.text;
 
         // Re-render circles to ensure correct active/inactive colors based on scheme
         if (Settings.preferences.showScheduleCircles) {

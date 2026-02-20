@@ -61,6 +61,12 @@ const resolveRootBase = () => {
   const repoName = repoNameFromEnv ?? repoNameFromRemote()
 
   if (!repoName) {
+    // Local builds may run outside a git checkout. Fall back to the folder name
+    // so GitHub Pages project sites still resolve assets correctly.
+    const dirName = basename(rootDir)
+    if (dirName && !dirName.endsWith('.github.io')) {
+      return normalizeBase(dirName)
+    }
     return '/'
   }
   if (repoName.endsWith('.github.io')) return '/'

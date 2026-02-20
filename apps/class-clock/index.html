@@ -20,7 +20,7 @@
         </div>
           <!-- Sand Bars Container -->
           <div id="sand-bars-container" class="display-element">
-            <!-- Outline Divs (behind canvas) - RE-ADDED -->
+            <!-- Outline Divs (behind canvas) -->
             <div class="sand-bar-outline-segment"></div>
             <div class="sand-bar-outline-segment"></div>
             <div class="sand-bar-outline-segment"></div>
@@ -28,6 +28,12 @@
             <div class="sand-bar-outline-segment"></div>
             <!-- Canvas for Matter.js (on top) -->
             <canvas id="sand-bars-canvas"></canvas>
+          </div>
+
+          <!-- Water Fill Container -->
+          <div id="water-fill-container" class="display-element element-hidden">
+            <div class="water-fill-outline-segment"></div>
+            <canvas id="water-fill-canvas"></canvas>
           </div>
       </div>
   </div>
@@ -73,28 +79,32 @@
                      <div class="pref-item checkbox-item"><label><input type="checkbox" id="pref-show-schedule-circles" data-pref="showScheduleCircles"> Show Schedule Circles</label></div>
                      <div class="pref-item checkbox-item"><label><input type="checkbox" id="pref-show-sand-bars" data-pref="showSandBars"> Show Sand Bars (Physics)</label></div>
                  </div>
+                 <div class="pref-row">
+                     <div class="pref-item checkbox-item"><label><input type="checkbox" id="pref-show-water-fill" data-pref="showWaterFill"> Show Water Fill (Physics)</label></div>
+                     <div class="pref-item checkbox-item"></div>
+                 </div>
             </div>
         </div>
 
-        <!-- Sand Bar Specific Settings (Initially Hidden) -->
+        <!-- Physics Fill Settings (Initially Hidden) -->
         <div id="sand-bar-options" class="settings-section display-element element-hidden">
-             <h4>Sand Bar Settings</h4>
+             <h4>Physics Fill Settings</h4>
              <div class="preferences-container">
                  <div class="pref-row">
                       <div class="pref-item">
-                          <label for="pref-sand-width">Bar Width (%):</label>
+                          <label for="pref-sand-width">Fill Width (%):</label>
                           <div class="number-input-wrapper">
-                              <button class="num-btn minus" aria-label="Decrease Sand Bar Width">-</button>
+                              <button class="num-btn minus" aria-label="Decrease Fill Width">-</button>
                               <input type="number" id="pref-sand-width" data-pref="sandWidth" min="10" max="100" step="1" value="80">
-                              <button class="num-btn plus" aria-label="Increase Sand Bar Width">+</button>
+                              <button class="num-btn plus" aria-label="Increase Fill Width">+</button>
                           </div>
                       </div>
                       <div class="pref-item">
-                          <label for="pref-sand-height">Bar Height (px):</label>
+                          <label for="pref-sand-height">Fill Height (px):</label>
                           <div class="number-input-wrapper">
-                              <button class="num-btn minus" aria-label="Decrease Sand Bar Height">-</button>
+                              <button class="num-btn minus" aria-label="Decrease Fill Height">-</button>
                               <input type="number" id="pref-sand-height" data-pref="sandHeight" min="50" max="800" step="5" value="150">
-                              <button class="num-btn plus" aria-label="Increase Sand Bar Height">+</button>
+                              <button class="num-btn plus" aria-label="Increase Fill Height">+</button>
                           </div>
                       </div>
                  </div>
@@ -111,7 +121,7 @@
                        <div class="pref-item"> <!-- Placeholder --> </div>
                  </div>
              </div>
-              <button id="reset-sandbar-defaults">Reset Sand Bar Defaults</button>
+              <button id="reset-sandbar-defaults">Reset Fill Defaults</button>
         </div>
 
 
@@ -183,7 +193,7 @@
               </div>
               <div class="pref-row">
                 <div class="pref-item">
-                   <label for="pref-progress-height">Progress Bar Height (px):</label>
+                   <label for="pref-progress-height">Progress Fill Height (px):</label>
                    <div class="number-input-wrapper">
                      <button class="num-btn minus" aria-label="Decrease Progress Bar Height">-</button>
                      <input type="number" id="pref-progress-height" data-pref="progressBarHeight" value="120" min="10">

@@ -51,7 +51,8 @@ export const Settings = {
         showProgressBar: true,
         showScheduleCircles: false,
         showSandBars: false,
-        // --- Sand Bar Preferences ---
+        showWaterFill: false,
+        // --- Physics Fill Preferences ---
         sandWidth: 80, // percentage
         sandHeight: 150, // pixels
         // sandDropInterval: 1000, // REMOVED
@@ -107,7 +108,7 @@ export const Settings = {
                           : Settings.defaultPreferences.colourSchemes
                     };
                     // Type checking booleans
-                    for (const key of ['showDate', 'showTime', 'showScheduleLabel', 'showProgressBar', 'showScheduleCircles', 'showSandBars']) {
+                    for (const key of ['showDate', 'showTime', 'showScheduleLabel', 'showProgressBar', 'showScheduleCircles', 'showSandBars', 'showWaterFill']) {
                          if (typeof tempPrefs[key] !== 'boolean') { tempPrefs[key] = Settings.defaultPreferences[key]; }
                     }
                     // Type checking numbers (excluding removed interval)
@@ -124,6 +125,12 @@ export const Settings = {
                         tempPrefs.fontFamily = Settings.defaultPreferences.fontFamily;
                     }
 
+                    if (tempPrefs.showSandBars && tempPrefs.showWaterFill) {
+                        tempPrefs.showWaterFill = false;
+                    }
+                    if (tempPrefs.showProgressBar && (tempPrefs.showSandBars || tempPrefs.showWaterFill)) {
+                        tempPrefs.showProgressBar = false;
+                    }
                     // Clamp sandbar values after loading/setting defaults
                     tempPrefs.sandWidth = Math.max(10, Math.min(100, tempPrefs.sandWidth));
                     tempPrefs.sandHeight = Math.max(50, Math.min(800, tempPrefs.sandHeight)); // Match HTML max

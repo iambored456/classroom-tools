@@ -247,7 +247,7 @@ html, body {
 #time-left { position: absolute; top: -1em; left: 0; transform: translateX(-50%); font-size: 40px; white-space: nowrap; z-index: 2; transition: color 0.3s, font-size 0.3s, left 1s linear; text-shadow: 0 0 5px rgba(0, 0, 0, 0.5); }
 
 /* Sand Bars Styling */
-#sand-bars-container {
+#sand-bars-container, #water-fill-container {
     display: flex;
     justify-content: center;
     align-items: stretch; /* Make outlines fill height */
@@ -262,7 +262,7 @@ html, body {
 }
 
 /* CSS Outline Styling - RE-ADDED */
-.sand-bar-outline-segment {
+.sand-bar-outline-segment, .water-fill-outline-segment {
     flex: 1;
     border: 2px solid #FFFFFF; /* Default color, updated by JS */
     border-radius: 15px; /* Rounded corners */
@@ -270,7 +270,7 @@ html, body {
     transition: border-color 0.3s;
 }
 
-#sand-bars-canvas {
+#sand-bars-canvas, #water-fill-canvas {
     position: absolute;
     top: 0;
     left: 0;

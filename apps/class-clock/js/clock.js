@@ -166,7 +166,7 @@ export const Clock = {
 
             // --- Update CSS Progress Bar & Time Left ---
             // Only update if the standard progress bar is the active one
-            if (Settings.preferences.showProgressBar && !Settings.preferences.showSandBars) {
+            if (Settings.preferences.showProgressBar && !Settings.preferences.showSandBars && !Settings.preferences.showWaterFill) {
                  if (DOM.progressEl && DOM.progressBarEl && DOM.timeLeftEl) {
                      const periodStartMs = periodInfo.start.getTime();
                      const periodEndMs = periodInfo.end.getTime();
@@ -200,7 +200,7 @@ export const Clock = {
                      }
                  }
             } else {
-                 // Clear standard progress/timeleft if sandbars are active
+                 // Clear standard progress/timeleft if a physics fill is active
                   if (DOM.progressEl) DOM.progressEl.style.width = "0%";
                   if (DOM.timeLeftEl) DOM.timeLeftEl.textContent = "";
             }

@@ -10,10 +10,18 @@ export const Physics = {
     runner: null,
     isInitialized: false,
     isRunning: false,
+    currentMode: 'sand',
+    currentSegments: State.SAND_COLORS.length,
 
-    init: function(canvasElement, containerWidth, containerHeight) {
+    init: function(canvasElement, containerWidth, containerHeight, options = {}) {
+        const mode = options.mode || Physics.currentMode || 'sand';
+        const segments = Math.max(1, options.segments || (mode === 'sand' ? State.SAND_COLORS.length : 1));
+
         if (Physics.isInitialized) {
-            if (Physics.render && (Physics.render.options.width !== containerWidth || Physics.render.options.height !== containerHeight)) {
+            const sizeChanged = Physics.render && (Physics.render.options.width !== containerWidth || Physics.render.options.height !== containerHeight);
+            const modeChanged = Physics.currentMode !== mode || Physics.currentSegments !== segments;
+
+            if (sizeChanged && Physics.render) {
                 console.log(`Resizing physics renderer to ${containerWidth}x${containerHeight}`);
                 Physics.render.bounds.max.x = containerWidth;
                 Physics.render.bounds.max.y = containerHeight;
@@ -21,28 +29,31 @@ export const Physics = {
                 Physics.render.options.height = containerHeight;
                 Physics.render.canvas.width = containerWidth;
                 Physics.render.canvas.height = containerHeight;
+            }
+
+            if (sizeChanged || modeChanged) {
+                Physics.currentMode = mode;
+                Physics.currentSegments = segments;
                 Physics.updateWallPositions(containerWidth, containerHeight);
             }
+
             Physics.start(); // Ensure running
             return;
         }
 
-        console.log(`Initializing Physics Engine: ${containerWidth}x${containerHeight}`);
+        console.log(`Initializing Physics Engine (${mode}): ${containerWidth}x${containerHeight}`);
         if (!canvasElement || isNaN(containerWidth) || isNaN(containerHeight) || containerWidth <= 0 || containerHeight <= 0) {
             console.error("Cannot initialize Physics: Invalid canvas or dimensions.");
             return;
         }
 
-        // --- NEW: Increased Solver Iterations for Rigidity ---
+        // Increased solver iterations for better stacking stability.
         const engineOptions = {
             enableSleeping: true,
-            // Default is 6, higher values increase rigidity but cost performance
             positionIterations: 8,
-             // Default is 4, higher values help prevent tunnelling/overlap
             velocityIterations: 6
         };
         Physics.engine = Matter.Engine.create(engineOptions);
-        // --- End New ---
 
         Physics.world = Physics.engine.world;
         Physics.engine.world.gravity.y = 0.7; // Keep gravity relatively low
@@ -56,12 +67,14 @@ export const Physics = {
                 height: containerHeight,
                 wireframes: false,
                 background: 'transparent',
-                showSleeping: false, // Keep particles visible when sleeping
+                showSleeping: false,
                 pixelRatio: window.devicePixelRatio || 1
             }
         });
 
-        Physics.createWalls(containerWidth, containerHeight);
+        Physics.currentMode = mode;
+        Physics.currentSegments = segments;
+        Physics.createWalls(containerWidth, containerHeight, mode, segments);
 
         Physics.runner = Matter.Runner.create();
         Matter.Runner.run(Physics.runner, Physics.engine);
@@ -72,52 +85,56 @@ export const Physics = {
         console.log("Physics engine initialized and running.");
     },
 
-    createWalls: function(width, height) {
+    createWalls: function(width, height, mode = Physics.currentMode, segments = Physics.currentSegments) {
         if (!Physics.world) return;
 
         const staticBodies = Matter.Composite.allBodies(Physics.world).filter(body => body.isStatic);
-        if (staticBodies.length > 0) { Matter.World.remove(Physics.world, staticBodies); }
+        if (staticBodies.length > 0) {
+            Matter.World.remove(Physics.world, staticBodies);
+        }
 
-        const numSegments = State.SAND_COLORS.length;
-        const segmentWidth = width / numSegments;
-        const wallThickness = 15; // Keep thickness reasonable
-        const walls = [];
+        const wallThickness = 15;
         const wallOptions = {
-             isStatic: true,
-             friction: 0.6, // Increased friction slightly for walls
-             restitution: 0.1, // Keep wall bounce low
-             render: { visible: false }
+            isStatic: true,
+            friction: 0.6,
+            restitution: 0.1,
+            render: { visible: false }
         };
 
+        const walls = [];
         // Floor
         walls.push(Matter.Bodies.rectangle(width / 2, height + wallThickness / 2, width + wallThickness * 2, wallThickness, wallOptions));
-        // Left Outer Wall
+        // Left and right container walls
         walls.push(Matter.Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height + wallThickness * 2, wallOptions));
-        // Right Outer Wall
         walls.push(Matter.Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height + wallThickness * 2, wallOptions));
-        // Inner Divider Walls
-        for (let i = 1; i < numSegments; i++) {
-            const dividerX = i * segmentWidth;
-             walls.push(Matter.Bodies.rectangle(dividerX, height / 2, wallThickness, height + wallThickness * 2, wallOptions));
+
+        if (mode === 'sand') {
+            const dividerCount = Math.max(1, segments);
+            const segmentWidth = width / dividerCount;
+            for (let i = 1; i < dividerCount; i++) {
+                const dividerX = i * segmentWidth;
+                walls.push(Matter.Bodies.rectangle(dividerX, height / 2, wallThickness, height + wallThickness * 2, wallOptions));
+            }
         }
+
         Matter.World.add(Physics.world, walls);
     },
 
     updateWallPositions: function(newWidth, newHeight) {
-        Physics.createWalls(newWidth, newHeight); // Recreate walls on resize
+        Physics.createWalls(newWidth, newHeight, Physics.currentMode, Physics.currentSegments);
     },
 
     addParticle: function(segmentIndex, color) {
         if (!Physics.isInitialized || !Physics.engine || !Physics.world || !Physics.render?.options?.width) return false;
-        if (segmentIndex < 0 || segmentIndex >= State.SAND_COLORS.length) return false;
+        if (Physics.currentMode !== 'sand') return false;
 
-        const numSegments = State.SAND_COLORS.length;
+        const numSegments = Math.max(1, Physics.currentSegments || State.SAND_COLORS.length);
+        if (segmentIndex < 0 || segmentIndex >= numSegments) return false;
+
         const segmentWidth = Physics.render.options.width / numSegments;
-        // For polygons, 'radius' usually means distance from center to vertex
+        // For polygons, 'radius' means distance from center to vertex.
         const radius = Settings.preferences?.sandParticleSize || 5;
-        const wallThickness = 15; // Match createWalls collision thickness
-        // Buffer calculation might need slight adjustment based on hexagon orientation,
-        // but using radius should still be a safe approximation.
+        const wallThickness = 15;
         const buffer = radius * 0.5;
 
         const segmentStartX = segmentIndex * segmentWidth;
@@ -125,38 +142,62 @@ export const Physics = {
         const maxX = segmentStartX + segmentWidth - (wallThickness / 2) - radius - buffer;
 
         if (minX >= maxX) {
-             // console.warn(`Segment ${segmentIndex} too narrow for particle radius ${radius}.`);
-             return false;
+            return false;
         }
 
         const x = minX + (Math.random() * (maxX - minX));
-        const y = -radius * 2; // Start just above the visible area
+        const y = -radius * 2;
 
-        // --- CHANGE: Use polygon instead of circle ---
-        const particle = Matter.Bodies.polygon(x, y, 6, radius, { // 6 sides for hexagon
-            restitution: 0.15, // Slightly reduced bounce from 0.2 maybe? Test this.
-            friction: 0.7,     // Slightly increased friction (hexagons have flat sides, might help locking)
+        const particle = Matter.Bodies.polygon(x, y, 6, radius, {
+            restitution: 0.15,
+            friction: 0.7,
             frictionAir: 0.01,
-            density: 0.01,     // Keep density relatively low
+            density: 0.01,
             render: { fillStyle: color },
-            sleepThreshold: 60, // Standard sleep threshold
-            // --- NEW: Chamfering can sometimes help stacking stability ---
-            // chamfer: { radius: radius * 0.1 } // Optional: slightly rounds corners
+            sleepThreshold: 60
         });
-        // --- End Change ---
-
 
         Matter.Body.setVelocity(particle, { x: (Math.random() - 0.5) * 0.1, y: Math.random() * 0.1 });
-        // Reduce initial spin slightly as hexagons might rotate more jarringly
         Matter.Body.setAngularVelocity(particle, (Math.random() - 0.5) * 0.01);
         Matter.World.add(Physics.world, particle);
+        return true;
+    },
+
+    addWaterParticle: function(color = '#4aa8ff') {
+        if (!Physics.isInitialized || !Physics.engine || !Physics.world || !Physics.render?.options?.width) return false;
+        if (Physics.currentMode !== 'water') return false;
+
+        const width = Physics.render.options.width;
+        const radius = Math.max(2, (Settings.preferences?.sandParticleSize || 5) * 0.8);
+        const wallThickness = 15;
+        const buffer = radius * 0.25;
+
+        const minX = (wallThickness / 2) + radius + buffer;
+        const maxX = width - (wallThickness / 2) - radius - buffer;
+        if (minX >= maxX) return false;
+
+        const x = minX + (Math.random() * (maxX - minX));
+        const y = -radius * 2;
+
+        const droplet = Matter.Bodies.circle(x, y, radius, {
+            restitution: 0.03,
+            friction: 0.01,
+            frictionStatic: 0.02,
+            frictionAir: 0.01,
+            density: 0.0008,
+            render: { fillStyle: color },
+            sleepThreshold: 120
+        });
+
+        Matter.Body.setVelocity(droplet, { x: (Math.random() - 0.5) * 0.08, y: Math.random() * 0.06 });
+        Matter.World.add(Physics.world, droplet);
         return true;
     },
 
     getSegmentTopYs: function() {
         if (!Physics.world || !Physics.render?.options?.width) return null;
 
-        const numSegments = State.SAND_COLORS.length;
+        const numSegments = Math.max(1, Physics.currentSegments || State.SAND_COLORS.length);
         const segmentWidth = Physics.render.options.width / numSegments;
         const segmentTopYs = Array(numSegments).fill(Infinity);
         const dynamicBodies = Matter.Composite.allBodies(Physics.world).filter(body => !body.isStatic);
@@ -175,11 +216,28 @@ export const Physics = {
         return segmentTopYs;
     },
 
+    getTopY: function() {
+        if (!Physics.world) return null;
+        const dynamicBodies = Matter.Composite.allBodies(Physics.world).filter(body => !body.isStatic);
+        if (dynamicBodies.length === 0) return Infinity;
+
+        let topY = Infinity;
+        dynamicBodies.forEach(body => {
+            const bodyTop = body.bounds?.min?.y;
+            if (typeof bodyTop === 'number' && !Number.isNaN(bodyTop) && bodyTop < topY) {
+                topY = bodyTop;
+            }
+        });
+        return topY;
+    },
+
     clearDynamicBodies: function() {
         if (!Physics.world) return;
         const allBodies = Matter.Composite.allBodies(Physics.world);
         const bodiesToRemove = allBodies.filter(body => !body.isStatic);
-        if (bodiesToRemove.length > 0) { Matter.World.remove(Physics.world, bodiesToRemove); }
+        if (bodiesToRemove.length > 0) {
+            Matter.World.remove(Physics.world, bodiesToRemove);
+        }
     },
 
     stop: function() {
@@ -195,7 +253,9 @@ export const Physics = {
          if (Physics.runner && Physics.engine) {
              Matter.Runner.run(Physics.runner, Physics.engine);
              Physics.isRunning = true;
-         } else { console.error("Cannot start physics, not initialized."); }
+         } else {
+             console.error("Cannot start physics, not initialized.");
+         }
     },
 
     destroy: function() {
@@ -203,8 +263,14 @@ export const Physics = {
          Physics.stop();
          if (Physics.world) Matter.World.clear(Physics.world, false);
          if (Physics.engine) Matter.Engine.clear(Physics.engine);
-         Physics.engine = null; Physics.world = null; Physics.render = null; Physics.runner = null;
-         Physics.isInitialized = false; Physics.isRunning = false;
+         Physics.engine = null;
+         Physics.world = null;
+         Physics.render = null;
+         Physics.runner = null;
+         Physics.isInitialized = false;
+         Physics.isRunning = false;
+         Physics.currentMode = 'sand';
+         Physics.currentSegments = State.SAND_COLORS.length;
          console.log("Physics engine destroyed.");
     }
 };
