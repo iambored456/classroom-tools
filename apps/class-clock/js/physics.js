@@ -108,8 +108,8 @@ export const Physics = {
     },
 
     addParticle: function(segmentIndex, color) {
-        if (!Physics.isInitialized || !Physics.engine || !Physics.render?.options?.width) return;
-        if (segmentIndex < 0 || segmentIndex >= State.SAND_COLORS.length) return;
+        if (!Physics.isInitialized || !Physics.engine || !Physics.world || !Physics.render?.options?.width) return false;
+        if (segmentIndex < 0 || segmentIndex >= State.SAND_COLORS.length) return false;
 
         const numSegments = State.SAND_COLORS.length;
         const segmentWidth = Physics.render.options.width / numSegments;
@@ -126,7 +126,7 @@ export const Physics = {
 
         if (minX >= maxX) {
              // console.warn(`Segment ${segmentIndex} too narrow for particle radius ${radius}.`);
-             return;
+             return false;
         }
 
         const x = minX + (Math.random() * (maxX - minX));
@@ -150,6 +150,29 @@ export const Physics = {
         // Reduce initial spin slightly as hexagons might rotate more jarringly
         Matter.Body.setAngularVelocity(particle, (Math.random() - 0.5) * 0.01);
         Matter.World.add(Physics.world, particle);
+        return true;
+    },
+
+    getSegmentTopYs: function() {
+        if (!Physics.world || !Physics.render?.options?.width) return null;
+
+        const numSegments = State.SAND_COLORS.length;
+        const segmentWidth = Physics.render.options.width / numSegments;
+        const segmentTopYs = Array(numSegments).fill(Infinity);
+        const dynamicBodies = Matter.Composite.allBodies(Physics.world).filter(body => !body.isStatic);
+
+        dynamicBodies.forEach(body => {
+            const x = body.position?.x;
+            if (typeof x !== 'number' || Number.isNaN(x)) return;
+
+            const segmentIndex = Math.max(0, Math.min(numSegments - 1, Math.floor(x / segmentWidth)));
+            const topY = body.bounds?.min?.y;
+            if (typeof topY === 'number' && !Number.isNaN(topY) && topY < segmentTopYs[segmentIndex]) {
+                segmentTopYs[segmentIndex] = topY;
+            }
+        });
+
+        return segmentTopYs;
     },
 
     clearDynamicBodies: function() {

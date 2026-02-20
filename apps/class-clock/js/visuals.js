@@ -79,16 +79,16 @@ export const Visuals = {
 
             const segmentWidth = containerWidth / State.SAND_COLORS.length;
             const wallThickness = 15; // Match physics wall thickness for calculation
-            const usableSegmentWidth = Math.max(0, segmentWidth - wallThickness); // Ensure non-negative
+            const usableSegmentWidth = Math.max(0, segmentWidth - wallThickness - (particleRadius * 0.25)); // Reduce conservative side buffer
             // Estimate usable height slightly more conservatively
-            const usableSegmentHeight = Math.max(0, containerHeight - particleRadius); // Only need buffer at bottom
+            const usableSegmentHeight = Math.max(0, containerHeight - (particleRadius * 0.2)); // Keep only a small top buffer
             const usableSegmentArea = usableSegmentWidth * usableSegmentHeight;
 
             // --- CHANGE: Adjust packing density for hexagons ---
             // Hexagons pack denser than circles. Theoretical max is ~0.907.
             // Random packing is less, simulation packing even less precise.
             // Start with a value like 0.8 or 0.85, adjust based on visual results.
-            const packingDensity = 0.85; // Adjusted from 1.1 (was too high even for circles)
+            const packingDensity = 0.94; // Target fuller bins while still allowing natural physics gaps
             // --- End Change ---
 
             // Calculate based on area, ensure a minimum sensible number
@@ -121,6 +121,17 @@ export const Visuals = {
         });
     },
 
+    isSandBarsNearTop: function() {
+        if (!Physics.isInitialized || !Physics.isRunning) return false;
+
+        const segmentTopYs = Physics.getSegmentTopYs();
+        if (!segmentTopYs || segmentTopYs.length !== State.SAND_COLORS.length) return false;
+
+        const particleRadius = Settings.preferences?.sandParticleSize || 5;
+        const nearTopThresholdY = Math.max(2, particleRadius * 1.2);
+
+        return segmentTopYs.every(y => Number.isFinite(y) && y <= nearTopThresholdY);
+    },
     checkAndAddParticles: function() {
         if (!Settings.preferences.showSandBars || !Physics.isRunning || State.totalParticlesForPeriod <= 0) {
             Visuals.stopPhysicsCheckInterval(); return;
@@ -137,38 +148,56 @@ export const Visuals = {
         const periodDurationMs = periodEndMs - periodStartMs;
         if (periodDurationMs <= 0) { Visuals.stopPhysicsCheckInterval(); return; } // Should not happen if started correctly
 
+        const isNearTop = Visuals.isSandBarsNearTop();
+        if (isNearTop) {
+            Visuals.stopPhysicsCheckInterval();
+            return;
+        }
+
         const timeElapsedMs = Math.max(0, now.getTime() - periodStartMs);
         const totalFillPercentage = Math.min(1, timeElapsedMs / periodDurationMs);
-        const targetTotalParticles = Math.floor(totalFillPercentage * State.totalParticlesForPeriod);
+        const baseTargetTotalParticles = Math.floor(totalFillPercentage * State.totalParticlesForPeriod);
+        const hardParticleCap = Math.ceil(State.totalParticlesForPeriod * 1.35);
 
-        // Determine how many particles to add *this interval* to catch up
+        let targetTotalParticles = baseTargetTotalParticles;
+
+        // During the final stretch, keep topping off until bins are near the top.
+        if (totalFillPercentage >= 0.9 && targetTotalParticles <= State.physicsParticlesAdded) {
+            targetTotalParticles = Math.min(hardParticleCap, State.physicsParticlesAdded + 6);
+        }
+
+        targetTotalParticles = Math.min(targetTotalParticles, hardParticleCap);
+
+        // Determine how many particles to add *this interval* to catch up.
         const particlesToAdd = targetTotalParticles - State.physicsParticlesAdded;
+        if (particlesToAdd <= 0) return;
 
-        // Add particles one by one if needed, up to the target
-        // Limit additions per interval to prevent potential frame drops if catching up a lot
-        const maxToAddThisTick = 5; // Adjust as needed for performance
+        // Add particles one by one if needed, up to the target.
+        // Limit additions per interval to prevent potential frame drops if catching up a lot.
+        const maxToAddThisTick = 6;
         for (let i = 0; i < Math.min(particlesToAdd, maxToAddThisTick); ++i) {
-             if (State.physicsParticlesAdded >= State.totalParticlesForPeriod) break; // Ensure we don't exceed total
+             if (State.physicsParticlesAdded >= hardParticleCap) break;
 
              const segmentDuration = periodDurationMs / State.SAND_COLORS.length;
              const nextParticleIndex = State.physicsParticlesAdded;
-             // Estimate time this specific particle represents
+             // Estimate time this specific particle represents.
              const particleRepresentsTime = (nextParticleIndex + 0.5) / State.totalParticlesForPeriod * periodDurationMs;
-             // Determine segment based on the *estimated time* the particle represents
+             // Determine segment based on the *estimated time* the particle represents.
              const segmentIndex = Math.min(State.SAND_COLORS.length - 1, Math.floor(particleRepresentsTime / segmentDuration));
 
-
             if (segmentIndex >= 0) {
-                Physics.addParticle(segmentIndex, State.SAND_COLORS[segmentIndex]);
-                State.physicsParticlesAdded++;
+                const added = Physics.addParticle(segmentIndex, State.SAND_COLORS[segmentIndex]);
+                if (added) {
+                    State.physicsParticlesAdded++;
+                } else {
+                    break;
+                }
             }
         }
 
-         // Stop adding if the period is complete visually
-         if (State.physicsParticlesAdded >= State.totalParticlesForPeriod) {
-            // console.log("Target particle count reached.");
+        if (State.physicsParticlesAdded >= hardParticleCap) {
             Visuals.stopPhysicsCheckInterval();
-         }
+        }
     },
 
     stopPhysicsCheckInterval: function() {
