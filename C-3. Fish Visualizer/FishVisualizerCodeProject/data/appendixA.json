@@ -1,0 +1,2156 @@
+{
+    "ADT 1": [],
+    "ADT 2": [
+        "ADT 1"
+    ],
+    "ADT 3": [],
+    "ADT 4": [
+        "ADT 1",
+        "ADT 2",
+        "SEN 3"
+    ],
+    "ADT 5": [
+        "ADT 1",
+        "ADT 2",
+        "ADT 4"
+    ],
+    "ADT 6": [
+        "ADT 1",
+        "ADT 2",
+        "ADT 4"
+    ],
+    "ADT 7": [
+        "ADT 1",
+        "ADT 2",
+        "ADT 4"
+    ],
+    "ADT 8": [
+        "ADT 1\u2013ADT 4",
+        "SEN 11",
+        "S&L 4"
+    ],
+    "ADT 9": [
+        "ADT 1\u2013ADT 3"
+    ],
+    "ADT 10": [
+        "ADT 1",
+        "ADT 3"
+    ],
+    "ADT 11": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "ADT 7",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 12": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "ADT 7",
+        "ADT 11",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 13": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "ADT 7",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 14": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "ADT 7",
+        "ADT 12",
+        "ADT 13",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 15": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 16": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "SEN 11",
+        "SEN 12"
+    ],
+    "ADT 17": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "SEN 11",
+        "SEN 12"
+    ],
+    "ADT 18": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "ADT 17",
+        "SEN 11",
+        "SEN 12"
+    ],
+    "ADT 19": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "SEN 11",
+        "SEN 12"
+    ],
+    "ADT 20": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "ADT 11",
+        "ADT 12",
+        "ADT 16",
+        "SEN 11",
+        "SEN 12"
+    ],
+    "ADT 21": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "SEN 11",
+        "SEN 12"
+    ],
+    "ADT 22": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "ADT 11",
+        "ADT 18",
+        "ADT 21",
+        "SEN 11",
+        "SEN 12"
+    ],
+    "ADT 23": [
+        "ADT 1",
+        "ADT 3\u2013ADT 6",
+        "SEN 12"
+    ],
+    "ADT 24": [
+        "ADT 1",
+        "ADT 3\u2013ADT 5"
+    ],
+    "ADT 25": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 11",
+        "SEN 12",
+        "S&L 7"
+    ],
+    "ADT 26": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 25",
+        "SEN 11",
+        "SEN 12"
+    ],
+    "ADT 27": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 28": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 5",
+        "ADT 11",
+        "ADT 19",
+        "SEN 11\u2013SEN 14",
+        "SEN 16"
+    ],
+    "ADT 29": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 5",
+        "ADT 11",
+        "ADT 19",
+        "SEN 11\u2013SEN 14",
+        "SEN 16"
+    ],
+    "ADT 30": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 31": [
+        "ADT 1",
+        "ADT 3\u2013ADT 6",
+        "ADT 13",
+        "ADT 14",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 32": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "ADT 27",
+        "COG 11",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 33": [
+        "ADT 1\u2013ADT 5",
+        "SEN 11",
+        "SEN 12"
+    ],
+    "ADT 34": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5"
+    ],
+    "ADT 35": [
+        "ADT 1",
+        "ADT 3\u2013ADT 5",
+        "ADT 34"
+    ],
+    "ADT 36": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5",
+        "ADT 144",
+        "SEN 12"
+    ],
+    "ADT 37": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 38": [
+        "ADT 1",
+        "ADT 3\u2013ADT 5",
+        "ADT 144",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 39": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 5",
+        "COG 11"
+    ],
+    "ADT 40": [
+        "ADT 1",
+        "ADT 2",
+        "ADT 4",
+        "ADT 5",
+        "ADT 20",
+        "ADT 21"
+    ],
+    "ADT 41": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 5",
+        "ADT 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 42": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 5",
+        "ADT 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 43": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 44": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 45": [
+        "ADT 1",
+        "ADT 3",
+        "COG 11",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 46": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 41",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 47": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 41",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 48": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 49": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 41\u2013ADT 48",
+        "COG 11",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 50": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 51": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 5",
+        "ADT 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 52": [
+        "ADT 1\u2013ADT 3",
+        "COG 1",
+        "COG 2",
+        "SEN 1"
+    ],
+    "ADT 53": [
+        "ADT 1\u2013ADT 3",
+        "COG 1",
+        "COG 2",
+        "SEN 1"
+    ],
+    "ADT 54": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 51",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 55": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 56": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 47",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 57": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 44",
+        "SEN 8",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 58": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 48",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 59": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "SEN 12"
+    ],
+    "ADT 60": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 4",
+        "ADT 51\u2013ADT 58",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 61": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12"
+    ],
+    "ADT 62": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12"
+    ],
+    "ADT 63": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 64": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 17"
+    ],
+    "ADT 65": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12"
+    ],
+    "ADT 66": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12"
+    ],
+    "ADT 67": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 17",
+        "ADT 64",
+        "SEN 12"
+    ],
+    "ADT 68": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 17",
+        "ADT 64",
+        "SEN 12"
+    ],
+    "ADT 69": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12"
+    ],
+    "ADT 70": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12"
+    ],
+    "ADT 71": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 17",
+        "ADT 64",
+        "ADT 65",
+        "ADT 67\u2013ADT 70",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 72": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 17",
+        "ADT 18",
+        "ADT 64\u2013ADT 70",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 73": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 17",
+        "ADT 64",
+        "ADT 69 (or ADT 70)",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 74": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 86",
+        "COG 6",
+        "COG 11"
+    ],
+    "ADT 75": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 86",
+        "COG 6",
+        "COG 11",
+        "SEN 13"
+    ],
+    "ADT 76": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 74",
+        "ADT 75",
+        "ADT 86",
+        "COG 6",
+        "COG 11",
+        "SEN 13"
+    ],
+    "ADT 77": [
+        "COG 3"
+    ],
+    "ADT 78": [
+        "ADT 5"
+    ],
+    "ADT 79": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 77",
+        "COG 6",
+        "COG 11"
+    ],
+    "ADT 80": [
+        "ADT 1",
+        "COG 6",
+        "COG 11"
+    ],
+    "ADT 81": [
+        "ADT 1",
+        "ADT 3",
+        "COG 6",
+        "COG 11"
+    ],
+    "ADT 82": [
+        "ADT 77"
+    ],
+    "ADT 83": [
+        "ADT 77",
+        "ADT 82"
+    ],
+    "ADT 84": [
+        "ADT 77\u2013ADT 83"
+    ],
+    "ADT 85": [
+        "ADT 9",
+        "ADT 18",
+        "ADT 19"
+    ],
+    "ADT 86": [
+        "ADT 1"
+    ],
+    "ADT 87": [
+        "ADT 1",
+        "ADT 3",
+        "COG 11"
+    ],
+    "ADT 88": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 13",
+        "COG 11"
+    ],
+    "ADT 89": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12",
+        "SEN 13",
+        "COG 11"
+    ],
+    "ADT 90": [],
+    "ADT 91": [
+        "ADT 1",
+        "ADT 17",
+        "SEN 11\u2013SEN 13"
+    ],
+    "ADT 92": [
+        "ADT 1",
+        "ADT 17",
+        "ADT 90",
+        "ADT 91",
+        "SEN 11\u2013SEN 13",
+        "COG 11"
+    ],
+    "ADT 93": [],
+    "ADT 94": [
+        "ADT 1",
+        "ADT 17",
+        "ADT 64",
+        "ADT 93",
+        "COG 6",
+        "SEN 11",
+        "SEN 12"
+    ],
+    "ADT 95": [
+        "ADT 1",
+        "ADT 5",
+        "S&L 4",
+        "S&L 5",
+        "S&L 7"
+    ],
+    "ADT 96": [
+        "ADT 1",
+        "ADT 5",
+        "COG 24",
+        "S&L 6"
+    ],
+    "ADT 97": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 96",
+        "COG 24",
+        "S&L 6"
+    ],
+    "ADT 98": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 97",
+        "COG 24",
+        "S&L 6"
+    ],
+    "ADT 99": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 98",
+        "COG 24",
+        "S&L 7"
+    ],
+    "ADT 100": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 99",
+        "COG 24",
+        "COG 35",
+        "COG 41",
+        "S&L 7"
+    ],
+    "ADT 101": [
+        "ADT 1",
+        "ADT 5",
+        "COG 24",
+        "COG 35",
+        "COG 49",
+        "S&L 7"
+    ],
+    "ADT 102": [
+        "ADT 1",
+        "S&L 6"
+    ],
+    "ADT 103": [
+        "ADT 1",
+        "S&L 6"
+    ],
+    "ADT 104": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 103",
+        "COG 56",
+        "S&L 7"
+    ],
+    "ADT 105": [
+        "ADT 1",
+        "S&L 6"
+    ],
+    "ADT 106": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 105",
+        "COG 56",
+        "S&L 7"
+    ],
+    "ADT 107": [
+        "ADT 1",
+        "S&L 6"
+    ],
+    "ADT 108": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 109": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 110": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 111": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 112": [
+        "ADT 1",
+        "ADT 5",
+        "SEN 12"
+    ],
+    "ADT 113": [
+        "ADT 1",
+        "ADT 5",
+        "SEN 12"
+    ],
+    "ADT 114": [
+        "ADT 1",
+        "ADT 4",
+        "COG 6",
+        "SEN 1",
+        "SEN 12"
+    ],
+    "ADT 115": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 112\u2013ADT 114",
+        "COG 6",
+        "SEN 1",
+        "SEN 12",
+        "SEN 14",
+        "SEN 16"
+    ],
+    "ADT 116": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 78",
+        "ADT 112",
+        "ADT 114",
+        "COG 6",
+        "SEN 1",
+        "SEN 12",
+        "SEN 14"
+    ],
+    "ADT 117": [
+        "ADT 1",
+        "COG 6",
+        "SEN 12"
+    ],
+    "ADT 118": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 117",
+        "COG 6",
+        "COG 11",
+        "SEN 12"
+    ],
+    "ADT 119": [
+        "ADT 1",
+        "COG 6",
+        "COG 11",
+        "SEN 12"
+    ],
+    "ADT 120": [
+        "ADT 1",
+        "ADT 17",
+        "COG 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 121": [
+        "ADT 1",
+        "ADT 17",
+        "COG 6",
+        "SEN 12"
+    ],
+    "ADT 122": [
+        "ADT 1",
+        "COG 6",
+        "SEN 12"
+    ],
+    "ADT 123": [
+        "ADT 1",
+        "SEN 12"
+    ],
+    "ADT 124": [
+        "ADT 1",
+        "ADT 17",
+        "COG 6",
+        "SEN 12"
+    ],
+    "ADT 125": [
+        "ADT 1",
+        "ADT 17",
+        "ADT 64",
+        "COG 6",
+        "COG 11",
+        "SEN 12"
+    ],
+    "ADT 126": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5"
+    ],
+    "ADT 127": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5",
+        "COG 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 128": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5",
+        "ADT 17",
+        "ADT 19",
+        "COG 6",
+        "SEN 12"
+    ],
+    "ADT 129": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5",
+        "COG 6",
+        "SEN 12"
+    ],
+    "ADT 130": [
+        "ADT 1",
+        "ADT 17",
+        "SEN 12"
+    ],
+    "ADT 131": [
+        "ADT 1",
+        "ADT 130",
+        "SEN 12",
+        "SEN 16"
+    ],
+    "ADT 132": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 131",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 133": [
+        "ADT 1",
+        "S&L 6"
+    ],
+    "ADT 134": [
+        "ADT 1",
+        "S&L 6"
+    ],
+    "ADT 135": [
+        "ADT 1",
+        "COG 11",
+        "SEN 11\u2013SEN 14"
+    ],
+    "ADT 136": [
+        "ADT 1",
+        "COG 6"
+    ],
+    "ADT 137": [
+        "ADT 1",
+        "COG 5",
+        "COG 6",
+        "SOC 2",
+        "S&L 14"
+    ],
+    "ADT 138": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 6"
+    ],
+    "ADT 139": [
+        "ADT 1",
+        "ADT 5",
+        "COG 6",
+        "COG 11"
+    ],
+    "ADT 140": [
+        "ADT 1",
+        "COG 6",
+        "SEN 11",
+        "SEN 12",
+        "S&L 6"
+    ],
+    "ADT 141": [
+        "ADT 1",
+        "ADT 140",
+        "COG 6",
+        "COG 24",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 142": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 133",
+        "ADT 134",
+        "ADT 140",
+        "ADT 141",
+        "SEN 11\u201313",
+        "S&L 7"
+    ],
+    "ADT 143": [
+        "ADT 1",
+        "ADT 141",
+        "COG 24",
+        "SEN 12",
+        "SEN 13",
+        "S&L 7",
+        "S&L 11"
+    ],
+    "ADT 144": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5"
+    ],
+    "ADT 145": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5",
+        "ADT 144",
+        "S&L 6"
+    ],
+    "ADT 146": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5",
+        "COG 35"
+    ],
+    "ADT 147": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5",
+        "COG 35",
+        "S&L 6"
+    ],
+    "ADT 148": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5",
+        "ADT 144",
+        "ADT 146",
+        "COG 31"
+    ],
+    "ADT 149": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 6",
+        "ADT 144",
+        "ADT 146",
+        "COG 41",
+        "COG 50",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 150": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 6",
+        "ADT 144",
+        "ADT 146",
+        "ADT 148",
+        "ADT 149",
+        "COG 41",
+        "COG 50",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 151": [
+        "ADT 1",
+        "ADT 5",
+        "COG 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "ADT 152": [
+        "ADT 1",
+        "ADT 5",
+        "COG 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "AFF 1": [
+        "S&L 4",
+        "S&L 7",
+        "S&L 15"
+    ],
+    "AFF 2": [
+        "ADT 1",
+        "ADT 2"
+    ],
+    "AFF 3": [
+        "ADT 1",
+        "ADT 2",
+        "ADT 4",
+        "SOC 2",
+        "S&L 7"
+    ],
+    "AFF 4": [],
+    "AFF 5": [],
+    "AFF 6": [],
+    "AFF 7": [],
+    "AFF 8": [
+        "COG 6"
+    ],
+    "AFF 9": [
+        "ADT 1",
+        "ADT 2",
+        "SOC 2",
+        "S&L 7"
+    ],
+    "AFF 10": [],
+    "AFF 11": [
+        "ADT 1",
+        "ADT 2",
+        "COG 6",
+        "COG 11",
+        "S&L 8"
+    ],
+    "AFF 12": [
+        "S&L 4",
+        "S&L 7",
+        "S&L 15"
+    ],
+    "COG 1": [
+        "ADT 1"
+    ],
+    "COG 2": [
+        "ADT 1"
+    ],
+    "COG 3": [
+        "ADT 1"
+    ],
+    "COG 4": [
+        "ADT 1"
+    ],
+    "COG 5": [
+        "ADT 1",
+        "COG 4"
+    ],
+    "COG 6": [],
+    "COG 7": [
+        "ADT 1",
+        "COG 6",
+        "S&L 8"
+    ],
+    "COG 8": [
+        "ADT 1",
+        "COG 3",
+        "COG 6",
+        "S&L 8"
+    ],
+    "COG 9": [
+        "ADT 1",
+        "COG 3",
+        "COG 6",
+        "S&L 8"
+    ],
+    "COG 10": [
+        "ADT 1",
+        "COG 6",
+        "S&L 8"
+    ],
+    "COG 11": [
+        "ADT 1",
+        "COG 6"
+    ],
+    "COG 12": [
+        "ADT 1"
+    ],
+    "COG 13": [
+        "ADT 1",
+        "ADT 4"
+    ],
+    "COG 14": [
+        "ADT 1",
+        "ADT 4",
+        "COG 13"
+    ],
+    "COG 15": [
+        "ADT 1",
+        "ADT 4",
+        "COG 14"
+    ],
+    "COG 16": [
+        "ADT 1",
+        "COG 35"
+    ],
+    "COG 17": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 6",
+        "COG 6",
+        "SEN 11\u2013SEN 13"
+    ],
+    "COG 18": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 6",
+        "COG 6",
+        "SEN 11\u2013SEN 13"
+    ],
+    "COG 19": [
+        "ADT 1",
+        "ADT 4\u2013ADT 6",
+        "COG 6",
+        "SEN 11\u2013SEN 13"
+    ],
+    "COG 20": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 6",
+        "COG 6",
+        "SEN 11\u2013SEN 13"
+    ],
+    "COG 21": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 6",
+        "COG 6",
+        "SEN 11\u2013SEN 13"
+    ],
+    "COG 22": [
+        "COG 20"
+    ],
+    "COG 23": [
+        "COG 17",
+        "COG 22"
+    ],
+    "COG 24": [
+        "COG 20"
+    ],
+    "COG 25": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 6",
+        "COG 6",
+        "SEN 11\u2013SEN 13"
+    ],
+    "COG 26": [
+        "ADT 4",
+        "COG 20"
+    ],
+    "COG 27": [
+        "ADT 4",
+        "COG 21"
+    ],
+    "COG 28": [
+        "ADT 4",
+        "COG 25"
+    ],
+    "COG 29": [
+        "ADT 1",
+        "ADT 4\u2013ADT 6",
+        "COG 6",
+        "COG 17",
+        "COG 26\u2013COG 28"
+    ],
+    "COG 30": [
+        "ADT 1",
+        "ADT 5",
+        "ADT 6",
+        "COG 6",
+        "COG 11",
+        "SEN 11\u2013SEN 13"
+    ],
+    "COG 31": [
+        "ADT 5",
+        "COG 20",
+        "COG 26"
+    ],
+    "COG 32": [
+        "COG 21",
+        "COG 27"
+    ],
+    "COG 33": [
+        "COG 25",
+        "COG 28"
+    ],
+    "COG 34": [
+        "ADT 1",
+        "ADT 4",
+        "COG 6"
+    ],
+    "COG 35": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5",
+        "COG 24"
+    ],
+    "COG 36": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5",
+        "COG 22"
+    ],
+    "COG 37": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 5",
+        "COG 22"
+    ],
+    "COG 38": [
+        "ADT 1",
+        "COG 6"
+    ],
+    "COG 39": [
+        "ADT 1",
+        "COG 6"
+    ],
+    "COG 40": [
+        "COG 35",
+        "S&L 6"
+    ],
+    "COG 41": [
+        "ADT 4",
+        "COG 40",
+        "S&L 6"
+    ],
+    "COG 42": [
+        "ADT 1",
+        "COG 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "COG 43": [
+        "COG 42"
+    ],
+    "COG 44": [
+        "COG 43"
+    ],
+    "COG 45": [
+        "COG 36",
+        "S&L 6"
+    ],
+    "COG 46": [
+        "ADT 1",
+        "COG 6",
+        "COG 43",
+        "COG 45",
+        "SEN 13"
+    ],
+    "COG 47": [
+        "ADT 6",
+        "COG 37",
+        "COG 46"
+    ],
+    "COG 48": [
+        "COG 47"
+    ],
+    "COG 49": [
+        "COG 35",
+        "S&L 6"
+    ],
+    "COG 50": [
+        "COG 23",
+        "COG 35",
+        "COG 41",
+        "COG 43"
+    ],
+    "COG 51": [
+        "COG 23",
+        "COG 35",
+        "COG 41",
+        "COG 43"
+    ],
+    "COG 52": [
+        "COG 23",
+        "COG 35",
+        "COG 41",
+        "COG 43",
+        "S&L 7"
+    ],
+    "COG 53": [
+        "COG 23",
+        "COG 35",
+        "COG 41",
+        "COG 43",
+        "COG 52",
+        "S&L 7"
+    ],
+    "COG 54": [
+        "COG 37",
+        "COG 43",
+        "S&L 6"
+    ],
+    "COG 55": [
+        "COG 43",
+        "COG 54",
+        "S&L 6"
+    ],
+    "COG 56": [
+        "ADT 4",
+        "ADT 5"
+    ],
+    "COG 57": [
+        "ADT 4",
+        "ADT 5",
+        "S&L 15"
+    ],
+    "COG 58": [
+        "ADT 4",
+        "ADT 5",
+        "S&L 7"
+    ],
+    "COG 59": [
+        "COG 36",
+        "S&L 6"
+    ],
+    "COG 60": [
+        "COG 56"
+    ],
+    "COG 61": [
+        "COG 60",
+        "S&L 11"
+    ],
+    "COG 62": [
+        "COG 61"
+    ],
+    "COG 63": [
+        "COG 62",
+        "S&L 11"
+    ],
+    "COG 64": [
+        "ADT 5",
+        "COG 63",
+        "SOC 6",
+        "S&L 6"
+    ],
+    "COG 65": [
+        "COG 64",
+        "S&L 15"
+    ],
+    "COG 66": [
+        "S&L 7"
+    ],
+    "COG 67": [
+        "ADT 1",
+        "ADT 5",
+        "COG 6",
+        "COG 27"
+    ],
+    "COG 68": [
+        "COG 63",
+        "S&L 7"
+    ],
+    "COG 69": [
+        "COG 66",
+        "S&L 15"
+    ],
+    "COG 70": [
+        "COG 43",
+        "COG 49"
+    ],
+    "COG 71": [
+        "COG 49",
+        "S&L 6",
+        "S&L 14"
+    ],
+    "COG 72": [
+        "COG 50\u2013COG 53"
+    ],
+    "COG 73": [
+        "S&L 7"
+    ],
+    "COG 74": [
+        "ADT 4",
+        "ADT 5"
+    ],
+    "COG 75": [
+        "ADT 4",
+        "ADT 5",
+        "ADT 104",
+        "ADT 106",
+        "COG 35",
+        "COG 74"
+    ],
+    "SEN 1": [],
+    "SEN 2": [
+        "None other than known ability to hear"
+    ],
+    "SEN 3": [
+        "None (fundamental vision abilities are assumed)"
+    ],
+    "SEN 4": [],
+    "SEN 5": [],
+    "SEN 6": [
+        "COG 6",
+        "SEN 1"
+    ],
+    "SEN 7": [
+        "COG 6",
+        "SEN 1"
+    ],
+    "SEN 8": [
+        "COG 6"
+    ],
+    "SEN 9": [
+        "SEN 7",
+        "SOC 32"
+    ],
+    "SEN 10": [
+        "SEN 9"
+    ],
+    "SEN 11": [
+        "ADT 1"
+    ],
+    "SEN 12": [
+        "ADT 1",
+        "SEN 11"
+    ],
+    "SEN 13": [
+        "SEN 12"
+    ],
+    "SEN 14": [
+        "SEN 13"
+    ],
+    "SEN 15": [
+        "SEN 13"
+    ],
+    "SEN 16": [
+        "ADT 3",
+        "SEN 12"
+    ],
+    "SEN 17": [
+        "SEN 13",
+        "SEN 14"
+    ],
+    "SEN 18": [
+        "ADT 3",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "SEN 19": [
+        "ADT 3",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "SEN 20": [
+        "ADT 1",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "SEN 21": [
+        "ADT 5",
+        "SEN 13"
+    ],
+    "SEN 22": [
+        "COG 6"
+    ],
+    "SEN 23": [
+        "ADT 3"
+    ],
+    "SEN 24": [
+        "SEN 11",
+        "SEN 12"
+    ],
+    "SEN 25": [
+        "ADT 3",
+        "SEN 23"
+    ],
+    "SEN 26": [
+        "SEN 11",
+        "SEN 12"
+    ],
+    "SEN 27": [
+        "SEN 11\u2013SEN 13"
+    ],
+    "SEN 28": [
+        "COG 6",
+        "SEN 10",
+        "SEN 22"
+    ],
+    "SEN 29": [
+        "SEN 28"
+    ],
+    "SEN 30": [
+        "ADT 2",
+        "COG 6"
+    ],
+    "SEN 31": [
+        "SEN 13",
+        "SEN 14"
+    ],
+    "SEN 32": [
+        "SEN 12\u2013SEN 14"
+    ],
+    "SEN 33": [
+        "ADT 3",
+        "COG 6",
+        "SEN 7"
+    ],
+    "SEN 34": [
+        "ADT 3",
+        "COG 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "SEN 35": [
+        "ADT 1",
+        "COG 6",
+        "SEN 12",
+        "SEN 13",
+        "S&L 8"
+    ],
+    "SOC 1": [],
+    "SOC 2": [],
+    "SOC 3": [
+        "SOC 2"
+    ],
+    "SOC 4": [
+        "ADT 4"
+    ],
+    "SOC 5": [
+        "S&L 6"
+    ],
+    "SOC 6": [
+        "COG 1",
+        "COG 2"
+    ],
+    "SOC 7": [
+        "ADT 4",
+        "S&L 15"
+    ],
+    "SOC 8": [
+        "COG 69",
+        "S&L 24"
+    ],
+    "SOC 9": [
+        "ADT 3",
+        "COG 6",
+        "SEN 12"
+    ],
+    "SOC 10": [
+        "ADT 3",
+        "COG 6",
+        "SEN 12"
+    ],
+    "SOC 11": [
+        "AFF 11",
+        "SOC 9"
+    ],
+    "SOC 12": [
+        "SOC 10"
+    ],
+    "SOC 13": [
+        "SEN 23",
+        "SOC 10"
+    ],
+    "SOC 14": [
+        "ADT 3",
+        "COG 6",
+        "SEN 12"
+    ],
+    "SOC 15": [
+        "ADT 3",
+        "COG 6",
+        "SEN 13"
+    ],
+    "SOC 16": [
+        "ADT 3",
+        "COG 6",
+        "SEN 12"
+    ],
+    "SOC 17": [
+        "SEN 9",
+        "SEN 10",
+        "SEN 12"
+    ],
+    "SOC 18": [
+        "ADT 1",
+        "COG 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "SOC 19": [
+        "ADT 4",
+        "ADT 5",
+        "COG 35",
+        "COG 36"
+    ],
+    "SOC 20": [
+        "SOC 19",
+        "SEN 13",
+        "S&L 7"
+    ],
+    "SOC 21": [
+        "ADT 1",
+        "ADT 3",
+        "ADT 5",
+        "ADT 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "SOC 22": [
+        "ADT 1",
+        "ADT 4",
+        "ADT 6",
+        "SEN 13"
+    ],
+    "SOC 23": [
+        "ADT 1",
+        "ADT 3",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "SOC 24": [
+        "ADT 3",
+        "ADT 5",
+        "SEN 13"
+    ],
+    "SOC 25": [
+        "ADT 4",
+        "ADT 5",
+        "COG 6",
+        "SEN 13"
+    ],
+    "SOC 26": [
+        "SOC 25"
+    ],
+    "SOC 27": [
+        "S&L 19",
+        "S&L 24"
+    ],
+    "SOC 28": [
+        "ADT 3",
+        "COG 27",
+        "COG 42",
+        "SEN 12\u2013SEN 14"
+    ],
+    "SOC 29": [
+        "ADT 1",
+        "ADT 2",
+        "COG 6"
+    ],
+    "SOC 30": [
+        "ADT 2",
+        "ADT 3",
+        "COG 6",
+        "SEN 9",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "SOC 31": [
+        "ADT 1",
+        "ADT 2",
+        "COG 6"
+    ],
+    "SOC 32": [
+        "ADT 1",
+        "ADT 2",
+        "COG 6"
+    ],
+    "SOC 33": [
+        "ADT 1",
+        "COG 42",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "SOC 34": [
+        "ADT 1",
+        "SEN 7"
+    ],
+    "SOC 35": [
+        "ADT 1",
+        "S&L 8"
+    ],
+    "SOC 36": [
+        "SOC 35"
+    ],
+    "SOC 37": [
+        "SOC 35",
+        "SOC 36"
+    ],
+    "SOC 38": [
+        "ADT 7",
+        "ADT 9\u2013ADT 14",
+        "ADT 16",
+        "ADT 20"
+    ],
+    "SOC 39": [
+        "SOC 24"
+    ],
+    "SOC 40": [
+        "ADT 1",
+        "ADT 3",
+        "COG 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "SOC 41": [
+        "S&L 23",
+        "S&L 24"
+    ],
+    "SOC 42": [
+        "SOC 41"
+    ],
+    "SOC 43": [
+        "ADT 1",
+        "ADT 2",
+        "SEN 12",
+        "SOC 3",
+        "SOC 9",
+        "SOC 11"
+    ],
+    "SOC 44": [
+        "ADT 1",
+        "ADT 2",
+        "COG 6",
+        "SEN 12",
+        "SOC 1 (or COG 1)"
+    ],
+    "S&L 1": [],
+    "S&L 2": [
+        "ADT 1",
+        "COG 11",
+        "SEN 2",
+        "S&L 1"
+    ],
+    "S&L 3": [
+        "ADT 1",
+        "COG 11"
+    ],
+    "S&L 4": [
+        "ADT 4\u2013ADT 6"
+    ],
+    "S&L 5": [
+        "ADT 2",
+        "S&L 4"
+    ],
+    "S&L 6": [
+        "S&L 2",
+        "S&L 4"
+    ],
+    "S&L 7": [
+        "S&L 6"
+    ],
+    "S&L 8": [
+        "COG 6",
+        "COG 11"
+    ],
+    "S&L 9": [
+        "ADT 4",
+        "ADT 5",
+        "COG 41",
+        "S&L 7"
+    ],
+    "S&L 10": [
+        "ADT 4\u2013ADT 6",
+        "S&L 7"
+    ],
+    "S&L 11": [
+        "S&L 6"
+    ],
+    "S&L 12": [
+        "COG 26",
+        "S&L 7",
+        "S&L 11"
+    ],
+    "S&L 13": [
+        "S&L 6"
+    ],
+    "S&L 14": [
+        "S&L 8"
+    ],
+    "S&L 15": [
+        "S&L 7"
+    ],
+    "S&L 16": [
+        "S&L 7"
+    ],
+    "S&L 17": [
+        "S&L 15"
+    ],
+    "S&L 18": [
+        "S&L 14"
+    ],
+    "S&L 19": [
+        "S&L 18"
+    ],
+    "S&L 20": [
+        "ADT 5",
+        "COG 66",
+        "S&L 7"
+    ],
+    "S&L 21": [
+        "S&L 15"
+    ],
+    "S&L 22": [
+        "ADT 4",
+        "S&L 10"
+    ],
+    "S&L 23": [
+        "S&L 22"
+    ],
+    "S&L 24": [
+        "S&L 21"
+    ],
+    "VOC 1": [
+        "ADT 1",
+        "ADT 4\u2013ADT 6",
+        "ADT 100 (or ADT 101)",
+        "COG 6",
+        "COG 75"
+    ],
+    "VOC 2": [
+        "ADT 1",
+        "ADT 4\u2013ADT 6",
+        "ADT 100 (or ADT 101)",
+        "COG 6"
+    ],
+    "VOC 3": [
+        "ADT 100 (or ADT 101)",
+        "COG 75",
+        "VOC 1"
+    ],
+    "VOC 4": [
+        "ADT 5",
+        "COG 6",
+        "S&L 8"
+    ],
+    "VOC 5": [
+        "ADT 2",
+        "AFF 11",
+        "COG 7",
+        "S&L 19"
+    ],
+    "VOC 6": [
+        "ADT 119",
+        "ADT 120",
+        "ADT 123",
+        "ADT 124"
+    ],
+    "VOC 7": [
+        "COG 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 8": [
+        "SEN 13",
+        "SEN 18"
+    ],
+    "VOC 9": [
+        "SEN 13",
+        "SEN 19",
+        "VOC 8"
+    ],
+    "VOC 10": [
+        "SEN 13",
+        "SEN 19",
+        "S&L 18",
+        "VOC 9"
+    ],
+    "VOC 11": [
+        "ADT 4",
+        "SEN 12",
+        "SEN 13",
+        "VOC 10"
+    ],
+    "VOC 12": [
+        "ADT 3",
+        "COG 6",
+        "SEN 12",
+        "VOC 5"
+    ],
+    "VOC 13": [
+        "ADT 3",
+        "COG 6",
+        "SEN 14"
+    ],
+    "VOC 14": [
+        "SEN 7",
+        "SEN 12"
+    ],
+    "VOC 15": [
+        "SEN 7",
+        "SEN 12"
+    ],
+    "VOC 16": [
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 17": [
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 18": [
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 19": [
+        "ADT 4",
+        "SEN 12\u2013SEN 14"
+    ],
+    "VOC 20": [
+        "SEN 12",
+        "SEN 15",
+        "VOC 5",
+        "VOC 14",
+        "VOC 15"
+    ],
+    "VOC 21": [
+        "COG 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 22": [
+        "COG 31\u2013COG 33"
+    ],
+    "VOC 23": [
+        "COG 41",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 24": [
+        "COG 21",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 25": [
+        "COG 6",
+        "SEN 12",
+        "SEN 13",
+        "S&L 19",
+        "VOC 5",
+        "VOC 7"
+    ],
+    "VOC 26": [
+        "ADT 3",
+        "COG 6",
+        "SEN 12",
+        "SEN 13",
+        "VOC 5"
+    ],
+    "VOC 27": [
+        "ADT 5",
+        "COG 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 28": [
+        "ADT 3",
+        "SEN 12",
+        "SEN 13",
+        "S&L 19",
+        "VOC 5"
+    ],
+    "VOC 29": [
+        "ADT 3",
+        "SEN 12",
+        "SEN 13",
+        "VOC 5"
+    ],
+    "VOC 30": [
+        "ADT 3",
+        "ADT 17",
+        "SEN 12",
+        "SEN 13",
+        "VOC 5"
+    ],
+    "VOC 31": [
+        "ADT 5",
+        "COG 16",
+        "COG 33"
+    ],
+    "VOC 32": [
+        "ADT 3\u2013ADT 5",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 33": [
+        "ADT 3",
+        "ADT 4",
+        "COG 11",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 34": [
+        "ADT 3",
+        "COG 11",
+        "SOC 28"
+    ],
+    "VOC 35": [
+        "ADT 5",
+        "SEN 13",
+        "VOC 5"
+    ],
+    "VOC 36": [
+        "ADT 3",
+        "COG 6",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 37": [
+        "ADT 3",
+        "ADT 17",
+        "COG 11",
+        "S&L 18",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 38": [
+        "ADT 3",
+        "SEN 12",
+        "SEN 13",
+        "S&L 18"
+    ],
+    "VOC 39": [
+        "ADT 3\u2013ADT 5",
+        "ADT 17",
+        "SEN 12",
+        "SEN 13",
+        "S&L 18"
+    ],
+    "VOC 40": [
+        "ADT 3",
+        "COG 6",
+        "COG 11",
+        "SEN 12",
+        "S&L 18"
+    ],
+    "VOC 41": [
+        "ADT 3",
+        "SEN 12",
+        "S&L 19"
+    ],
+    "VOC 42": [
+        "VOC 41"
+    ],
+    "VOC 43": [
+        "ADT 3",
+        "ADT 19",
+        "SEN 12"
+    ],
+    "VOC 44": [
+        "ADT 64",
+        "ADT 73",
+        "VOC 5"
+    ],
+    "VOC 45": [
+        "ADT 76",
+        "VOC 5"
+    ],
+    "VOC 46": [
+        "ADT 119"
+    ],
+    "VOC 47": [
+        "ADT 121"
+    ],
+    "VOC 48": [
+        "ADT 3",
+        "ADT 17",
+        "ADT 64",
+        "COG 11",
+        "SEN 12"
+    ],
+    "VOC 49": [
+        "ADT 3",
+        "COG 11",
+        "SEN 12"
+    ],
+    "VOC 50": [
+        "ADT 3",
+        "COG 11",
+        "SEN 12"
+    ],
+    "VOC 51": [
+        "ADT 3",
+        "COG 11",
+        "SEN 12",
+        "SEN 13",
+        "VOC 5"
+    ],
+    "VOC 52": [
+        "COG 6",
+        "SEN 13",
+        "VOC 5"
+    ],
+    "VOC 53": [
+        "ADT 19",
+        "ADT 128",
+        "ADT 129",
+        "S&L 19"
+    ],
+    "VOC 54": [
+        "VOC 5",
+        "VOC 53"
+    ],
+    "VOC 55": [
+        "ADT 100 (or ADT 101)",
+        "VOC 5",
+        "VOC 52\u2013VOC 54"
+    ],
+    "VOC 56": [
+        "ADT 14",
+        "VOC 5"
+    ],
+    "VOC 57": [
+        "ADT 11",
+        "ADT 19",
+        "SEN 12\u2013SEN 14",
+        "VOC 5"
+    ],
+    "VOC 58": [
+        "ADT 17",
+        "ADT 19",
+        "ADT 28"
+    ],
+    "VOC 59": [
+        "SEN 12",
+        "SEN 13",
+        "VOC 5"
+    ],
+    "VOC 60": [
+        "ADT 17",
+        "ADT 100 (or ADT 101)",
+        "SEN 12",
+        "SEN 34",
+        "VOC 5",
+        "VOC 52"
+    ],
+    "VOC 61": [
+        "ADT 39",
+        "SEN 12",
+        "SEN 14",
+        "SEN 34",
+        "S&L 19",
+        "VOC 5",
+        "VOC 52"
+    ],
+    "VOC 62": [
+        "ADT 24",
+        "ADT 124",
+        "S&L 19",
+        "VOC 5"
+    ],
+    "VOC 63": [
+        "ADT 3\u2013ADT 5",
+        "ADT 17",
+        "ADT 64",
+        "SEN 12",
+        "S&L 18",
+        "VOC 5"
+    ],
+    "VOC 64": [
+        "ADT 23",
+        "COG 20",
+        "COG 41",
+        "VOC 5"
+    ],
+    "VOC 65": [
+        "ADT 67",
+        "ADT 125"
+    ],
+    "VOC 66": [
+        "ADT 3",
+        "ADT 5",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 67": [
+        "ADT 3\u2013ADT 5",
+        "SEN 12",
+        "SEN 13"
+    ],
+    "VOC 68": [
+        "ADT 123"
+    ],
+    "VOC 69": [
+        "ADT 3",
+        "COG 11",
+        "SEN 12",
+        "VOC 5"
+    ],
+    "VOC 70": [
+        "ADT 3",
+        "COG 11",
+        "VOC 5"
+    ],
+    "VOC 71": [
+        "ADT 3",
+        "COG 11",
+        "SEN 12"
+    ]
+}

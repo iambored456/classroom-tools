@@ -1,0 +1,148 @@
+:root {
+  --text-color: #ffffff;
+  --background-color: #000000;
+  --highlight-bg-color: #003366;
+  --highlight-text-color: #ffffff;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+
+#text-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.word {
+  white-space: pre-wrap;
+  cursor: pointer;
+}
+
+.highlighted {
+  background-color: var(--highlight-bg-color);
+  color: var(--highlight-text-color);
+}
+
+#text-container p {
+  margin: 1em 0;
+  text-indent: 2em;
+}
+
+#chevron {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(18, 18, 18, 0.92);
+  border: 1px solid #3a3a3a;
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 1000;
+  user-select: none;
+}
+
+#sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100%;
+  background-color: #121212;
+  color: #ececec;
+  box-shadow: -6px 0 18px rgba(0, 0, 0, 0.5);
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  z-index: 999;
+  overflow-y: auto;
+  padding: 20px;
+  padding-bottom: 50px;
+}
+
+#sidebar.open {
+  transform: translateX(0);
+}
+
+#sidebar h2 {
+  margin-top: 0;
+  color: #ffffff;
+}
+
+#sidebar label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+  color: #d9d9d9;
+}
+
+#sidebar textarea {
+  width: 100%;
+  height: 150px;
+  background-color: #1b1b1b;
+  color: #f1f1f1;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+#sidebar input[type='color'] {
+  width: 100%;
+  height: 30px;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  padding: 0;
+  margin-top: 5px;
+  background-color: #1b1b1b;
+}
+
+#text-size-buttons {
+  margin-top: 10px;
+}
+
+#text-size-buttons button {
+  margin: 5px 5px 0 0;
+  padding: 5px 10px;
+  border: 1px solid #3a3a3a;
+  background-color: #232323;
+  color: #f2f2f2;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+#text-size-buttons button:hover {
+  background-color: #303030;
+}
+
+#apply-btn {
+  margin-top: 15px;
+  width: 100%;
+  padding: 10px;
+  background-color: #1a73e8;
+  color: #fff;
+  border: 1px solid #2d86fb;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+#apply-btn:hover {
+  background-color: #2d86fb;
+}

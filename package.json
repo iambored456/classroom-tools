@@ -1,0 +1,26 @@
+{
+  "name": "app-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Quinn Fleming's App Hub",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter hub --filter class-clock --filter read-along-highlighter --filter launchpad-whack-a-mole run dev",
+    "dev:hub": "pnpm --filter hub run dev",
+    "dev:class-clock": "pnpm --filter class-clock run dev",
+    "dev:read-along": "pnpm --filter read-along-highlighter run dev",
+    "dev:whack-a-mole": "pnpm --filter launchpad-whack-a-mole run dev",
+    "build": "pnpm -r --if-present run build",
+    "build:pages": "node scripts/build-pages.js",
+    "preview": "pnpm run build:pages && node scripts/preview-pages.js",
+    "preview:hub": "pnpm --filter hub run preview",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "clean": "pnpm -r exec rm -rf dist node_modules/.vite"
+  },
+  "author": "Quinn Fleming",
+  "license": "MIT",
+  "packageManager": "pnpm@10.26.2",
+  "engines": {
+    "node": ">=18"
+  }
+}

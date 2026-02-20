@@ -1,0 +1,64 @@
+/* styles.css */
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #121212;
+  color: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  text-align: center;
+}
+
+#connect-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background-color: #1db954;
+  color: #ffffff;
+  transition: background-color 0.3s;
+}
+
+#connect-button:hover {
+  background-color: #1ed760;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 60px);
+  grid-template-rows: repeat(8, 60px);
+  gap: 10px;
+  justify-content: center;
+}
+
+.square {
+  width: 60px;
+  height: 60px;
+  background-color: #333333;
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+
+.square.active {
+  background-color: #1db954;
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(8, 40px);
+    grid-template-rows: repeat(8, 40px);
+    gap: 8px;
+  }
+
+  .square {
+    width: 40px;
+    height: 40px;
+  }
+}

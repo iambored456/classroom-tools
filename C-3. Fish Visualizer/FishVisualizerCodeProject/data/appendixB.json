@@ -1,0 +1,1290 @@
+{
+    "ADT 1": [
+        "Directly or indirectly leads to all programs in the handbook."
+    ],
+    "ADT 2": [
+        "ADT 104\u2013ADT 9",
+        "ADT 33",
+        "ADT 40",
+        "ADT 52",
+        "ADT 53",
+        "AFF 2",
+        "AFF 3",
+        "AFF 9",
+        "AFF 11",
+        "SEN 30",
+        "SOC 30\u2013SOC 32",
+        "SOC 43",
+        "SOC 44",
+        "S&L 5",
+        "VOC 5"
+    ],
+    "ADT 3": [
+        "ADT 8\u2013ADT 33",
+        "ADT 35",
+        "ADT 37\u2013ADT 39",
+        "ADT 41\u2013ADT 76",
+        "ADT 79",
+        "ADT 81",
+        "ADT 87\u2013ADT 89",
+        "ADT 108\u2013ADT 111",
+        "SEN 16",
+        "SEN 18",
+        "SEN 19",
+        "SEN 23",
+        "SEN 25",
+        "SEN 33",
+        "SEN 34",
+        "SOC 9",
+        "SOC 10",
+        "SOC 14\u2013SOC 16",
+        "SOC 21",
+        "SOC 22",
+        "SOC 25",
+        "SOC 28",
+        "SOC 30",
+        "SOC 40",
+        "VOC 12",
+        "VOC 13",
+        "VOC 26",
+        "VOC 28\u2013VOC 32",
+        "VOC 42\u2013VOC 44",
+        "VOC 36\u2013VOC 41",
+        "VOC 43",
+        "VOC 48\u2013VOC 51",
+        "VOC 63",
+        "VOC 66",
+        "VOC 67",
+        "VOC 69\u2013VOC 71"
+    ],
+    "ADT 4": [
+        "ADT 5\u2013ADT 8",
+        "ADT 11\u2013ADT 24",
+        "ADT 30\u2013ADT 36",
+        "ADT 38",
+        "ADT 40",
+        "ADT 59",
+        "ADT 60",
+        "ADT 114\u2013ADT 116",
+        "ADT 126\u2013ADT 129",
+        "ADT 138",
+        "ADT 144\u2013ADT 148",
+        "AFF 5",
+        "COG 13\u2013COG 15",
+        "COG 19",
+        "COG 26\u2013COG 28",
+        "COG 34\u2013COG 37",
+        "COG 41",
+        "COG 56\u2013COG 58",
+        "COG 74",
+        "COG 75",
+        "SOC 4",
+        "SOC 7",
+        "SOC 22",
+        "SOC 25",
+        "S&L 4",
+        "S&L 9",
+        "S&L 10",
+        "VOC 1",
+        "VOC 2",
+        "VOC 11",
+        "VOC 19",
+        "VOC 32",
+        "VOC 33",
+        "VOC 39",
+        "VOC 63",
+        "VOC 66",
+        "VOC 67",
+        "VOC 75",
+        "VOC 77"
+    ],
+    "ADT 5": [
+        "ADT 23",
+        "ADT 24",
+        "ADT 28",
+        "ADT 29",
+        "ADT 31",
+        "ADT 33\u2013ADT 36",
+        "ADT 38\u2013ADT 42",
+        "ADT 51",
+        "ADT 78",
+        "ADT 95\u2013ADT 101",
+        "ADT 104",
+        "ADT 106",
+        "ADT 112",
+        "ADT 113",
+        "ADT 118",
+        "ADT 119",
+        "ADT 126\u2013ADT 129",
+        "ADT 132",
+        "ADT 142",
+        "ADT 144\u2013ADT 152",
+        "COG 17\u2013COG 21",
+        "COG 25",
+        "COG 29\u2013COG 31",
+        "COG 35\u2013COG 37",
+        "COG 58",
+        "COG 64",
+        "COG 67",
+        "COG 74",
+        "COG 75",
+        "SEN 21",
+        "SOC 19",
+        "SOC 21",
+        "SOC 24",
+        "SOC 25",
+        "S&L 4",
+        "S&L 9",
+        "S&L 10",
+        "S&L 20",
+        "VOC 1",
+        "VOC 2",
+        "VOC 4",
+        "VOC 27",
+        "VOC 31",
+        "VOC 32",
+        "VOC 35",
+        "VOC 39",
+        "VOC 63",
+        "VOC 66",
+        "VOC 67",
+        "VOC 75",
+        "VOC 77"
+    ],
+    "ADT 6": [
+        "ADT 31",
+        "ADT 41",
+        "ADT 42",
+        "ADT 51",
+        "ADT 138\u2013ADT 150",
+        "COG 17\u2013COG 21",
+        "COG 25",
+        "COG 29",
+        "COG 30",
+        "COG 47",
+        "SOC 21",
+        "SOC 22",
+        "S&L 4",
+        "S&L 10",
+        "VOC 1",
+        "VOC 2"
+    ],
+    "ADT 7": [
+        "ADT 11\u2013ADT 14",
+        "SOC 38"
+    ],
+    "ADT 9": [
+        "ADT 85",
+        "SOC 38"
+    ],
+    "ADT 10": [
+        "SOC 38"
+    ],
+    "ADT 11": [
+        "ADT 12",
+        "ADT 20",
+        "ADT 22",
+        "ADT 28",
+        "ADT 29",
+        "SOC 38",
+        "VOC 57"
+    ],
+    "ADT 12": [
+        "ADT 14",
+        "ADT 20",
+        "SOC 38"
+    ],
+    "ADT 13": [
+        "ADT 14",
+        "ADT 31",
+        "SOC 38"
+    ],
+    "ADT 14": [
+        "ADT 31",
+        "SOC 38",
+        "VOC 56"
+    ],
+    "ADT 16": [
+        "ADT 20",
+        "SOC 38"
+    ],
+    "ADT 17": [
+        "ADT 18",
+        "ADT 64",
+        "ADT 67",
+        "ADT 68",
+        "ADT 71\u2013ADT 73",
+        "ADT 91",
+        "ADT 92",
+        "ADT 94",
+        "ADT 120",
+        "ADT 121",
+        "ADT 124",
+        "ADT 125",
+        "ADT 128",
+        "ADT 130",
+        "VOC 30",
+        "VOC 37",
+        "VOC 39",
+        "VOC 48",
+        "VOC 58",
+        "VOC 60",
+        "VOC 63",
+        "VOC 72",
+        "VOC 73"
+    ],
+    "ADT 18": [
+        "ADT 22",
+        "ADT 72",
+        "ADT 85"
+    ],
+    "ADT 19": [
+        "ADT 28",
+        "ADT 29",
+        "ADT 85",
+        "ADT 128",
+        "VOC 43",
+        "VOC 53",
+        "VOC 57",
+        "VOC 58"
+    ],
+    "ADT 20": [
+        "ADT 40",
+        "SOC 38"
+    ],
+    "ADT 21": [
+        "ADT 22",
+        "ADT 40"
+    ],
+    "ADT 23": [
+        "VOC 64"
+    ],
+    "ADT 24": [
+        "VOC 62"
+    ],
+    "ADT 25": [
+        "ADT 26"
+    ],
+    "ADT 27": [
+        "ADT 32"
+    ],
+    "ADT 28": [
+        "VOC 58"
+    ],
+    "ADT 34": [
+        "ADT 35"
+    ],
+    "ADT 39": [
+        "VOC 61"
+    ],
+    "ADT 41": [
+        "ADT 46",
+        "ADT 47",
+        "ADT 49"
+    ],
+    "ADT 42": [
+        "ADT 49"
+    ],
+    "ADT 43": [
+        "ADT 49"
+    ],
+    "ADT 44": [
+        "ADT 49",
+        "ADT 57"
+    ],
+    "ADT 45": [
+        "ADT 45"
+    ],
+    "ADT 46": [
+        "ADT 49"
+    ],
+    "ADT 47": [
+        "ADT 49",
+        "ADT 56"
+    ],
+    "ADT 48": [
+        "ADT 49",
+        "ADT 58"
+    ],
+    "ADT 51": [
+        "ADT 54",
+        "ADT 60"
+    ],
+    "ADT 52": [
+        "ADT 60"
+    ],
+    "ADT 53": [
+        "ADT 60"
+    ],
+    "ADT 54": [
+        "ADT 60"
+    ],
+    "ADT 55": [
+        "ADT 60"
+    ],
+    "ADT 56": [
+        "ADT 60"
+    ],
+    "ADT 57": [
+        "ADT 60"
+    ],
+    "ADT 58": [
+        "ADT 60"
+    ],
+    "ADT 64": [
+        "ADT 67",
+        "ADT 68",
+        "ADT 71\u2013ADT 73",
+        "ADT 94",
+        "ADT 125",
+        "VOC 44",
+        "VOC 48",
+        "VOC 63",
+        "VOC 72",
+        "VOC 73"
+    ],
+    "ADT 65": [
+        "ADT 71",
+        "VOC 72"
+    ],
+    "ADT 66": [
+        "ADT 72"
+    ],
+    "ADT 67": [
+        "ADT 71",
+        "ADT 72",
+        "VOC 65"
+    ],
+    "ADT 68": [
+        "ADT 71",
+        "ADT 72"
+    ],
+    "ADT 69": [
+        "ADT 71\u2013ADT 73"
+    ],
+    "ADT 70": [
+        "ADT 71\u2013ADT 73"
+    ],
+    "ADT 73": [
+        "VOC 44"
+    ],
+    "ADT 74": [
+        "ADT 76"
+    ],
+    "ADT 75": [
+        "ADT 76"
+    ],
+    "ADT 76": [
+        "VOC 45"
+    ],
+    "ADT 77": [
+        "ADT 79",
+        "ADT 82\u2013ADT 84"
+    ],
+    "ADT 78": [
+        "ADT 84",
+        "ADT 116"
+    ],
+    "ADT 82": [
+        "ADT 83",
+        "ADT 84"
+    ],
+    "ADT 83": [
+        "ADT 84"
+    ],
+    "ADT 86": [
+        "ADT 74\u2013ADT 76"
+    ],
+    "ADT 90": [
+        "ADT 92"
+    ],
+    "ADT 91": [
+        "ADT 92"
+    ],
+    "ADT 93": [
+        "ADT 94"
+    ],
+    "ADT 96": [
+        "ADT 97"
+    ],
+    "ADT 97": [
+        "ADT 98"
+    ],
+    "ADT 98": [
+        "ADT 99"
+    ],
+    "ADT 99": [
+        "ADT 100"
+    ],
+    "ADT 100": [
+        "VOC 1\u2013VOC 3",
+        "VOC 55",
+        "VOC 60"
+    ],
+    "ADT 101": [
+        "VOC 1\u2013VOC 3",
+        "VOC 55",
+        "VOC 60"
+    ],
+    "ADT 103": [
+        "ADT 104"
+    ],
+    "ADT 104": [
+        "COG 75"
+    ],
+    "ADT 105": [
+        "ADT 106"
+    ],
+    "ADT 106": [
+        "COG 75"
+    ],
+    "ADT 112": [
+        "ADT 115",
+        "ADT 116"
+    ],
+    "ADT 113": [
+        "ADT 115"
+    ],
+    "ADT 114": [
+        "ADT 115",
+        "ADT 116"
+    ],
+    "ADT 117": [
+        "ADT 118",
+        "ADT 119"
+    ],
+    "ADT 119": [
+        "VOC 6",
+        "VOC 46"
+    ],
+    "ADT 120": [
+        "VOC 6"
+    ],
+    "ADT 121": [
+        "VOC 47"
+    ],
+    "ADT 123": [
+        "VOC 6",
+        "VOC 68"
+    ],
+    "ADT 124": [
+        "VOC 6",
+        "VOC 62",
+        "VOC 73"
+    ],
+    "ADT 125": [
+        "VOC 65",
+        "VOC 72"
+    ],
+    "ADT 128": [
+        "VOC 53"
+    ],
+    "ADT 129": [
+        "VOC 53"
+    ],
+    "ADT 130": [
+        "ADT 131"
+    ],
+    "ADT 131": [
+        "ADT 132"
+    ],
+    "ADT 133": [
+        "ADT 142"
+    ],
+    "ADT 134": [
+        "ADT 142"
+    ],
+    "ADT 140": [
+        "ADT 141",
+        "ADT 142"
+    ],
+    "ADT 141": [
+        "ADT 142",
+        "ADT 143"
+    ],
+    "ADT 144": [
+        "ADT 36",
+        "ADT 38",
+        "ADT 145",
+        "ADT 148\u2013ADT 150"
+    ],
+    "ADT 146": [
+        "ADT 148\u2013ADT 150"
+    ],
+    "ADT 148": [
+        "ADT 150"
+    ],
+    "ADT 149": [
+        "ADT 150"
+    ],
+    "AFF 11": [
+        "SOC 11",
+        "VOC 5"
+    ],
+    "COG 1": [
+        "ADT 52",
+        "ADT 53",
+        "SOC 6",
+        "SOC 44"
+    ],
+    "COG 2": [
+        "ADT 52",
+        "ADT 53",
+        "SOC 6"
+    ],
+    "COG 3": [
+        "ADT 77",
+        "COG 8",
+        "COG 9"
+    ],
+    "COG 4": [
+        "COG 5"
+    ],
+    "COG 5": [
+        "ADT 137"
+    ],
+    "COG 6": [
+        "ADT 74\u2013ADT 76",
+        "ADT 79\u2013ADT 81",
+        "ADT 94",
+        "ADT 114\u2013ADT 122",
+        "ADT 124",
+        "ADT 125",
+        "ADT 127\u2013ADT 129",
+        "ADT 136",
+        "ADT 137",
+        "ADT 139\u2013ADT 141",
+        "ADT 151",
+        "ADT 152",
+        "AFF 8",
+        "AFF 11",
+        "COG 7\u2013COG 11",
+        "COG 17\u2013COG 21",
+        "COG 25",
+        "COG 29",
+        "COG 30",
+        "COG 34",
+        "COG 38",
+        "COG 39",
+        "COG 42",
+        "COG 46",
+        "COG 67",
+        "SEN 6\u2013SEN 8",
+        "SEN 22",
+        "SEN 28",
+        "SEN 30",
+        "SEN 34",
+        "SEN 35",
+        "SOC 9",
+        "SOC 10",
+        "SOC 14\u2013SOC 16",
+        "SOC 18",
+        "SOC 25",
+        "SOC 29\u2013SOC 32",
+        "SOC 40",
+        "SOC 44",
+        "S&L 8",
+        "VOC 1",
+        "VOC 2",
+        "VOC 4",
+        "VOC 7",
+        "VOC 12",
+        "VOC 13",
+        "VOC 21",
+        "VOC 25\u2013VOC 27",
+        "VOC 36",
+        "VOC 40",
+        "VOC 52"
+    ],
+    "COG 7": [
+        "VOC 5"
+    ],
+    "COG 11": [
+        "ADT 32",
+        "ADT 39",
+        "ADT 45",
+        "ADT 49",
+        "ADT 74\u2013ADT 76",
+        "ADT 79\u2013ADT 81",
+        "ADT 87\u2013ADT 89",
+        "ADT 92",
+        "ADT 118",
+        "ADT 119",
+        "ADT 125",
+        "ADT 135",
+        "ADT 139",
+        "AFF 11",
+        "COG 30",
+        "S&L 2",
+        "S&L 3",
+        "S&L 8",
+        "VOC 33",
+        "VOC 34",
+        "VOC 37",
+        "VOC 40",
+        "VOC 48\u2013VOC 51",
+        "VOC 69\u2013VOC 72",
+        "VOC 75"
+    ],
+    "COG 13": [
+        "COG 14"
+    ],
+    "COG 14": [
+        "COG 15"
+    ],
+    "COG 16": [
+        "VOC 31"
+    ],
+    "COG 17": [
+        "COG 23",
+        "COG 29"
+    ],
+    "COG 20": [
+        "COG 22",
+        "COG 24",
+        "COG 26",
+        "COG 31",
+        "VOC 64"
+    ],
+    "COG 21": [
+        "COG 27",
+        "COG 32",
+        "VOC 24"
+    ],
+    "COG 22": [
+        "COG 23",
+        "COG 36",
+        "COG 37"
+    ],
+    "COG 23": [
+        "COG 50\u2013COG 53"
+    ],
+    "COG 24": [
+        "ADT 96\u2013ADT 101",
+        "ADT 141",
+        "ADT 143",
+        "COG 35"
+    ],
+    "COG 25": [
+        "COG 28",
+        "COG 33"
+    ],
+    "COG 26": [
+        "COG 29",
+        "COG 31",
+        "S&L 12",
+        "VOC 77"
+    ],
+    "COG 27": [
+        "COG 29",
+        "COG 32",
+        "COG 67",
+        "SOC 28"
+    ],
+    "COG 28": [
+        "COG 29",
+        "COG 33"
+    ],
+    "COG 31": [
+        "ADT 148",
+        "VOC 22"
+    ],
+    "COG 32": [
+        "VOC 22"
+    ],
+    "COG 33": [
+        "VOC 22",
+        "VOC 31"
+    ],
+    "COG 35": [
+        "ADT 100",
+        "ADT 101",
+        "ADT 146",
+        "ADT 147",
+        "COG 16",
+        "COG 40",
+        "COG 49\u2013COG 53",
+        "COG 75",
+        "SOC 19"
+    ],
+    "COG 36": [
+        "COG 45",
+        "COG 59",
+        "SOC 19"
+    ],
+    "COG 37": [
+        "COG 47",
+        "COG 54"
+    ],
+    "COG 40": [
+        "COG 41"
+    ],
+    "COG 41": [
+        "ADT 100",
+        "ADT 149",
+        "ADT 150",
+        "COG 50\u2013COG 53",
+        "S&L 9",
+        "VOC 23",
+        "VOC 64"
+    ],
+    "COG 42": [
+        "COG 43",
+        "SOC 28",
+        "SOC 33"
+    ],
+    "COG 43": [
+        "COG 44",
+        "COG 46",
+        "COG 50\u2013COG 55",
+        "COG 70"
+    ],
+    "COG 45": [
+        "COG 46"
+    ],
+    "COG 46": [
+        "COG 47"
+    ],
+    "COG 47": [
+        "COG 48",
+        "VOC 79"
+    ],
+    "COG 49": [
+        "ADT 101",
+        "COG 70",
+        "COG 71"
+    ],
+    "COG 50": [
+        "ADT 149",
+        "ADT 150",
+        "COG 72"
+    ],
+    "COG 51": [
+        "COG 72"
+    ],
+    "COG 52": [
+        "COG 53",
+        "COG 72"
+    ],
+    "COG 53": [
+        "COG 72"
+    ],
+    "COG 54": [
+        "COG 55",
+        "VOC 76",
+        "VOC 79"
+    ],
+    "COG 55": [
+        "VOC 79"
+    ],
+    "COG 56": [
+        "ADT 104",
+        "ADT 106",
+        "COG 60"
+    ],
+    "COG 60": [
+        "COG 61",
+        "VOC 77"
+    ],
+    "COG 61": [
+        "COG 62",
+        "VOC 79"
+    ],
+    "COG 62": [
+        "COG 63"
+    ],
+    "COG 63": [
+        "COG 64",
+        "COG 68"
+    ],
+    "COG 64": [
+        "COG 65"
+    ],
+    "COG 66": [
+        "COG 69",
+        "S&L 20"
+    ],
+    "COG 69": [
+        "SOC 8"
+    ],
+    "COG 74": [
+        "COG 75"
+    ],
+    "COG 75": [
+        "VOC 1",
+        "VOC 3"
+    ],
+    "SEN 1": [
+        "ADT 52",
+        "ADT 53",
+        "ADT 114\u2013ADT 116",
+        "SEN 6",
+        "SEN 7"
+    ],
+    "SEN 2": [
+        "S&L 2"
+    ],
+    "SEN 3": [
+        "ADT 4"
+    ],
+    "SEN 6": [
+        "SEN 33"
+    ],
+    "SEN 7": [
+        "SEN 9",
+        "SEN 33",
+        "SOC 34",
+        "VOC 14",
+        "VOC 15"
+    ],
+    "SEN 8": [
+        "ADT 57"
+    ],
+    "SEN 9": [
+        "SEN 10",
+        "SOC 17",
+        "SOC 30"
+    ],
+    "SEN 10": [
+        "SEN 28",
+        "SOC 17"
+    ],
+    "SEN 11": [
+        "ADT 8",
+        "ADT 11\u2013ADT 14",
+        "ADT 16\u2013ADT 22",
+        "ADT 25\u2013ADT 33",
+        "ADT 37",
+        "ADT 54\u2013ADT 58",
+        "ADT 63",
+        "ADT 71\u2013ADT 73",
+        "ADT 91",
+        "ADT 92",
+        "ADT 94",
+        "ADT 135",
+        "ADT 140",
+        "ADT 142",
+        "COG 17\u2013COG 21",
+        "COG 25",
+        "COG 30",
+        "SEN 12",
+        "SEN 24",
+        "SEN 26",
+        "SEN 27"
+    ],
+    "SEN 12": [
+        "ADT 11\u2013ADT 23",
+        "ADT 25\u2013ADT 33",
+        "ADT 36\u2013ADT 38",
+        "ADT 41\u2013ADT 51",
+        "ADT 54\u2013ADT 63",
+        "ADT 65\u2013ADT 73",
+        "ADT 89",
+        "ADT 91",
+        "ADT 92",
+        "ADT 94",
+        "ADT 108\u2013ADT 125",
+        "ADT 127\u2013ADT 132",
+        "ADT 135",
+        "ADT 149\u2013ADT 152",
+        "COG 17\u2013COG 21",
+        "COG 25",
+        "COG 30",
+        "COG 42",
+        "SEN 13",
+        "SEN 16",
+        "SEN 18\u2013SEN 20",
+        "SEN 24",
+        "SEN 26",
+        "SEN 27",
+        "SEN 32",
+        "SEN 33",
+        "SEN 35",
+        "SOC 9",
+        "SOC 10",
+        "SOC 14",
+        "SOC 15",
+        "SOC 18",
+        "SOC 21",
+        "SOC 22",
+        "SOC 23",
+        "SOC 30",
+        "SOC 36",
+        "SOC 40",
+        "SOC 43",
+        "SOC 44",
+        "VOC 7",
+        "VOC 11",
+        "VOC 14\u2013VOC 21",
+        "VOC 23\u2013VOC 30",
+        "VOC 32",
+        "VOC 33",
+        "VOC 36\u2013VOC 41",
+        "VOC 43",
+        "VOC 48\u2013VOC 51",
+        "VOC 57",
+        "VOC 59\u2013VOC 61",
+        "VOC 63",
+        "VOC 66",
+        "VOC 67",
+        "VOC 69",
+        "VOC 71",
+        "VOC 76"
+    ],
+    "SEN 13": [
+        "ADT 11\u2013ADT 15",
+        "ADT 27\u2013ADT 32",
+        "ADT 37",
+        "ADT 38",
+        "ADT 41\u2013ADT 51",
+        "ADT 54\u2013ADT 58",
+        "ADT 60",
+        "ADT 63",
+        "ADT 71\u2013ADT 73",
+        "ADT 75",
+        "ADT 76",
+        "ADT 88",
+        "ADT 89",
+        "ADT 91",
+        "ADT 92",
+        "ADT 108\u2013ADT 111",
+        "ADT 120",
+        "ADT 127",
+        "ADT 132",
+        "ADT 135",
+        "ADT 140",
+        "ADT 143",
+        "ADT 149\u2013ADT 152",
+        "COG 17\u2013COG 21",
+        "COG 25",
+        "COG 30",
+        "COG 42",
+        "COG 46",
+        "SEN 14",
+        "SEN 15",
+        "SEN 17\u2013SEN 19",
+        "SEN 27",
+        "SEN 31",
+        "SEN 32",
+        "SEN 33",
+        "SEN 35",
+        "SOC 15",
+        "SOC 18",
+        "SOC 20\u2013SOC 25",
+        "SOC 28",
+        "SOC 30",
+        "SOC 33",
+        "SOC 40",
+        "VOC 7\u2013VOC 11",
+        "VOC 16\u2013VOC 19",
+        "VOC 21",
+        "VOC 23\u2013VOC 30",
+        "VOC 32",
+        "VOC 33",
+        "VOC 35\u2013VOC 39",
+        "VOC 56",
+        "VOC 57",
+        "VOC 66",
+        "VOC 67",
+        "VOC 76"
+    ],
+    "SEN 14": [
+        "ADT 28",
+        "ADT 29",
+        "ADT 115",
+        "ADT 116",
+        "ADT 135",
+        "SEN 17",
+        "SEN 31",
+        "SEN 32",
+        "SOC 28",
+        "VOC 13",
+        "VOC 19",
+        "VOC 57",
+        "VOC 61",
+        "VOC 76"
+    ],
+    "SEN 15": [
+        "VOC 20"
+    ],
+    "SEN 16": [
+        "ADT 28",
+        "ADT 29",
+        "ADT 115",
+        "ADT 131"
+    ],
+    "SEN 18": [
+        "VOC 8"
+    ],
+    "SEN 19": [
+        "VOC 9",
+        "VOC 10"
+    ],
+    "SEN 22": [
+        "SEN 28"
+    ],
+    "SEN 23": [
+        "SEN 25",
+        "SOC 13"
+    ],
+    "SEN 28": [
+        "SEN 29"
+    ],
+    "SEN 34": [
+        "VOC 60",
+        "VOC 61"
+    ],
+    "SOC 1": [
+        "SOC 44"
+    ],
+    "SOC 2": [
+        "ADT 137",
+        "AFF 3",
+        "AFF 9",
+        "SOC 3"
+    ],
+    "SOC 3": [
+        "SOC 43"
+    ],
+    "SOC 4": [
+        "VOC 75"
+    ],
+    "SOC 9": [
+        "SOC 11",
+        "SOC 43"
+    ],
+    "SOC 10": [
+        "SOC 12",
+        "SOC 13"
+    ],
+    "SOC 11": [
+        "SOC 43"
+    ],
+    "SOC 19": [
+        "SOC 20"
+    ],
+    "SOC 24": [
+        "SOC 39"
+    ],
+    "SOC 25": [
+        "SOC 26"
+    ],
+    "SOC 28": [
+        "VOC 34"
+    ],
+    "SOC 32": [
+        "SEN 9"
+    ],
+    "SOC 35": [
+        "SOC 36",
+        "SOC 37"
+    ],
+    "SOC 36": [
+        "SOC 37"
+    ],
+    "SOC 41": [
+        "SOC 42"
+    ],
+    "S&L 1": [
+        "S&L 2"
+    ],
+    "S&L 2": [
+        "S&L 6"
+    ],
+    "S&L 4": [
+        "ADT 8",
+        "ADT 95",
+        "AFF 1",
+        "S&L 5",
+        "S&L 6"
+    ],
+    "S&L 5": [
+        "ADT 95"
+    ],
+    "S&L 6": [
+        "ADT 96\u2013ADT 98",
+        "ADT 102",
+        "ADT 103",
+        "ADT 105",
+        "ADT 107",
+        "ADT 133",
+        "ADT 134",
+        "ADT 140",
+        "ADT 145",
+        "ADT 147",
+        "COG 40",
+        "COG 41",
+        "COG 45",
+        "COG 49",
+        "COG 54",
+        "COG 55",
+        "COG 59",
+        "COG 64",
+        "COG 67",
+        "S&L 7",
+        "S&L 11",
+        "S&L 13"
+    ],
+    "S&L 7": [
+        "ADT 25",
+        "ADT 95",
+        "ADT 99\u2013ADT 101",
+        "ADT 104",
+        "ADT 106",
+        "ADT 142",
+        "ADT 143",
+        "AFF 1",
+        "AFF 3",
+        "AFF 9",
+        "COG 52",
+        "COG 53",
+        "COG 58",
+        "COG 66",
+        "COG 68",
+        "COG 73",
+        "SOC 20",
+        "S&L 9",
+        "S&L 10",
+        "S&L 12",
+        "S&L 15",
+        "S&L 16",
+        "S&L 20",
+        "VOC 77"
+    ],
+    "S&L 8": [
+        "AFF 11",
+        "COG 7\u2013COG 10",
+        "SEN 35",
+        "SOC 35",
+        "S&L 14",
+        "VOC 4"
+    ],
+    "S&L 10": [
+        "S&L 10"
+    ],
+    "S&L 11": [
+        "ADT 143",
+        "COG 61",
+        "COG 63",
+        "S&L 12",
+        "VOC 74"
+    ],
+    "S&L 14": [
+        "ADT 137",
+        "COG 71",
+        "S&L 18",
+        "VOC 74"
+    ],
+    "S&L 15": [
+        "COG 57",
+        "COG 65",
+        "COG 69",
+        "SOC 7",
+        "S&L 17",
+        "S&L 21"
+    ],
+    "S&L 18": [
+        "S&L 19",
+        "VOC 10",
+        "VOC 37\u2013VOC 40",
+        "VOC 63"
+    ],
+    "S&L 19": [
+        "SOC 27",
+        "VOC 5",
+        "VOC 25",
+        "VOC 28",
+        "VOC 41",
+        "VOC 53",
+        "VOC 61",
+        "VOC 62"
+    ],
+    "S&L 20": [
+        "VOC 74"
+    ],
+    "S&L 21": [
+        "S&L 24",
+        "VOC 74"
+    ],
+    "S&L 22": [
+        "S&L 23"
+    ],
+    "S&L 23": [
+        "SOC 41",
+        "VOC 78",
+        "VOC 80"
+    ],
+    "S&L 24": [
+        "SOC 8",
+        "SOC 27",
+        "SOC 41",
+        "VOC 78",
+        "VOC 80"
+    ],
+    "VOC 1": [
+        "VOC 3"
+    ],
+    "VOC 2": [
+        "VOC 76"
+    ],
+    "VOC 3": [
+        "VOC 75",
+        "VOC 76"
+    ],
+    "VOC 5": [
+        "VOC 12",
+        "VOC 20",
+        "VOC 25",
+        "VOC 26",
+        "VOC 28\u2013VOC 30",
+        "VOC 35",
+        "VOC 44",
+        "VOC 45",
+        "VOC 51",
+        "VOC 52",
+        "VOC 54\u2013VOC 57",
+        "VOC 59\u2013VOC 64",
+        "VOC 69",
+        "VOC 70",
+        "VOC 72"
+    ],
+    "VOC 7": [
+        "VOC 25"
+    ],
+    "VOC 8": [
+        "VOC 9"
+    ],
+    "VOC 9": [
+        "VOC 10"
+    ],
+    "VOC 10": [
+        "VOC 11"
+    ],
+    "VOC 14": [
+        "VOC 20"
+    ],
+    "VOC 15": [
+        "VOC 20"
+    ],
+    "VOC 41": [
+        "VOC 42"
+    ],
+    "VOC 52": [
+        "VOC 55",
+        "VOC 60",
+        "VOC 61"
+    ],
+    "VOC 53": [
+        "VOC 54",
+        "VOC 55"
+    ],
+    "VOC 54": [
+        "VOC 55"
+    ],
+    "VOC 74": [
+        "VOC 79"
+    ],
+    "VOC 78": [
+        "VOC 80"
+    ]
+}

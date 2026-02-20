@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReadAlong Highlighter</title>
+  </head>
+  <body>
+    <div id="text-container"></div>
+    <div id="chevron">❯</div>
+    <div id="sidebar">
+      <h2>Settings</h2>
+      <label for="text-input">Text:</label>
+      <textarea id="text-input" placeholder="Paste your text here..."></textarea>
+      <label for="text-color">Text Color:</label>
+      <input type="color" id="text-color" value="#ffffff" />
+      <label for="background-color">Background Color:</label>
+      <input type="color" id="background-color" value="#000000" />
+      <label for="highlight-bg-color">Highlight Background Color:</label>
+      <input type="color" id="highlight-bg-color" value="#003366" />
+      <label for="highlight-text-color">Highlight Text Color:</label>
+      <input type="color" id="highlight-text-color" value="#ffffff" />
+      <label for="text-size">Text Size:</label>
+      <div id="text-size-buttons">
+        <button class="text-size-btn" data-size="12">12</button>
+        <button class="text-size-btn" data-size="14">14</button>
+        <button class="text-size-btn" data-size="18">18</button>
+        <button class="text-size-btn" data-size="24">24</button>
+        <button class="text-size-btn" data-size="30">30</button>
+        <button class="text-size-btn" data-size="36">36</button>
+        <button class="text-size-btn" data-size="48">48</button>
+        <button class="text-size-btn" data-size="60">60</button>
+        <button class="text-size-btn" data-size="66">66</button>
+        <button class="text-size-btn" data-size="72">72</button>
+        <button class="text-size-btn" data-size="84">84</button>
+        <button class="text-size-btn" data-size="96">96</button>
+      </div>
+      <button id="apply-btn">Apply</button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
