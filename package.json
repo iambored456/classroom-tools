@@ -12,6 +12,7 @@
     "dev:whack-a-mole": "pnpm --filter launchpad-whack-a-mole run dev",
     "build": "pnpm -r --if-present run build",
     "build:pages": "node scripts/build-pages.js",
+    "capture:previews": "node scripts/capture-previews.js",
     "preview": "pnpm run build:pages && node scripts/preview-pages.js",
     "preview:hub": "pnpm --filter hub run preview",
     "typecheck": "pnpm -r --if-present run typecheck",
@@ -22,5 +23,8 @@
   "packageManager": "pnpm@10.26.2",
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "playwright": "^1.58.2"
   }
 }

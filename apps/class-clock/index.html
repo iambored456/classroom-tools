@@ -33,6 +33,10 @@
           <!-- Water Fill Container -->
           <div id="water-fill-container" class="display-element element-hidden">
             <div class="water-fill-outline-segment"></div>
+            <div class="water-fill-outline-segment"></div>
+            <div class="water-fill-outline-segment"></div>
+            <div class="water-fill-outline-segment"></div>
+            <div class="water-fill-outline-segment"></div>
             <canvas id="water-fill-canvas"></canvas>
           </div>
       </div>
@@ -80,7 +84,7 @@
                      <div class="pref-item checkbox-item"><label><input type="checkbox" id="pref-show-sand-bars" data-pref="showSandBars"> Show Sand Bars (Physics)</label></div>
                  </div>
                  <div class="pref-row">
-                     <div class="pref-item checkbox-item"><label><input type="checkbox" id="pref-show-water-fill" data-pref="showWaterFill"> Show Water Fill (Physics)</label></div>
+                     <div class="pref-item checkbox-item"><label><input type="checkbox" id="pref-show-water-fill" data-pref="showWaterFill"> Show Water Bars (Fluid)</label></div>
                      <div class="pref-item checkbox-item"></div>
                  </div>
             </div>
@@ -88,7 +92,7 @@
 
         <!-- Physics Fill Settings (Initially Hidden) -->
         <div id="sand-bar-options" class="settings-section display-element element-hidden">
-             <h4>Physics Fill Settings</h4>
+             <h4>Sand/Water Fill Settings</h4>
              <div class="preferences-container">
                  <div class="pref-row">
                       <div class="pref-item">
@@ -227,7 +231,7 @@
             <table id="schedule-table">
               <thead>
                 <tr>
-                  <th>Drag</th><th>Label</th><th>Start</th><th>End</th><th>Scheme</th><th>Alert On?</th><th>Schedule Circles?</th>
+                  <th>Drag</th><th>Label</th><th>Start</th><th>End (Auto)</th><th>Scheme</th><th>Alert On?</th><th>Schedule Circles?</th>
                 </tr>
               </thead>
               <tbody></tbody>

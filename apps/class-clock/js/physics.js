@@ -3,6 +3,25 @@ import Matter from 'matter-js';
 import { State } from './state.js';
 import { Settings } from './settings.js'; // Import settings for particle size
 
+const SAND_OUTER_PADDING = 2;
+const SAND_INNER_INSET = 3;
+const SAND_SEGMENT_GAP = 10;
+const SAND_CORNER_RADIUS = 15;
+
+function addRoundedRectPath(ctx, x, y, width, height, radius) {
+    const r = Math.max(0, Math.min(radius, width / 2, height / 2));
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + width - r, y);
+    ctx.arcTo(x + width, y, x + width, y + r, r);
+    ctx.lineTo(x + width, y + height - r);
+    ctx.arcTo(x + width, y + height, x + width - r, y + height, r);
+    ctx.lineTo(x + r, y + height);
+    ctx.arcTo(x, y + height, x, y + height - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+}
+
 export const Physics = {
     engine: null,
     render: null,
@@ -12,6 +31,7 @@ export const Physics = {
     isRunning: false,
     currentMode: 'sand',
     currentSegments: State.SAND_COLORS.length,
+    renderMaskHandler: null,
 
     init: function(canvasElement, containerWidth, containerHeight, options = {}) {
         const mode = options.mode || Physics.currentMode || 'sand';
@@ -37,6 +57,7 @@ export const Physics = {
                 Physics.updateWallPositions(containerWidth, containerHeight);
             }
 
+            Physics.configureRenderMask();
             Physics.start(); // Ensure running
             return;
         }
@@ -75,6 +96,7 @@ export const Physics = {
         Physics.currentMode = mode;
         Physics.currentSegments = segments;
         Physics.createWalls(containerWidth, containerHeight, mode, segments);
+        Physics.configureRenderMask();
 
         Physics.runner = Matter.Runner.create();
         Matter.Runner.run(Physics.runner, Physics.engine);
@@ -146,7 +168,7 @@ export const Physics = {
         }
 
         const x = minX + (Math.random() * (maxX - minX));
-        const y = -radius * 2;
+        const y = radius + 4;
 
         const particle = Matter.Bodies.polygon(x, y, 6, radius, {
             restitution: 0.15,
@@ -240,6 +262,51 @@ export const Physics = {
         }
     },
 
+    configureRenderMask: function() {
+        if (!Physics.render) return;
+
+        if (Physics.renderMaskHandler) {
+            Matter.Events.off(Physics.render, 'afterRender', Physics.renderMaskHandler);
+            Physics.renderMaskHandler = null;
+        }
+
+        if (Physics.currentMode !== 'sand') return;
+
+        Physics.renderMaskHandler = () => {
+            Physics.applyRoundedSegmentMask();
+        };
+        Matter.Events.on(Physics.render, 'afterRender', Physics.renderMaskHandler);
+    },
+
+    applyRoundedSegmentMask: function() {
+        if (!Physics.render?.context || !Physics.render?.options) return;
+
+        const ctx = Physics.render.context;
+        const width = Physics.render.options.width;
+        const height = Physics.render.options.height;
+        const segments = Math.max(1, Physics.currentSegments || State.SAND_COLORS.length);
+
+        const contentWidth = Math.max(1, width - (SAND_OUTER_PADDING * 2));
+        const slotWidth = (contentWidth - (SAND_SEGMENT_GAP * (segments - 1))) / segments;
+        const segmentHeight = Math.max(1, height - (SAND_OUTER_PADDING * 2) - (SAND_INNER_INSET * 2));
+        const y = SAND_OUTER_PADDING + SAND_INNER_INSET;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.beginPath();
+
+        for (let i = 0; i < segments; i++) {
+            const x = SAND_OUTER_PADDING + (i * (slotWidth + SAND_SEGMENT_GAP)) + SAND_INNER_INSET;
+            const w = Math.max(1, slotWidth - (SAND_INNER_INSET * 2));
+            const r = Math.min(SAND_CORNER_RADIUS, w / 2, segmentHeight / 2);
+            addRoundedRectPath(ctx, x, y, w, segmentHeight, r);
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.restore();
+    },
+
     stop: function() {
          if (!Physics.isRunning) return;
          if (Physics.runner) Matter.Runner.stop(Physics.runner);
@@ -261,6 +328,10 @@ export const Physics = {
     destroy: function() {
          console.log("Destroying physics engine...");
          Physics.stop();
+         if (Physics.render && Physics.renderMaskHandler) {
+             Matter.Events.off(Physics.render, 'afterRender', Physics.renderMaskHandler);
+             Physics.renderMaskHandler = null;
+         }
          if (Physics.world) Matter.World.clear(Physics.world, false);
          if (Physics.engine) Matter.Engine.clear(Physics.engine);
          Physics.engine = null;

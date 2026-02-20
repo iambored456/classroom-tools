@@ -18,6 +18,7 @@ export const Schedule = {
         const tableBody = DOM.scheduleTableBody;
         if (!tableBody) { console.error("Schedule table body not found"); return; }
         tableBody.innerHTML = ""; // Clear previous rows
+        Settings.normalizeScheduleContinuity();
 
         // Ensure schedule data is available
         const scheduleData = Settings.schedule || [];
@@ -83,16 +84,49 @@ export const Schedule = {
          const td = document.createElement("td");
          const input = document.createElement("input");
          input.type = "time";
-         input.value = item[type] || "00:00";
-         input.addEventListener("change", function() {
-              if (Settings.schedule && Settings.schedule[index]) {
-                  Settings.schedule[index][type] = this.value;
-                  Settings.save();
-                  Clock.update(); // Recalculate current period and update display
-              }
-         });
+
+         if (type === 'end') {
+             const isLocked = Schedule.isEndLocked(index);
+             input.value = Schedule.getEffectiveEndValue(index, item);
+             if (isLocked) {
+                 input.readOnly = true;
+                 input.classList.add('locked-time');
+                 input.title = "Locked to the next row's Start time";
+             } else {
+                 input.addEventListener("change", function() {
+                     if (Settings.schedule && Settings.schedule[index]) {
+                         Settings.schedule[index].end = this.value;
+                         Settings.save();
+                         Clock.update();
+                     }
+                 });
+             }
+         } else {
+             input.value = item.start || "00:00";
+             input.addEventListener("change", function() {
+                 if (Settings.schedule && Settings.schedule[index]) {
+                     Settings.schedule[index].start = this.value;
+                     Settings.normalizeScheduleContinuity();
+                     Settings.save();
+                     Schedule.renderTable();
+                     Clock.update(); // Recalculate current period and update display
+                 }
+             });
+         }
+
          td.appendChild(input);
          return td;
+    },
+
+    isEndLocked: function(index) {
+        return index >= 0 && index < (Settings.schedule.length - 1);
+    },
+
+    getEffectiveEndValue: function(index, item) {
+        if (Schedule.isEndLocked(index)) {
+            return Settings.schedule[index + 1]?.start || item?.end || "00:00";
+        }
+        return item?.end || "23:59";
     },
     createSchemeCell: function(item, index) {
          const td = document.createElement("td");
@@ -186,11 +220,15 @@ export const Schedule = {
     },
 
     addRow: function() {
-        const newRow = { label: "New Period", start: "00:00", end: "00:00", colourSchemeId: 1, showCircles: false };
         // Determine insertion index: below selected or at the end
         const insertIndex = (State.selectedScheduleRowIndex === null || State.selectedScheduleRowIndex < 0 || State.selectedScheduleRowIndex >= Settings.schedule.length)
                            ? Settings.schedule.length
                            : State.selectedScheduleRowIndex + 1;
+        const nextRow = Settings.schedule[insertIndex];
+        const prevRow = Settings.schedule[insertIndex - 1];
+        const seedStart = nextRow?.start || prevRow?.start || "00:00";
+        const seedEnd = nextRow?.start || prevRow?.end || "23:59";
+        const newRow = { label: "New Period", start: seedStart, end: seedEnd, colourSchemeId: 1, showCircles: false };
 
         Settings.schedule.splice(insertIndex, 0, newRow); // Insert into schedule array
 
@@ -203,9 +241,11 @@ export const Schedule = {
         });
         Settings.alerts = newAlerts; // Update the main alerts object
 
+        Settings.normalizeScheduleContinuity();
         State.selectedScheduleRowIndex = insertIndex; // Select the newly added row
         Schedule.renderTable(); // Re-render the table
         Settings.save(); // Save changes
+        Clock.update();
     },
 
     deleteRow: function() {
@@ -226,6 +266,7 @@ export const Schedule = {
                 });
                 Settings.alerts = newAlerts; // Update the main alerts object
 
+                Settings.normalizeScheduleContinuity();
                 State.selectedScheduleRowIndex = null; // Deselect row
                 Schedule.renderTable(); // Re-render table
                 Settings.save();        // Save changes
@@ -301,6 +342,7 @@ export const Schedule = {
             }
             Settings.alerts = tempAlerts; // Update main alerts object
 
+            Settings.normalizeScheduleContinuity();
             // 3. Update selected index to follow the moved item
             State.selectedScheduleRowIndex = dragEndIndex;
 

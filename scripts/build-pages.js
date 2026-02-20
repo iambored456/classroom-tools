@@ -103,23 +103,29 @@ const runBuild = (filter, baseUrl) => {
   }
 }
 
+const runNodeScript = (args, env = process.env) => {
+  const result = spawnSync(process.execPath, args, {
+    cwd: rootDir,
+    stdio: 'inherit',
+    env,
+  })
+  if (result.error) {
+    throw new Error(`Failed running ${args.join(' ')}: ${result.error.message}`)
+  }
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1)
+  }
+}
+
 const rootBase = resolveRootBase()
 console.log(`Using root BASE_URL=${rootBase}`)
 
-runBuild('hub', rootBase)
 runBuild('class-clock', appendPath(rootBase, 'class-clock'))
 runBuild('read-along-highlighter', appendPath(rootBase, 'read-along-highlighter'))
 runBuild('launchpad-whack-a-mole', appendPath(rootBase, 'launchpad-whack-a-mole'))
-
-const assembleResult = spawnSync(process.execPath, ['scripts/assemble-pages.js', '--out', 'docs'], {
-  cwd: rootDir,
-  stdio: 'inherit',
-  env: process.env,
+runNodeScript(['scripts/capture-previews.js'], {
+  ...process.env,
+  CAPTURE_ROOT_BASE: rootBase,
 })
-
-if (assembleResult.error) {
-  throw new Error(`Failed to run assemble-pages: ${assembleResult.error.message}`)
-}
-if (assembleResult.status !== 0) {
-  process.exit(assembleResult.status ?? 1)
-}
+runBuild('hub', rootBase)
+runNodeScript(['scripts/assemble-pages.js', '--out', 'docs'])

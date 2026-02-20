@@ -70,6 +70,27 @@ export const Settings = {
         }
     },
 
+    normalizeScheduleContinuity: function() {
+        if (!Array.isArray(Settings.schedule) || Settings.schedule.length === 0) return;
+
+        for (let i = 0; i < Settings.schedule.length - 1; i++) {
+            const current = Settings.schedule[i];
+            const next = Settings.schedule[i + 1];
+            if (!current || !next) continue;
+            if (typeof next.start === 'string' && next.start.length > 0) {
+                current.end = next.start;
+            } else if (typeof current.end !== 'string' || current.end.length === 0) {
+                current.end = "00:00";
+            }
+        }
+
+        const lastIndex = Settings.schedule.length - 1;
+        const last = Settings.schedule[lastIndex];
+        if (last && (typeof last.end !== 'string' || last.end.length === 0)) {
+            last.end = "23:59";
+        }
+    },
+
     load: function() {
         Settings.preferences = JSON.parse(JSON.stringify(Settings.defaultPreferences));
         const defaultScheduleCopy = JSON.parse(JSON.stringify(Settings.schedule));
@@ -92,6 +113,7 @@ export const Settings = {
             } catch (e) { console.error("Error parsing saved schedule.", e); }
         }
         if (!scheduleLoaded) { Settings.schedule = defaultScheduleCopy; }
+        Settings.normalizeScheduleContinuity();
 
         // --- Load Preferences ---
         const savedPrefs = localStorage.getItem("clockPreferences");
@@ -162,6 +184,7 @@ export const Settings = {
 
     save: function() {
         try {
+             Settings.normalizeScheduleContinuity();
              // Make sure to remove the sandDropInterval if it somehow exists before saving
              if (Settings.preferences.hasOwnProperty('sandDropInterval')) {
                  delete Settings.preferences.sandDropInterval;

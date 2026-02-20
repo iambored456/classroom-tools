@@ -5,8 +5,7 @@ import { Clock } from './clock.js';
 import { getCurrentOffsetTime } from './utils.js';
 import { State } from './state.js';
 import { Physics } from './physics.js';
-
-const WATER_PARTICLE_COLOR = '#4aa8ff';
+import { WaterBars } from './waterBars.js';
 
 export const Visuals = {
     update: function(now) {
@@ -49,6 +48,8 @@ export const Visuals = {
 
     setupPhysicsSandBars: function(periodInfo) {
         Visuals.stopPhysicsCheckInterval();
+        WaterBars.stop();
+        WaterBars.reset();
         Physics.clearDynamicBodies();
         State.physicsParticlesAdded = 0;
         State.totalParticlesForPeriod = 0;
@@ -114,11 +115,13 @@ export const Visuals = {
     setupPhysicsWaterFill: function(periodInfo) {
         Visuals.stopPhysicsCheckInterval();
         Physics.clearDynamicBodies();
+        Physics.stop();
         State.physicsParticlesAdded = 0;
         State.totalParticlesForPeriod = 0;
 
         if (!Settings.preferences.showWaterFill || !DOM.waterFillCanvas || !DOM.waterFillContainerEl) {
-            Physics.stop();
+            WaterBars.stop();
+            WaterBars.reset();
             return;
         }
 
@@ -133,26 +136,33 @@ export const Visuals = {
 
             if (containerWidth <= 0 || containerHeight <= 0) {
                 console.warn("Water fill container has zero dimensions after rAF. Aborting physics setup.");
-                Physics.stop();
+                WaterBars.stop();
                 return;
             }
 
-            const particleRadius = Math.max(2, (Settings.preferences?.sandParticleSize || 5) * 0.8);
+            const barCount = State.SAND_COLORS.length;
+            const particleRadius = Math.max(2, (Settings.preferences?.sandParticleSize || 5) * 0.75);
             const particleArea = Math.PI * particleRadius * particleRadius;
-            const wallThickness = 15;
-            const usableWidth = Math.max(0, containerWidth - wallThickness - (particleRadius * 0.1));
-            const usableHeight = Math.max(0, containerHeight - (particleRadius * 0.05));
-            const packingDensity = 0.74;
+            const horizontalPadding = 8;
+            const gap = 10;
+            const usableWidth = Math.max(20, containerWidth - (horizontalPadding * 2));
+            const usableHeight = Math.max(20, containerHeight - 8);
+            const segmentWidth = Math.max(6, (usableWidth - (gap * (barCount - 1))) / barCount);
+            const packingDensity = 0.7;
 
-            State.totalParticlesForPeriod = Math.max(20, Math.floor((usableWidth * usableHeight * packingDensity) / particleArea));
-            State.visualMaxParticlesPerSegment = State.totalParticlesForPeriod;
-            console.log(`Est. Max Water Particles: ${State.totalParticlesForPeriod}, Particle Area: ${particleArea.toFixed(2)}`);
+            State.visualMaxParticlesPerSegment = Math.max(30, Math.floor((segmentWidth * usableHeight * packingDensity) / particleArea));
+            State.totalParticlesForPeriod = State.visualMaxParticlesPerSegment * barCount;
+            console.log(`Est. Max Water Droplets Per Segment: ${State.visualMaxParticlesPerSegment}, Total Target: ${State.totalParticlesForPeriod}, Particle Area: ${particleArea.toFixed(2)}`);
 
-            Physics.init(DOM.waterFillCanvas, containerWidth, containerHeight, {
-                mode: 'water',
-                segments: 1
+            WaterBars.init(DOM.waterFillCanvas, containerWidth, containerHeight, {
+                colors: State.SAND_COLORS,
+                capacityPerBar: State.visualMaxParticlesPerSegment,
+                particleRadius
             });
-            Physics.start();
+            WaterBars.setCapacity(State.visualMaxParticlesPerSegment);
+            WaterBars.setParticleRadius(particleRadius);
+            WaterBars.reset();
+            WaterBars.start();
             Visuals.handleColorSchemeChange();
 
             const activePeriod = periodInfo || Clock.getCurrentPeriodInfo(getCurrentOffsetTime());
@@ -162,12 +172,10 @@ export const Visuals = {
                     Visuals.checkAndAddWaterParticles();
                     State.physicsCheckIntervalId = setInterval(Visuals.checkAndAddWaterParticles, State.physicsCheckIntervalMs);
                 } else {
-                    console.log("Period duration is zero or negative, stopping water physics.");
-                    Physics.stop();
+                    console.log("Period duration is zero or negative, showing empty water bars.");
                 }
             } else {
-                console.log("No current period found, stopping water physics.");
-                Physics.stop();
+                console.log("No current period found, showing empty water bars.");
             }
         });
     },
@@ -185,14 +193,7 @@ export const Visuals = {
     },
 
     isWaterNearTop: function() {
-        if (!Physics.isInitialized || !Physics.isRunning) return false;
-
-        const topY = Physics.getTopY();
-        if (!Number.isFinite(topY)) return false;
-
-        const particleRadius = Math.max(2, (Settings.preferences?.sandParticleSize || 5) * 0.8);
-        const nearTopThresholdY = Math.max(1, particleRadius * 0.2);
-        return topY <= nearTopThresholdY;
+        return WaterBars.isNearTop();
     },
 
     checkAndAddParticles: function() {
@@ -270,7 +271,7 @@ export const Visuals = {
     },
 
     checkAndAddWaterParticles: function() {
-        if (!Settings.preferences.showWaterFill || !Physics.isRunning || State.totalParticlesForPeriod <= 0) {
+        if (!Settings.preferences.showWaterFill || !WaterBars.isRunning || State.totalParticlesForPeriod <= 0) {
             Visuals.stopPhysicsCheckInterval();
             return;
         }
@@ -290,40 +291,75 @@ export const Visuals = {
             return;
         }
 
-        const isNearTop = Visuals.isWaterNearTop();
-        if (isNearTop) {
+        const totalCapacity = Math.max(1, WaterBars.getTotalCapacity() || State.totalParticlesForPeriod);
+        State.totalParticlesForPeriod = totalCapacity;
+
+        const filledUnits = WaterBars.getTotalFillUnits();
+        const pendingDrops = WaterBars.getPendingDropletCount();
+        const producedUnits = filledUnits + pendingDrops;
+        State.physicsParticlesAdded = producedUnits;
+
+        if (Visuals.isWaterNearTop() && pendingDrops === 0) {
             Visuals.stopPhysicsCheckInterval();
             return;
         }
 
         const timeElapsedMs = Math.max(0, now.getTime() - periodStartMs);
         const totalFillPercentage = Math.min(1, timeElapsedMs / periodDurationMs);
-        const baseTargetTotalParticles = Math.floor(totalFillPercentage * State.totalParticlesForPeriod);
-        const hardParticleCap = Math.ceil(State.totalParticlesForPeriod * 1.5);
+        const baseTargetTotalParticles = Math.floor(totalFillPercentage * totalCapacity);
+        const hardParticleCap = Math.ceil(totalCapacity * 1.6);
+        const remainingToFull = Math.max(0, totalCapacity - filledUnits);
 
         let targetTotalParticles = baseTargetTotalParticles;
-        if (totalFillPercentage >= 0.9 && targetTotalParticles <= State.physicsParticlesAdded) {
-            targetTotalParticles = Math.min(hardParticleCap, State.physicsParticlesAdded + 6);
+        if (totalFillPercentage >= 0.9) {
+            targetTotalParticles = Math.max(targetTotalParticles, Math.min(totalCapacity, filledUnits + Math.ceil(remainingToFull * 0.35)));
+        }
+        if (totalFillPercentage >= 0.97) {
+            targetTotalParticles = Math.max(targetTotalParticles, Math.min(totalCapacity, filledUnits + Math.ceil(remainingToFull * 0.75)));
+        }
+        if (totalFillPercentage >= 0.995) {
+            targetTotalParticles = Math.max(targetTotalParticles, totalCapacity);
+        }
+        if (totalFillPercentage >= 0.9 && targetTotalParticles <= producedUnits && remainingToFull > 0) {
+            targetTotalParticles = Math.min(hardParticleCap, producedUnits + Math.min(18, remainingToFull * 2));
         }
 
         targetTotalParticles = Math.min(targetTotalParticles, hardParticleCap);
 
-        const particlesToAdd = targetTotalParticles - State.physicsParticlesAdded;
+        const particlesToAdd = targetTotalParticles - producedUnits;
         if (particlesToAdd <= 0) return;
 
-        const maxToAddThisTick = 8;
-        for (let i = 0; i < Math.min(particlesToAdd, maxToAddThisTick); ++i) {
-            if (State.physicsParticlesAdded >= hardParticleCap) break;
+        let maxToAddThisTick = 5;
+        if (totalFillPercentage >= 0.9) maxToAddThisTick = 10;
+        if (totalFillPercentage >= 0.97) maxToAddThisTick = 18;
+        if (totalFillPercentage >= 0.995) maxToAddThisTick = 28;
 
-            const added = Physics.addWaterParticle(WATER_PARTICLE_COLOR);
-            if (added) {
-                State.physicsParticlesAdded++;
+        for (let i = 0; i < Math.min(particlesToAdd, maxToAddThisTick); ++i) {
+            const projectedProduced = producedUnits + i;
+            if (projectedProduced >= hardParticleCap) break;
+
+            const segmentDuration = periodDurationMs / State.SAND_COLORS.length;
+            const nextParticleIndex = projectedProduced;
+            let preferredSegmentIndex;
+
+            if (nextParticleIndex < totalCapacity) {
+                const particleRepresentsTime = (nextParticleIndex + 0.5) / totalCapacity * periodDurationMs;
+                preferredSegmentIndex = Math.min(State.SAND_COLORS.length - 1, Math.floor(particleRepresentsTime / segmentDuration));
+            } else {
+                preferredSegmentIndex = nextParticleIndex % State.SAND_COLORS.length;
+            }
+
+            const segmentIndex = WaterBars.findBestBarIndex(preferredSegmentIndex);
+            if (segmentIndex >= 0) {
+                const added = WaterBars.addDroplet(segmentIndex, State.SAND_COLORS[segmentIndex]);
+                if (!added) break;
             } else {
                 break;
             }
         }
 
-        if (State.physicsParticlesAdded >= hardParticleCap) {
+        const finalPending = WaterBars.getPendingDropletCount();
+        if (Visuals.isWaterNearTop() && finalPending === 0) {
             Visuals.stopPhysicsCheckInterval();
         }
     },
@@ -346,6 +382,8 @@ export const Visuals = {
         }
 
         Visuals.stopPhysicsCheckInterval();
+        WaterBars.stop();
+        WaterBars.reset();
         Physics.clearDynamicBodies();
         Physics.stop();
     },
@@ -362,6 +400,8 @@ export const Visuals = {
         }
 
         Visuals.stopPhysicsCheckInterval();
+        WaterBars.stop();
+        WaterBars.reset();
         Physics.clearDynamicBodies();
         Physics.stop();
     },
