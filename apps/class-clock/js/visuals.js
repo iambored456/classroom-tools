@@ -228,13 +228,7 @@ export const Visuals = {
         const baseTargetTotalParticles = Math.floor(totalFillPercentage * State.totalParticlesForPeriod);
         const hardParticleCap = Math.ceil(State.totalParticlesForPeriod * 1.35);
 
-        let targetTotalParticles = baseTargetTotalParticles;
-
-        if (totalFillPercentage >= 0.9 && targetTotalParticles <= State.physicsParticlesAdded) {
-            targetTotalParticles = Math.min(hardParticleCap, State.physicsParticlesAdded + 6);
-        }
-
-        targetTotalParticles = Math.min(targetTotalParticles, hardParticleCap);
+        let targetTotalParticles = Math.min(baseTargetTotalParticles, hardParticleCap);
 
         const particlesToAdd = targetTotalParticles - State.physicsParticlesAdded;
         if (particlesToAdd <= 0) return;
@@ -308,31 +302,13 @@ export const Visuals = {
         const totalFillPercentage = Math.min(1, timeElapsedMs / periodDurationMs);
         const baseTargetTotalParticles = Math.floor(totalFillPercentage * totalCapacity);
         const hardParticleCap = Math.ceil(totalCapacity * 1.6);
-        const remainingToFull = Math.max(0, totalCapacity - filledUnits);
 
-        let targetTotalParticles = baseTargetTotalParticles;
-        if (totalFillPercentage >= 0.9) {
-            targetTotalParticles = Math.max(targetTotalParticles, Math.min(totalCapacity, filledUnits + Math.ceil(remainingToFull * 0.35)));
-        }
-        if (totalFillPercentage >= 0.97) {
-            targetTotalParticles = Math.max(targetTotalParticles, Math.min(totalCapacity, filledUnits + Math.ceil(remainingToFull * 0.75)));
-        }
-        if (totalFillPercentage >= 0.995) {
-            targetTotalParticles = Math.max(targetTotalParticles, totalCapacity);
-        }
-        if (totalFillPercentage >= 0.9 && targetTotalParticles <= producedUnits && remainingToFull > 0) {
-            targetTotalParticles = Math.min(hardParticleCap, producedUnits + Math.min(18, remainingToFull * 2));
-        }
-
-        targetTotalParticles = Math.min(targetTotalParticles, hardParticleCap);
+        const targetTotalParticles = Math.min(baseTargetTotalParticles, hardParticleCap);
 
         const particlesToAdd = targetTotalParticles - producedUnits;
         if (particlesToAdd <= 0) return;
 
-        let maxToAddThisTick = 5;
-        if (totalFillPercentage >= 0.9) maxToAddThisTick = 10;
-        if (totalFillPercentage >= 0.97) maxToAddThisTick = 18;
-        if (totalFillPercentage >= 0.995) maxToAddThisTick = 28;
+        const maxToAddThisTick = 5;
 
         for (let i = 0; i < Math.min(particlesToAdd, maxToAddThisTick); ++i) {
             const projectedProduced = producedUnits + i;

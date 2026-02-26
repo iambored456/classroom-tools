@@ -41,4 +41,24 @@ export const appCards: AppCard[] = [
     tags: ['Timer', 'Clock', 'Classroom'],
     accent: '#7abd6e',
   },
+  {
+    id: 'fish-visualizer',
+    name: 'Fish Visualizer',
+    description:
+      'An interactive prerequisite map of FISH skills. Explore dependencies, filter skills, and save your layout.',
+    href: withBase('fish-visualizer/'),
+    preview: withBase('images/FishVisualizer-screenshot.png'),
+    tags: ['Visualization', 'Curriculum', 'Planning'],
+    accent: '#4ea6b9',
+  },
+  {
+    id: 'launchpad-controller',
+    name: 'Launchpad Controller',
+    description:
+      'Visualize Launchpad X pad presses in real time and hear each note played as a sine wave tone.',
+    href: withBase('launchpad-controller/'),
+    preview: withBase('images/LaunchpadController-screenshot.png'),
+    tags: ['MIDI', 'Music', 'Visualization'],
+    accent: '#9d65e0',
+  },
 ]

@@ -34,6 +34,16 @@ const appDistTargets = [
     distPath: join(rootDir, 'apps/launchpad-whack-a-mole/dist'),
     targetSubdir: 'launchpad-whack-a-mole',
   },
+  {
+    name: 'fish-visualizer',
+    distPath: join(rootDir, 'apps/fish-visualizer/dist'),
+    targetSubdir: 'fish-visualizer',
+  },
+  {
+    name: 'launchpad-controller',
+    distPath: join(rootDir, 'apps/launchpad-controller/dist'),
+    targetSubdir: 'launchpad-controller',
+  },
 ]
 
 console.log(`Assembling Pages output into ${outputDirName}/`)

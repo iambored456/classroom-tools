@@ -123,6 +123,8 @@ console.log(`Using root BASE_URL=${rootBase}`)
 runBuild('class-clock', appendPath(rootBase, 'class-clock'))
 runBuild('read-along-highlighter', appendPath(rootBase, 'read-along-highlighter'))
 runBuild('launchpad-whack-a-mole', appendPath(rootBase, 'launchpad-whack-a-mole'))
+runBuild('fish-visualizer', appendPath(rootBase, 'fish-visualizer'))
+runBuild('launchpad-controller', appendPath(rootBase, 'launchpad-controller'))
 runNodeScript(['scripts/capture-previews.js'], {
   ...process.env,
   CAPTURE_ROOT_BASE: rootBase,

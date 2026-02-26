@@ -87,6 +87,8 @@ function buildTargets(rootBase) {
   const classClockBase = appendPath(rootBase, 'class-clock')
   const readAlongBase = appendPath(rootBase, 'read-along-highlighter')
   const whackAMoleBase = appendPath(rootBase, 'launchpad-whack-a-mole')
+  const fishVisualizerBase = appendPath(rootBase, 'fish-visualizer')
+  const launchpadControllerBase = appendPath(rootBase, 'launchpad-controller')
 
   return [
     {
@@ -147,23 +149,51 @@ function buildTargets(rootBase) {
       distDir: 'apps/launchpad-whack-a-mole/dist',
       basePath: whackAMoleBase,
       route: whackAMoleBase,
-      waitFor: '#grid .square',
+      waitFor: '.grid .pad',
       delayMs: 300,
       postReadyScript: `
 (() => {
-  const squares = Array.from(document.querySelectorAll('#grid .square'));
-  const middle = squares[Math.floor(squares.length / 2)];
+  const pads = Array.from(document.querySelectorAll('.grid .pad'));
+  const middle = pads[Math.floor(pads.length / 2)];
   if (middle instanceof HTMLElement) {
-    middle.classList.add('active-web');
+    middle.classList.add('active');
     middle.style.backgroundColor = '#62bbf7';
   }
 })();
 `,
       injectCss: `
-.container > *:not(#scoreboard):not(#grid) {
+.container > *:not(.scoreboard):not(.grid) {
   display: none !important;
 }
-#scoreboard > *:not(h1):not(#score-display) {
+`,
+    },
+    {
+      id: 'fish-visualizer',
+      outputFile: 'FishVisualizer-screenshot.png',
+      distDir: 'apps/fish-visualizer/dist',
+      basePath: fishVisualizerBase,
+      route: fishVisualizerBase,
+      waitFor: '#network-graph .node',
+      delayMs: 600,
+      injectCss: `
+  #tooltip {
+    display: none !important;
+  }
+  `,
+    },
+    {
+      id: 'launchpad-controller',
+      outputFile: 'LaunchpadController-screenshot.png',
+      distDir: 'apps/launchpad-controller/dist',
+      basePath: launchpadControllerBase,
+      route: launchpadControllerBase,
+      waitFor: '.grid-placeholder, .grid',
+      delayMs: 300,
+      injectCss: `
+button {
+  display: none !important;
+}
+.status-text {
   display: none !important;
 }
 `,

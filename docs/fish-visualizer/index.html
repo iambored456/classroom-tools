@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FISH Skills Prerequisite Network</title>
+  <script type="module" crossorigin src="/classroom-tools/fish-visualizer/assets/index-DjgjNX0G.js"></script>
+  <link rel="stylesheet" crossorigin href="/classroom-tools/fish-visualizer/assets/index-DujtpFrW.css">
+</head>
+<body>
+    <div id="main-container">
+        <div id="sidebar">
+            <div class="sidebar-content">
+                <details class="sidebar-section" id="checklist-section">
+                    <summary>Skill Checklist</summary>
+                    <div id="skill-checklist-container" class="sidebar-list"></div>
+                </details>
+                <details class="sidebar-section">
+                    <summary>Appendix A: Prerequisites</summary>
+                    <div id="appendix-a-container" class="sidebar-list"></div>
+                </details>
+                <details class="sidebar-section">
+                    <summary>Appendix B: Future Lessons</summary>
+                    <div id="appendix-b-container" class="sidebar-list"></div>
+                </details>
+            </div>
+        </div>
+
+        <div id="graph-container">
+            <svg id="network-graph"></svg>
+
+            <div id="info-panel">
+                 <h2>Skills Network</h2>
+                 <p>
+                    - Hover over a node for details.<br>
+                    - Uncheck skills to remove them from the graph.<br>
+                    - Use the sidebar to explore connections.
+                 </p>
+            </div>
+            <div id="legend"></div>
+            <div id="controls">
+                 <div class="control-group search-group">
+                    <input type="text" id="search-input" placeholder="e.g., ADT 1">
+                    <button id="search-btn">Find Node</button>
+                </div>
+                <div class="control-group">
+                    <button id="export-btn">Export Layout</button>
+                    <button id="import-btn">Import Layout</button>
+                    <button id="reset-btn">Reset Layout</button>
+                </div>
+                <div class="control-group sliders">
+                    <div class="slider-container">
+                        <label for="node-size-slider">Node Size:</label>
+                        <input type="range" id="node-size-slider" min="2" max="60" step="1">
+                        <span id="node-size-value" class="value-display"></span>
+                    </div>
+                    <div class="slider-container">
+                        <label for="line-width-slider">Line Width:</label>
+                        <input type="range" id="line-width-slider" min="0.5" max="10" step="0.5">
+                        <span id="line-width-value" class="value-display"></span>
+                    </div>
+                    <div class="slider-container">
+                        <label for="arrow-size-slider">Arrow Size:</label>
+                        <input type="range" id="arrow-size-slider" min="1" max="15" step="1">
+                        <span id="arrow-size-value" class="value-display"></span>
+                    </div>
+                    <div class="slider-container">
+                        <label for="repulsion-slider">Repulsion Force:</label>
+                        <input type="range" id="repulsion-slider" min="-500" max="-10" step="10">
+                        <span id="repulsion-value" class="value-display"></span>
+                    </div>
+                    <div class="slider-container">
+                        <label for="spacing-slider">Graph Spacing:</label>
+                        <input type="range" id="spacing-slider" min="50" max="200" step="5">
+                        <span id="spacing-value" class="value-display"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="tooltip"></div>
+        </div>
+    </div>
+
+</body>
+</html>

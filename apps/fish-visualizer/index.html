@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FISH Skills Prerequisite Network</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="main-container">
+        <div id="sidebar">
+            <div id="sidebar-resize-handle"></div>
+            <div class="sidebar-content">
+                <details class="sidebar-section controls-section" id="students-section" open>
+                    <summary>Students</summary>
+                    <div class="sidebar-controls">
+                        <div id="student-slots-grid"></div>
+                    </div>
+                </details>
+                <details class="sidebar-section controls-section" id="file-search-section" open>
+                    <summary>File &amp; Search</summary>
+                    <div class="sidebar-controls" id="file-search-controls">
+                        <div class="control-group search-group">
+                            <input type="text" id="search-input" placeholder="e.g., ADT 1">
+                            <button id="search-btn">Find Node</button>
+                        </div>
+                        <div class="control-group file-buttons">
+                            <button id="export-btn">Export Layout</button>
+                            <button id="import-btn">Import Layout</button>
+                            <button id="reset-btn">Reset Layout</button>
+                        </div>
+                    </div>
+                </details>
+                <details class="sidebar-section controls-section" id="appearance-section" open>
+                    <summary>Appearance</summary>
+                    <div class="sidebar-controls" id="appearance-controls">
+                        <label class="toggle-row">
+                            <input type="checkbox" id="theme-toggle">
+                            Dark mode
+                        </label>
+                        <div class="control-group mode-group">
+                            <label for="layout-mode-select">Layout Mode:</label>
+                            <select id="layout-mode-select">
+                                <option value="free-force">Free Force</option>
+                                <option value="growth-axis">Growth Axis</option>
+                                <option value="layered-lanes">Layered Lanes</option>
+                            </select>
+                        </div>
+                        <label class="toggle-row">
+                            <input type="checkbox" id="snap-to-guides-toggle">
+                            Snap nodes to maturity guide lines
+                        </label>
+                        <div class="control-group sliders">
+                            <div class="slider-container">
+                                <label for="node-size-slider">Node Size:</label>
+                                <input type="range" id="node-size-slider" min="2" max="60" step="1">
+                                <span id="node-size-value" class="value-display"></span>
+                            </div>
+                            <div class="slider-container">
+                                <label for="line-width-slider">Line Width:</label>
+                                <input type="range" id="line-width-slider" min="0.5" max="10" step="0.5">
+                                <span id="line-width-value" class="value-display"></span>
+                            </div>
+                            <div class="slider-container">
+                                <label for="arrow-size-slider">Arrow Size:</label>
+                                <input type="range" id="arrow-size-slider" min="1" max="15" step="1">
+                                <span id="arrow-size-value" class="value-display"></span>
+                            </div>
+                            <div class="slider-container">
+                                <label for="repulsion-slider">Repulsion Force:</label>
+                                <input type="range" id="repulsion-slider" min="-500" max="-10" step="10">
+                                <span id="repulsion-value" class="value-display"></span>
+                            </div>
+                            <div class="slider-container">
+                                <label for="spacing-slider">Graph Spacing:</label>
+                                <input type="range" id="spacing-slider" min="50" max="200" step="5">
+                                <span id="spacing-value" class="value-display"></span>
+                            </div>
+                            <div class="slider-container">
+                                <label for="progression-slider">Growth Pull:</label>
+                                <input type="range" id="progression-slider" min="0" max="1" step="0.02">
+                                <span id="progression-value" class="value-display"></span>
+                            </div>
+                        </div>
+                        <label class="toggle-row">
+                            <input type="checkbox" id="transitive-reduction-toggle">
+                            Simplify indirect prerequisite edges
+                        </label>
+                        <label class="toggle-row">
+                            <input type="checkbox" id="offoff-remove-toggle">
+                            Remove off/off skills from graph (unchecked = gray out)
+                        </label>
+                        <div id="edge-summary" class="edge-summary"></div>
+                        <p class="helper-note">Dashed arrows indicate OR alternatives (any one satisfies that prerequisite group).</p>
+                    </div>
+                </details>
+                <details class="sidebar-section controls-section" id="progress-section" open>
+                    <summary>Student Progress</summary>
+                    <div class="sidebar-controls" id="progress-controls">
+                        <label class="toggle-row">
+                            <input type="checkbox" id="progress-mode-toggle">
+                            Enable progress visualization
+                        </label>
+                        <p class="helper-note">Select nodes in the graph, then set a status.</p>
+                        <div class="control-group progress-actions">
+                            <button id="progress-not-started-btn" type="button">Set Not Started</button>
+                            <button id="progress-in-progress-btn" type="button">Set In Progress</button>
+                            <button id="progress-mastered-btn" type="button">Set Mastered</button>
+                            <button id="progress-clear-btn" type="button">Clear All Progress</button>
+                        </div>
+                        <div id="progress-summary" class="progress-summary"></div>
+                        <div class="ready-frontier">
+                            <div id="ready-count" class="ready-count"></div>
+                            <ul id="ready-list"></ul>
+                        </div>
+                    </div>
+                </details>
+                <details class="sidebar-section" id="checklist-section">
+                    <summary>Skill Checklist</summary>
+                    <div id="skill-checklist-container" class="sidebar-list"></div>
+                </details>
+                <details class="sidebar-section">
+                    <summary>Appendix A: Prerequisites</summary>
+                    <div id="appendix-a-container" class="sidebar-list"></div>
+                </details>
+                <details class="sidebar-section">
+                    <summary>Appendix B: Future Lessons</summary>
+                    <div id="appendix-b-container" class="sidebar-list"></div>
+                </details>
+            </div>
+        </div>
+
+        <div id="graph-container">
+            <svg id="network-graph"></svg>
+
+            <div id="info-panel">
+                <button id="info-panel-close" title="Dismiss">✕</button>
+                 <h2>Skills Network</h2>
+                 <p>
+                    - Hover over a node for details.<br>
+                    - In Skill Checklist: W = working, M = mastered.<br>
+                    - Use the sidebar to search, configure appearance, and explore connections.<br>
+                    - Growth-axis layouts use manual 1-10 maturity weights, smoothed to preserve prerequisite flow left-to-right.<br>
+                    - Background guide lines show maturity levels 1-10 across the growth axis.<br>
+                    - Optional: snap node x-positions directly to those maturity lines.<br>
+                    - Dashed links represent OR prerequisites.
+                 </p>
+            </div>
+            <div id="legend"></div>
+            <div id="tooltip"></div>
+        </div>
+    </div>
+
+    <script type="module" src="src/main.ts"></script>
+</body>
+</html>
