@@ -1,12 +1,8 @@
 /** js/physics.js */
 import Matter from 'matter-js';
-import { State } from './state.js';
-import { Settings } from './settings.js'; // Import settings for particle size
-
-const SAND_OUTER_PADDING = 2;
-const SAND_INNER_INSET = 3;
-const SAND_SEGMENT_GAP = 10;
-const SAND_CORNER_RADIUS = 15;
+import { State } from './state.ts';
+import { Settings } from './settings.ts';
+import { createFallbackFillLayout } from './fillLayout.ts';
 
 function addRoundedRectPath(ctx, x, y, width, height, radius) {
     const r = Math.max(0, Math.min(radius, width / 2, height / 2));
@@ -32,10 +28,14 @@ export const Physics = {
     currentMode: 'sand',
     currentSegments: State.SAND_COLORS.length,
     renderMaskHandler: null,
+    layoutProvider: null,
 
-    init: function(canvasElement, containerWidth, containerHeight, options = {}) {
+    init: function(canvasElement, containerWidth, containerHeight, options: any = {}) {
         const mode = options.mode || Physics.currentMode || 'sand';
         const segments = Math.max(1, options.segments || (mode === 'sand' ? State.SAND_COLORS.length : 1));
+        if (Object.prototype.hasOwnProperty.call(options, 'measureLayout')) {
+            Physics.layoutProvider = typeof options.measureLayout === 'function' ? options.measureLayout : null;
+        }
 
         if (Physics.isInitialized) {
             const sizeChanged = Physics.render && (Physics.render.options.width !== containerWidth || Physics.render.options.height !== containerHeight);
@@ -71,13 +71,14 @@ export const Physics = {
         // Increased solver iterations for better stacking stability.
         const engineOptions = {
             enableSleeping: true,
-            positionIterations: 8,
-            velocityIterations: 6
+            positionIterations: 12,
+            velocityIterations: 8,
+            constraintIterations: 4
         };
         Physics.engine = Matter.Engine.create(engineOptions);
 
         Physics.world = Physics.engine.world;
-        Physics.engine.world.gravity.y = 0.7; // Keep gravity relatively low
+        Physics.engine.world.gravity.y = 0.9;
 
         Physics.render = Matter.Render.create({
             element: canvasElement.parentNode,
@@ -155,7 +156,7 @@ export const Physics = {
 
         const segmentWidth = Physics.render.options.width / numSegments;
         // For polygons, 'radius' means distance from center to vertex.
-        const radius = Settings.preferences?.sandParticleSize || 5;
+        const radius = Settings.getAnimationDetailSizePx(Physics.render.options.height);
         const wallThickness = 15;
         const buffer = radius * 0.5;
 
@@ -171,16 +172,18 @@ export const Physics = {
         const y = radius + 4;
 
         const particle = Matter.Bodies.polygon(x, y, 6, radius, {
-            restitution: 0.15,
-            friction: 0.7,
-            frictionAir: 0.01,
-            density: 0.01,
+            restitution: 0.04,
+            friction: 0.82,
+            frictionStatic: 0.95,
+            frictionAir: 0.003,
+            density: 0.015,
+            slop: 0.02,
+            inertia: Infinity,
             render: { fillStyle: color },
-            sleepThreshold: 60
+            sleepThreshold: 45
         });
 
-        Matter.Body.setVelocity(particle, { x: (Math.random() - 0.5) * 0.1, y: Math.random() * 0.1 });
-        Matter.Body.setAngularVelocity(particle, (Math.random() - 0.5) * 0.01);
+        Matter.Body.setVelocity(particle, { x: (Math.random() - 0.5) * 0.05, y: Math.random() * 0.08 });
         Matter.World.add(Physics.world, particle);
         return true;
     },
@@ -190,7 +193,7 @@ export const Physics = {
         if (Physics.currentMode !== 'water') return false;
 
         const width = Physics.render.options.width;
-        const radius = Math.max(2, (Settings.preferences?.sandParticleSize || 5) * 0.8);
+        const radius = Math.max(2, Settings.getAnimationDetailSizePx(Physics.render.options.height) * 0.8);
         const wallThickness = 15;
         const buffer = radius * 0.25;
 
@@ -278,29 +281,36 @@ export const Physics = {
         Matter.Events.on(Physics.render, 'afterRender', Physics.renderMaskHandler);
     },
 
+    getMaskLayout: function() {
+        const width = Physics.render?.options?.width || 0;
+        const height = Physics.render?.options?.height || 0;
+        const segments = Math.max(1, Physics.currentSegments || State.SAND_COLORS.length);
+
+        if (typeof Physics.layoutProvider === 'function') {
+            const measuredLayout = Physics.layoutProvider();
+            if (measuredLayout?.bars?.length) {
+                return measuredLayout;
+            }
+        }
+
+        return createFallbackFillLayout(width, height, segments);
+    },
+
     applyRoundedSegmentMask: function() {
         if (!Physics.render?.context || !Physics.render?.options) return;
 
         const ctx = Physics.render.context;
-        const width = Physics.render.options.width;
-        const height = Physics.render.options.height;
-        const segments = Math.max(1, Physics.currentSegments || State.SAND_COLORS.length);
-
-        const contentWidth = Math.max(1, width - (SAND_OUTER_PADDING * 2));
-        const slotWidth = (contentWidth - (SAND_SEGMENT_GAP * (segments - 1))) / segments;
-        const segmentHeight = Math.max(1, height - (SAND_OUTER_PADDING * 2) - (SAND_INNER_INSET * 2));
-        const y = SAND_OUTER_PADDING + SAND_INNER_INSET;
+        const layout = Physics.getMaskLayout();
+        const bars = Array.isArray(layout?.bars) ? layout.bars : [];
+        if (bars.length === 0) return;
 
         ctx.save();
         ctx.globalCompositeOperation = 'destination-in';
         ctx.beginPath();
 
-        for (let i = 0; i < segments; i++) {
-            const x = SAND_OUTER_PADDING + (i * (slotWidth + SAND_SEGMENT_GAP)) + SAND_INNER_INSET;
-            const w = Math.max(1, slotWidth - (SAND_INNER_INSET * 2));
-            const r = Math.min(SAND_CORNER_RADIUS, w / 2, segmentHeight / 2);
-            addRoundedRectPath(ctx, x, y, w, segmentHeight, r);
-        }
+        bars.forEach(bar => {
+            addRoundedRectPath(ctx, bar.x, bar.yTop, bar.width, bar.height, bar.cornerRadius);
+        });
 
         ctx.fillStyle = '#ffffff';
         ctx.fill();
@@ -342,6 +352,7 @@ export const Physics = {
          Physics.isRunning = false;
          Physics.currentMode = 'sand';
          Physics.currentSegments = State.SAND_COLORS.length;
+         Physics.layoutProvider = null;
          console.log("Physics engine destroyed.");
     }
 };

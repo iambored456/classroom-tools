@@ -1,11 +1,11 @@
 /** js/schedule.js */
-import { DOM } from './dom.js';
-import { State } from './state.js';
-import { Settings } from './settings.js';
-import { Clock } from './clock.js';
-import { Alerts } from './alerts.js';
-import { Visuals } from './visuals.js';
-import { Utils } from './utils.js';
+import { DOM } from './dom.ts';
+import { State } from './state.ts';
+import { Settings } from './settings.ts';
+import { Clock } from './clock.ts';
+import { Alerts } from './alerts.ts';
+import { Visuals } from './visuals.ts';
+import { Utils } from './utils.ts';
 
 export const Schedule = {
     attachListeners: function() {

@@ -125,9 +125,9 @@ runBuild('read-along-highlighter', appendPath(rootBase, 'read-along-highlighter'
 runBuild('launchpad-whack-a-mole', appendPath(rootBase, 'launchpad-whack-a-mole'))
 runBuild('fish-visualizer', appendPath(rootBase, 'fish-visualizer'))
 runBuild('launchpad-controller', appendPath(rootBase, 'launchpad-controller'))
-runNodeScript(['scripts/capture-previews.js'], {
+runNodeScript(['scripts/capture-previews.ts'], {
   ...process.env,
   CAPTURE_ROOT_BASE: rootBase,
 })
 runBuild('hub', rootBase)
-runNodeScript(['scripts/assemble-pages.js', '--out', 'docs'])
+runNodeScript(['scripts/assemble-pages.ts', '--out', 'docs'])

@@ -10,7 +10,7 @@ let linkSelection: d3.Selection<SVGLineElement, SkillLink, SVGGElement, unknown>
 let markerSelection: d3.Selection<SVGMarkerElement, unknown, HTMLElement, unknown> | null = null;
 let svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, unknown> | null = null;
 let container: d3.Selection<SVGGElement, unknown, HTMLElement, unknown> | null = null;
-let weightGuideLayer: d3.Selection<SVGGElement, unknown, SVGGElement, unknown> | null = null;
+let weightGuideLayer: d3.Selection<SVGGElement, unknown, HTMLElement, unknown> | null = null;
 let zoom: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
 let simulation: d3.Simulation<SkillNode, SkillLink> | null = null;
 let color: d3.ScaleOrdinal<string, string, never> | null = null;

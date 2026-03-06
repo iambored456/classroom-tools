@@ -1,11 +1,11 @@
 /** js/clock.js */
-import { Utils, getCurrentOffsetTime } from './utils.js';
-import { Settings } from './settings.js';
-import { Layout } from './layout.js';
-import { Alerts } from './alerts.js';
-import { Visuals } from './visuals.js';
-import { State } from './state.js';
-import { DOM } from './dom.js';
+import { Utils, getCurrentOffsetTime } from './utils.ts';
+import { Settings } from './settings.ts';
+import { Layout } from './layout.ts';
+import { Alerts } from './alerts.ts';
+import { Visuals } from './visuals.ts';
+import { State } from './state.ts';
+import { DOM } from './dom.ts';
 
 export const Clock = {
     updateIntervalId: null,
@@ -166,7 +166,7 @@ export const Clock = {
 
             // --- Update CSS Progress Bar & Time Left ---
             // Only update if the standard progress bar is the active one
-            if (Settings.preferences.showProgressBar && !Settings.preferences.showSandBars && !Settings.preferences.showWaterFill) {
+            if (Settings.isProgressBarMode()) {
                  if (DOM.progressEl && DOM.progressBarEl && DOM.timeLeftEl) {
                      const periodStartMs = periodInfo.start.getTime();
                      const periodEndMs = periodInfo.end.getTime();
@@ -199,7 +199,7 @@ export const Clock = {
                          DOM.timeLeftEl.style.left = `${progressBarWidth - timeLeftWidth}px`; // Position at end
                      }
                  }
-            } else {
+             } else {
                  // Clear standard progress/timeleft if a physics fill is active
                   if (DOM.progressEl) DOM.progressEl.style.width = "0%";
                   if (DOM.timeLeftEl) DOM.timeLeftEl.textContent = "";
@@ -209,8 +209,8 @@ export const Clock = {
              // --- No Active Period ---
              if (DOM.periodLabelEl) DOM.periodLabelEl.textContent = "";
              // Clear standard progress bar if it's enabled by preference
-             if (DOM.progressEl && Settings.preferences.showProgressBar) DOM.progressEl.style.width = "0%";
-             if (DOM.timeLeftEl && Settings.preferences.showProgressBar) DOM.timeLeftEl.textContent = "";
+             if (DOM.progressEl && Settings.isProgressBarMode()) DOM.progressEl.style.width = "0%";
+             if (DOM.timeLeftEl && Settings.isProgressBarMode()) DOM.timeLeftEl.textContent = "";
              // Physics bodies/intervals cleared via Visuals.handlePeriodChange
         }
     }

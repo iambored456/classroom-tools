@@ -1,7 +1,7 @@
 import { createServer } from 'node:net'
 
 export async function findFreePort(host = '127.0.0.1') {
-  return new Promise((resolve, reject) => {
+  return new Promise<number>((resolve, reject) => {
     const server = createServer()
     server.unref()
 

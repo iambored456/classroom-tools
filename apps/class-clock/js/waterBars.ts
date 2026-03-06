@@ -1,10 +1,8 @@
 /** js/waterBars.js */
-import { State } from './state.js';
+import { State } from './state.ts';
+import { createFallbackFillLayout } from './fillLayout.ts';
 
 const BAR_COUNT = State.SAND_COLORS.length;
-const OUTER_PADDING = 2;
-const BAR_GAP = 10;
-const INNER_INSET = 3;
 const MAX_DROPLETS_DEFAULT = 220;
 const MAX_SPLASH_PARTICLES = 320;
 const GRAVITY = 1150;
@@ -12,7 +10,6 @@ const SURFACE_TENSION = 34;
 const SURFACE_DAMPING = 6.5;
 const SURFACE_SPREAD = 18;
 const MAX_SURFACE_DISPLACEMENT_RATIO = 0.18;
-const BAR_CORNER_RADIUS = 15;
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
@@ -176,8 +173,9 @@ export const WaterBars = {
     maxDroplets: MAX_DROPLETS_DEFAULT,
     colors: [...State.SAND_COLORS],
     frameClockMs: 0,
+    layoutProvider: null,
 
-    init: function(canvasElement, width, height, options = {}) {
+    init: function(canvasElement, width, height, options: any = {}) {
         if (!canvasElement || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
             console.error('WaterBars.init called with invalid canvas or dimensions.');
             return;
@@ -198,6 +196,9 @@ export const WaterBars = {
             ? options.colors.slice(0, BAR_COUNT)
             : [...State.SAND_COLORS];
         WaterBars.colors = nextColors;
+        if (Object.prototype.hasOwnProperty.call(options, 'measureLayout')) {
+            WaterBars.layoutProvider = typeof options.measureLayout === 'function' ? options.measureLayout : null;
+        }
 
         if (options.capacityPerBar !== undefined) {
             WaterBars.setCapacity(options.capacityPerBar);
@@ -211,6 +212,17 @@ export const WaterBars = {
         WaterBars.renderOnce();
     },
 
+    getLayout: function(width = WaterBars.width, height = WaterBars.height) {
+        if (typeof WaterBars.layoutProvider === 'function') {
+            const measuredLayout = WaterBars.layoutProvider();
+            if (measuredLayout?.bars?.length === BAR_COUNT) {
+                return measuredLayout;
+            }
+        }
+
+        return createFallbackFillLayout(width, height, BAR_COUNT);
+    },
+
     resize: function(width, height) {
         if (!WaterBars.canvas || !WaterBars.ctx) return;
         if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return;
@@ -222,41 +234,36 @@ export const WaterBars = {
 
         WaterBars.canvas.width = Math.floor(WaterBars.width * WaterBars.dpr);
         WaterBars.canvas.height = Math.floor(WaterBars.height * WaterBars.dpr);
-        WaterBars.canvas.style.width = `${WaterBars.width}px`;
-        WaterBars.canvas.style.height = `${WaterBars.height}px`;
+        WaterBars.canvas.style.width = '';
+        WaterBars.canvas.style.height = '';
         WaterBars.ctx.setTransform(WaterBars.dpr, 0, 0, WaterBars.dpr, 0, 0);
 
-        WaterBars.rebuildBars(previousUnits);
+        WaterBars.rebuildBars(previousUnits, WaterBars.getLayout(WaterBars.width, WaterBars.height));
     },
 
-    rebuildBars: function(previousUnits = []) {
+    rebuildBars: function(previousUnits = [], layout = null) {
         WaterBars.droplets = [];
         WaterBars.splashParticles = [];
         WaterBars.bars = [];
 
-        const contentWidth = Math.max(20, WaterBars.width - (OUTER_PADDING * 2));
-        const contentHeight = Math.max(20, WaterBars.height - (OUTER_PADDING * 2));
-        const slotWidth = Math.max(8, (contentWidth - (BAR_GAP * (BAR_COUNT - 1))) / BAR_COUNT);
-        const leftStart = OUTER_PADDING;
-        const yTop = OUTER_PADDING + INNER_INSET;
-        const yBottom = WaterBars.height - OUTER_PADDING - INNER_INSET;
-        const waterHeight = Math.max(8, contentHeight - (INNER_INSET * 2));
+        const nextLayout = layout?.bars?.length === BAR_COUNT
+            ? layout
+            : createFallbackFillLayout(WaterBars.width, WaterBars.height, BAR_COUNT);
 
         for (let i = 0; i < BAR_COUNT; i++) {
-            const x = leftStart + (i * (slotWidth + BAR_GAP)) + INNER_INSET;
-            const width = Math.max(4, slotWidth - (INNER_INSET * 2));
+            const layoutBar = nextLayout.bars[i];
             const fillUnits = clamp(Number(previousUnits[i]) || 0, 0, WaterBars.barCapacity);
             const bar = {
                 index: i,
-                x,
-                width,
-                yTop,
-                yBottom,
-                height: waterHeight,
-                cornerRadius: Math.min(BAR_CORNER_RADIUS, width / 2, waterHeight / 2),
+                x: layoutBar.x,
+                width: layoutBar.width,
+                yTop: layoutBar.yTop,
+                yBottom: layoutBar.yBottom,
+                height: layoutBar.height,
+                cornerRadius: layoutBar.cornerRadius,
                 colorHex: WaterBars.colors[i] || State.SAND_COLORS[i] || '#4aa8ff',
                 fillUnits,
-                surfacePoints: createSurfacePoints(width)
+                surfacePoints: createSurfacePoints(layoutBar.width)
             };
             WaterBars.bars.push(bar);
         }
@@ -494,15 +501,6 @@ export const WaterBars = {
         return WaterBars.bars.every(bar => bar.fillUnits >= WaterBars.barCapacity);
     },
 
-    ensureSizeFromCanvas: function() {
-        if (!WaterBars.canvas) return;
-        const nextWidth = Math.max(1, Math.floor(WaterBars.canvas.clientWidth || 0));
-        const nextHeight = Math.max(1, Math.floor(WaterBars.canvas.clientHeight || 0));
-        if (nextWidth !== WaterBars.width || nextHeight !== WaterBars.height) {
-            WaterBars.resize(nextWidth, nextHeight);
-        }
-    },
-
     start: function() {
         if (!WaterBars.isInitialized || WaterBars.isRunning) return;
         WaterBars.isRunning = true;
@@ -526,7 +524,6 @@ export const WaterBars = {
         WaterBars.lastFrameMs = frameTimeMs;
         WaterBars.frameClockMs = frameTimeMs;
 
-        WaterBars.ensureSizeFromCanvas();
         WaterBars.updateDroplets(dt);
         WaterBars.updateSplashParticles(dt);
         WaterBars.updateSurface(dt);
@@ -626,5 +623,6 @@ export const WaterBars = {
         WaterBars.width = 0;
         WaterBars.height = 0;
         WaterBars.isInitialized = false;
+        WaterBars.layoutProvider = null;
     }
 };

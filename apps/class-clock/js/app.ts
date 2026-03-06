@@ -1,20 +1,21 @@
 /** js/app.js */
 // Import all necessary modules
-import { updateDOMCache, DOM } from './dom.js'; // Import the function and the variable
-import { Settings } from './settings.js';
-import { Appearance } from './appearance.js';
-import { ColorSchemes } from './colorSchemes.js';
-import { Schedule } from './schedule.js';
-import { Alerts } from './alerts.js';
-import { TimeSync } from './timeSync.js';
-import { Layout } from './layout.js';
-import { Clock } from './clock.js';
-import { State } from './state.js';
-import { Visuals } from './visuals.js';
-import { Physics } from './physics.js'; // Even if just for potential use
-import { Utils, getCurrentOffsetTime } from './utils.js'; // Import specific utility if needed
+import { updateDOMCache, DOM } from './dom.ts'; // Import the function and the variable
+import { Settings } from './settings.ts';
+import { Appearance } from './appearance.ts';
+import { ColorSchemes } from './colorSchemes.ts';
+import { Schedule } from './schedule.ts';
+import { Alerts } from './alerts.ts';
+import { TimeSync } from './timeSync.ts';
+import { Layout } from './layout.ts';
+import { Clock } from './clock.ts';
+import { State } from './state.ts';
+import { Visuals } from './visuals.ts';
 
 export const App = {
+    fillResizeFrameId: null,
+    fillResizeObserver: null,
+
     init: function() {
         console.log("Classroom Clock Initializing...");
         // 1. Update DOM Cache (needs DOM ready)
@@ -69,6 +70,19 @@ export const App = {
          DOM.tabsContainer?.querySelectorAll(".tab-button").forEach(button => {
             button.addEventListener("click", App.handleTabClick);
          });
+
+        window.addEventListener("resize", App.scheduleFillLayoutRefresh);
+        window.addEventListener("orientationchange", App.scheduleFillLayoutRefresh);
+        document.addEventListener("fullscreenchange", App.scheduleFillLayoutRefresh);
+
+        if (typeof ResizeObserver === 'function') {
+            App.fillResizeObserver = new ResizeObserver(() => {
+                App.scheduleFillLayoutRefresh();
+            });
+            DOM.sandBarsContainerEl && App.fillResizeObserver.observe(DOM.sandBarsContainerEl);
+            DOM.waterFillContainerEl && App.fillResizeObserver.observe(DOM.waterFillContainerEl);
+            DOM.stageVisualizationContainerEl && App.fillResizeObserver.observe(DOM.stageVisualizationContainerEl);
+        }
     },
 
     handleTabClick: function() { // 'this' refers to the clicked tab button
@@ -81,6 +95,15 @@ export const App = {
              const targetContent = DOM.tabContentsContainer.querySelector(`#${tabId}`);
              if (targetContent) targetContent.classList.add("active");
          }
+    },
+
+    scheduleFillLayoutRefresh: function() {
+        if (App.fillResizeFrameId) return;
+        App.fillResizeFrameId = requestAnimationFrame(() => {
+            App.fillResizeFrameId = null;
+            Layout.applyFontAndSizePreferences();
+            Visuals.refreshActiveFillLayout();
+        });
     },
 
     // --- Menu Resizer Handlers ---

@@ -1,10 +1,10 @@
 /** js/alerts.js */
-import { DOM } from './dom.js';
-import { Settings } from './settings.js';
-import { State } from './state.js';
-import { Visuals } from './visuals.js'; // Needed by restoreOriginalStyles
-import { Utils } from './utils.js';
-import { Schedule } from './schedule.js'; // Needed for table render on save/remove
+import { DOM } from './dom.ts';
+import { Settings } from './settings.ts';
+import { State } from './state.ts';
+import { Visuals } from './visuals.ts'; // Needed by restoreOriginalStyles
+import { Utils } from './utils.ts';
+import { Schedule } from './schedule.ts'; // Needed for table render on save/remove
 
 export const Alerts = {
     attachListeners: function() {
@@ -234,9 +234,9 @@ export const Alerts = {
             if (DOM.timeEl && Settings.preferences.showTime) DOM.timeEl.style.color = currentText;
             if (DOM.dateEl && Settings.preferences.showDate) DOM.dateEl.style.color = currentText;
             if (DOM.periodLabelEl && Settings.preferences.showScheduleLabel) DOM.periodLabelEl.style.color = currentText;
-            if (DOM.progressEl && Settings.preferences.showProgressBar && !Settings.preferences.showSandBars && !Settings.preferences.showWaterFill) DOM.progressEl.style.backgroundColor = currentText;
-            if (DOM.timeLeftEl && Settings.preferences.showProgressBar && !Settings.preferences.showSandBars && !Settings.preferences.showWaterFill) DOM.timeLeftEl.style.color = currentText;
-            if (DOM.scheduleCirclesDisplayEl && Settings.preferences.showScheduleCircles) {
+            if (DOM.progressEl && Settings.isProgressBarMode()) DOM.progressEl.style.backgroundColor = currentText;
+            if (DOM.timeLeftEl && Settings.isProgressBarMode()) DOM.timeLeftEl.style.color = currentText;
+            if (DOM.scheduleCirclesDisplayEl && Visuals.hasRenderableScheduleCircles()) {
                 // Just update active circle colors during flash
                 DOM.scheduleCirclesDisplayEl.querySelectorAll('.schedule-circle-symbol.active').forEach(span => span.style.color = currentText);
             }
@@ -266,12 +266,14 @@ export const Alerts = {
         if (DOM.timeEl && Settings.preferences.showTime) DOM.timeEl.style.color = scheme.text;
         if (DOM.dateEl && Settings.preferences.showDate) DOM.dateEl.style.color = scheme.text;
         if (DOM.periodLabelEl && Settings.preferences.showScheduleLabel) DOM.periodLabelEl.style.color = scheme.text;
-        if (DOM.progressEl && Settings.preferences.showProgressBar && !Settings.preferences.showSandBars && !Settings.preferences.showWaterFill) DOM.progressEl.style.backgroundColor = scheme.text;
-        if (DOM.timeLeftEl && Settings.preferences.showProgressBar && !Settings.preferences.showSandBars && !Settings.preferences.showWaterFill) DOM.timeLeftEl.style.color = scheme.text;
+        if (DOM.progressEl && Settings.isProgressBarMode()) DOM.progressEl.style.backgroundColor = scheme.text;
+        if (DOM.timeLeftEl && Settings.isProgressBarMode()) DOM.timeLeftEl.style.color = scheme.text;
 
         // Re-render circles to ensure correct active/inactive colors based on scheme
-        if (Settings.preferences.showScheduleCircles) {
+        if (Visuals.hasRenderableScheduleCircles()) {
              Visuals.renderScheduleCircles();
+        } else {
+             Visuals.updateScheduleCirclesVisibility([]);
         }
     }
 };

@@ -1,8 +1,8 @@
 /** js/timeSync.js */
-import { DOM } from './dom.js';
-import { Settings } from './settings.js';
-import { Clock } from './clock.js';
-import { Utils, getCurrentOffsetTime } from './utils.js'; // Import specific offset func
+import { DOM } from './dom.ts';
+import { Settings } from './settings.ts';
+import { Clock } from './clock.ts';
+import { Utils, getCurrentOffsetTime } from './utils.ts'; // Import specific offset func
 
 export const TimeSync = {
      attachListeners: function() {

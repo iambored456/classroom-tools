@@ -92,7 +92,7 @@ export const Utils = {
 };
 
 // Helper specifically for getting current time with offset, importing Settings here
-import { Settings } from './settings.js'; // Assuming settings.js exports Settings
+import { Settings } from './settings.ts'; // Assuming settings.js exports Settings
 
 export function getCurrentOffsetTime() {
     const offset = (Settings.preferences && Settings.preferences.timeOffsetMs) ? Number(Settings.preferences.timeOffsetMs) : 0;

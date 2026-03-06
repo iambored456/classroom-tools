@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 
 import { chromium } from 'playwright'
 
-import { startStaticServer } from './lib/static-server.js'
+import { startStaticServer } from './lib/static-server.ts'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const rootDir = join(__dirname, '..')
@@ -497,7 +497,7 @@ async function captureTarget(browser, target, options) {
     }
 
     const pngPath = resolve(OUTPUT_DIR, target.outputFile)
-    const screenshotOptions = {
+    const screenshotOptions: any = {
       path: pngPath,
       type: 'png',
       fullPage: false,

@@ -1,9 +1,10 @@
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
+import type { Socket } from 'node:net'
 import { extname, isAbsolute, relative, resolve } from 'node:path'
 
-import { findFreePort } from './ports.js'
+import { findFreePort } from './ports.ts'
 
 const CONTENT_TYPES = {
   '.css': 'text/css; charset=utf-8',
@@ -118,7 +119,7 @@ export async function startStaticServer(options) {
   const port = options.port ?? (await findFreePort(host))
   const verbose = options.verbose ?? false
 
-  const sockets = new Set()
+  const sockets = new Set<Socket>()
   const server = createServer((request, response) => {
     void handleRequest(rootDir, basePath, request, response, verbose).catch(() => {
       if (!response.headersSent) {
@@ -137,7 +138,7 @@ export async function startStaticServer(options) {
     })
   })
 
-  await new Promise((resolveStart, rejectStart) => {
+  await new Promise<void>((resolveStart, rejectStart) => {
     server.once('error', rejectStart)
     server.listen(port, host, () => {
       server.off('error', rejectStart)
@@ -160,7 +161,7 @@ export async function startStaticServer(options) {
       socket.destroy()
     }
 
-    await new Promise((resolveStop, rejectStop) => {
+    await new Promise<void>((resolveStop, rejectStop) => {
       server.close((closeError) => {
         if (closeError) {
           rejectStop(closeError)
@@ -218,7 +219,7 @@ async function handleRequest(rootDir, basePath, request, response, verbose) {
     return
   }
 
-  await new Promise((resolvePipe, rejectPipe) => {
+  await new Promise<void>((resolvePipe, rejectPipe) => {
     const stream = createReadStream(filePath)
     stream.on('error', rejectPipe)
     stream.on('end', () => resolvePipe())

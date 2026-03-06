@@ -17,4 +17,5 @@ export const State = {
     physicsParticlesAdded: 0,          // Counter for particles successfully added
     visualMaxParticlesPerSegment: 0,   // Estimated max particles per segment for current size
     totalParticlesForPeriod: 0,        // Total particles calculated for the current period duration
+    visualTargetParticlesForPeriod: 0, // Slightly higher end-state target so the pile reaches the visible top
 };

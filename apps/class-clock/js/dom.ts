@@ -1,7 +1,6 @@
-/** js/dom.js */
-// No imports needed for this pattern
+type DOMCache = Record<string, any>;
 
-function queryElements() {
+function queryElements(): DOMCache {
     return {
         clockDisplayArea: document.getElementById("clock-display-area"),
         timeEl: document.getElementById("time"),
@@ -13,9 +12,14 @@ function queryElements() {
         progressEl: document.getElementById("progress"),
         timeLeftEl: document.getElementById("time-left"),
         sandBarsContainerEl: document.getElementById("sand-bars-container"),
+        sandBarOutlineEls: Array.from(document.querySelectorAll('#sand-bars-container .sand-bar-outline-segment')),
         sandBarsCanvas: document.getElementById('sand-bars-canvas'), // Canvas for sand physics
         waterFillContainerEl: document.getElementById("water-fill-container"),
+        waterFillOutlineEls: Array.from(document.querySelectorAll('#water-fill-container .water-fill-outline-segment')),
         waterFillCanvas: document.getElementById('water-fill-canvas'), // Canvas for fluid water bars
+        stageVisualizationContainerEl: document.getElementById("stage-visualization-container"),
+        stageVisualizationOutlineEls: Array.from(document.querySelectorAll('#stage-visualization-container .stage-visualization-outline-segment')),
+        stageVisualizationCanvas: document.getElementById('stage-visualization-canvas'),
         alertModal: document.getElementById('alert-modal'),
         alertModalTitle: document.getElementById('modal-title'),
         alertModalBody: document.getElementById('modal-body'),
@@ -29,12 +33,11 @@ function queryElements() {
         appearanceTab: document.getElementById("appearance-tab"),
         scheduleAlertsTab: document.getElementById("schedule-alerts-tab"),
         displayElementsChecklist: document.getElementById("display-elements-checklist"),
-        fontSelect: document.getElementById("pref-font"),
+        visualizationModeInputs: Array.from(document.querySelectorAll('input[name="visualization-mode"]')),
+        visualizationSettingsSection: document.getElementById("visualization-settings"),
         dateFontSizeInput: document.getElementById("pref-date-font"),
         timeFontSizeInput: document.getElementById("pref-time-font"),
         labelFontSizeInput: document.getElementById("pref-schedule-label-font"),
-        timeLeftFontSizeInput: document.getElementById("pref-time-left-font"),
-        progressHeightInput: document.getElementById("pref-progress-height"),
         resetAppearanceBtn: document.getElementById('reset-appearance-defaults'),
         resetSchemesBtn: document.getElementById('reset-schemes-defaults'),
         colorSchemeTabsContainer: document.getElementById("colour-scheme-tabs"),
@@ -53,11 +56,9 @@ function queryElements() {
     };
 }
 
-// Export the cache object, initialized later
-export let DOM = {};
+export let DOM: DOMCache = {};
 
-// Export a function to populate the cache AFTER the DOM is loaded
-export function updateDOMCache() {
+export function updateDOMCache(): void {
     DOM = queryElements();
     console.log("DOM Cache Updated", DOM); // For debugging
 }

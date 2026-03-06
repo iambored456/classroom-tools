@@ -13,11 +13,11 @@
     "dev:fish-visualizer": "pnpm --filter fish-visualizer run dev",
     "dev:launchpad-controller": "pnpm --filter launchpad-controller run dev",
     "build": "pnpm -r --if-present run build",
-    "build:pages": "node scripts/build-pages.js",
-    "capture:previews": "node scripts/capture-previews.js",
-    "preview": "pnpm run build:pages && node scripts/preview-pages.js",
+    "build:pages": "tsx scripts/build-pages.ts",
+    "capture:previews": "tsx scripts/capture-previews.ts",
+    "preview": "pnpm run build:pages && tsx scripts/preview-pages.ts",
     "preview:hub": "pnpm --filter hub run preview",
-    "typecheck": "pnpm -r --if-present run typecheck",
+    "typecheck": "pnpm -r --if-present run typecheck && tsc -p tsconfig.scripts.json",
     "clean": "pnpm -r exec rm -rf dist node_modules/.vite"
   },
   "author": "Quinn Fleming",
@@ -27,6 +27,9 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "playwright": "^1.58.2"
+    "@types/node": "^24.10.1",
+    "playwright": "^1.58.2",
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.3"
   }
 }

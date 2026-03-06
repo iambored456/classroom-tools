@@ -1,9 +1,9 @@
 /** js/colorSchemes.js */
-import { DOM } from './dom.js';
-import { Settings } from './settings.js';
-import { Schedule } from './schedule.js';
-import { Clock } from './clock.js';
-import { Utils } from './utils.js';
+import { DOM } from './dom.ts';
+import { Settings } from './settings.ts';
+import { Schedule } from './schedule.ts';
+import { Clock } from './clock.ts';
+import { Utils } from './utils.ts';
 
 export const ColorSchemes = {
      attachListeners: function() {
