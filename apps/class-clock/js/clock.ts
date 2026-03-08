@@ -14,14 +14,12 @@ export const Clock = {
         if (Clock.updateIntervalId) clearInterval(Clock.updateIntervalId);
         Clock.updateIntervalId = setInterval(Clock.update, 1000); // Update every second
         Clock.update(); // Initial call immediately
-        console.log("Clock started.");
     },
 
     stop: function() {
          if (Clock.updateIntervalId) {
               clearInterval(Clock.updateIntervalId);
               Clock.updateIntervalId = null;
-              console.log("Clock stopped.");
          }
     },
 

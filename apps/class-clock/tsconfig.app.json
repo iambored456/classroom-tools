@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "strict": false,
+    "types": ["vite/client"],
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo"
   },
   "include": ["js/**/*.ts"]

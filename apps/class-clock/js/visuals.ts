@@ -3,10 +3,85 @@ import { DOM } from './dom.ts';
 import { Clock } from './clock.ts';
 import { getCurrentOffsetTime } from './utils.ts';
 import { State } from './state.ts';
-import { Physics } from './physics.ts';
-import { WaterBars } from './waterBars.ts';
 import { measureFillLayout } from './fillLayout.ts';
-import { StageVisualization } from './stageVisualization.ts';
+
+type PhysicsModule = typeof import('./physics.ts');
+type WaterBarsModule = typeof import('./waterBars.ts');
+type StageVisualizationModule = typeof import('./stageVisualization.ts');
+
+let physicsModulePromise: Promise<PhysicsModule> | null = null;
+let waterBarsModulePromise: Promise<WaterBarsModule> | null = null;
+let stageVisualizationModulePromise: Promise<StageVisualizationModule> | null = null;
+
+let loadedPhysicsModule: PhysicsModule | null = null;
+let loadedWaterBarsModule: WaterBarsModule | null = null;
+let loadedStageVisualizationModule: StageVisualizationModule | null = null;
+
+function loadPhysicsModule() {
+    if (!physicsModulePromise) {
+        physicsModulePromise = import('./physics.ts').then(
+            module => {
+                loadedPhysicsModule = module;
+                return module;
+            },
+            error => {
+                physicsModulePromise = null;
+                throw error;
+            }
+        );
+    }
+    return physicsModulePromise;
+}
+
+function loadWaterBarsModule() {
+    if (!waterBarsModulePromise) {
+        waterBarsModulePromise = import('./waterBars.ts').then(
+            module => {
+                loadedWaterBarsModule = module;
+                return module;
+            },
+            error => {
+                waterBarsModulePromise = null;
+                throw error;
+            }
+        );
+    }
+    return waterBarsModulePromise;
+}
+
+function loadStageVisualizationModule() {
+    if (!stageVisualizationModulePromise) {
+        stageVisualizationModulePromise = import('./stageVisualization.ts').then(
+            module => {
+                loadedStageVisualizationModule = module;
+                return module;
+            },
+            error => {
+                stageVisualizationModulePromise = null;
+                throw error;
+            }
+        );
+    }
+    return stageVisualizationModulePromise;
+}
+
+function getPhysics() {
+    return loadedPhysicsModule?.Physics ?? null;
+}
+
+function getWaterBars() {
+    return loadedWaterBarsModule?.WaterBars ?? null;
+}
+
+function getStageVisualization() {
+    return loadedStageVisualizationModule?.StageVisualization ?? null;
+}
+
+function nextFrame() {
+    return new Promise<void>(resolve => {
+        requestAnimationFrame(() => resolve());
+    });
+}
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
@@ -25,6 +100,8 @@ function getEmptyStageState() {
 }
 
 export const Visuals = {
+    visualSetupRequestId: 0,
+
     getScheduleCirclePeriods: function() {
         return (Settings.schedule || [])
             .map((item, index) => ({ ...item, originalIndex: index }))
@@ -169,34 +246,56 @@ export const Visuals = {
         };
     },
 
+    beginVisualSetup: function() {
+        Visuals.visualSetupRequestId += 1;
+        return Visuals.visualSetupRequestId;
+    },
+
+    isVisualSetupCurrent: function(requestId, expectedMode) {
+        return Visuals.visualSetupRequestId === requestId && Settings.getVisualizationMode() === expectedMode;
+    },
+
     stopLegacyVisualizations: function() {
+        const WaterBars = getWaterBars();
+        const Physics = getPhysics();
         Visuals.stopPhysicsCheckInterval();
-        WaterBars.stop();
-        WaterBars.reset();
-        Physics.clearDynamicBodies();
-        Physics.stop();
+        WaterBars?.stop();
+        WaterBars?.reset();
+        Physics?.clearDynamicBodies();
+        Physics?.stop();
     },
 
     stopStageVisualization: function() {
-        StageVisualization.stop();
+        getStageVisualization()?.stop();
     },
 
-    setupPhysicsSandBars: function(periodInfo) {
-        StageVisualization.stop();
+    setupPhysicsSandBars: async function(periodInfo) {
+        const requestId = Visuals.beginVisualSetup();
+        Visuals.stopStageVisualization();
         Visuals.stopPhysicsCheckInterval();
-        WaterBars.stop();
-        WaterBars.reset();
-        Physics.clearDynamicBodies();
+        getWaterBars()?.stop();
+        getWaterBars()?.reset();
+        getPhysics()?.clearDynamicBodies();
         State.physicsParticlesAdded = 0;
         State.totalParticlesForPeriod = 0;
         State.visualTargetParticlesForPeriod = 0;
 
         if (Settings.getVisualizationMode() !== 'sand' || !DOM.sandBarsCanvas || !DOM.sandBarsContainerEl) {
-            Physics.stop();
+            getPhysics()?.stop();
             return;
         }
 
-        requestAnimationFrame(() => {
+        try {
+            const { Physics } = await loadPhysicsModule();
+            if (!Visuals.isVisualSetupCurrent(requestId, 'sand')) {
+                return;
+            }
+
+            await nextFrame();
+            if (!Visuals.isVisualSetupCurrent(requestId, 'sand')) {
+                return;
+            }
+
             const layout = Visuals.getSandFillLayout();
             if (layout.width <= 0 || layout.height <= 0) {
                 console.warn("Sand bars container has zero dimensions after rAF. Aborting physics setup.");
@@ -230,25 +329,38 @@ export const Visuals = {
             } else {
                 Physics.stop();
             }
-        });
+        } catch (error) {
+            console.error("Unable to initialize sand visualization.", error);
+        }
     },
 
-    setupPhysicsWaterFill: function(periodInfo) {
-        StageVisualization.stop();
+    setupPhysicsWaterFill: async function(periodInfo) {
+        const requestId = Visuals.beginVisualSetup();
+        Visuals.stopStageVisualization();
         Visuals.stopPhysicsCheckInterval();
-        Physics.clearDynamicBodies();
-        Physics.stop();
+        getPhysics()?.clearDynamicBodies();
+        getPhysics()?.stop();
         State.physicsParticlesAdded = 0;
         State.totalParticlesForPeriod = 0;
         State.visualTargetParticlesForPeriod = 0;
 
         if (Settings.getVisualizationMode() !== 'water' || !DOM.waterFillCanvas || !DOM.waterFillContainerEl) {
-            WaterBars.stop();
-            WaterBars.reset();
+            getWaterBars()?.stop();
+            getWaterBars()?.reset();
             return;
         }
 
-        requestAnimationFrame(() => {
+        try {
+            const { WaterBars } = await loadWaterBarsModule();
+            if (!Visuals.isVisualSetupCurrent(requestId, 'water')) {
+                return;
+            }
+
+            await nextFrame();
+            if (!Visuals.isVisualSetupCurrent(requestId, 'water')) {
+                return;
+            }
+
             const layout = Visuals.getWaterFillLayout();
             if (layout.width <= 0 || layout.height <= 0) {
                 console.warn("Water fill container has zero dimensions after rAF. Aborting physics setup.");
@@ -280,23 +392,36 @@ export const Visuals = {
                 Visuals.checkAndAddWaterParticles();
                 State.physicsCheckIntervalId = setInterval(Visuals.checkAndAddWaterParticles, State.physicsCheckIntervalMs);
             }
-        });
+        } catch (error) {
+            console.error("Unable to initialize water visualization.", error);
+        }
     },
 
-    setupStageVisualization: function() {
+    setupStageVisualization: async function() {
+        const requestId = Visuals.beginVisualSetup();
         Visuals.stopPhysicsCheckInterval();
-        WaterBars.stop();
-        WaterBars.reset();
-        Physics.clearDynamicBodies();
-        Physics.stop();
+        getWaterBars()?.stop();
+        getWaterBars()?.reset();
+        getPhysics()?.clearDynamicBodies();
+        getPhysics()?.stop();
 
         const mode = Settings.getVisualizationMode();
         if (!Settings.isStageVisualizationMode() || !DOM.stageVisualizationCanvas || !DOM.stageVisualizationContainerEl) {
-            StageVisualization.stop();
+            getStageVisualization()?.stop();
             return;
         }
 
-        requestAnimationFrame(() => {
+        try {
+            const { StageVisualization } = await loadStageVisualizationModule();
+            if (!Visuals.isVisualSetupCurrent(requestId, mode)) {
+                return;
+            }
+
+            await nextFrame();
+            if (!Visuals.isVisualSetupCurrent(requestId, mode)) {
+                return;
+            }
+
             const layout = Visuals.getStageFillLayout();
             if (layout.width <= 0 || layout.height <= 0) {
                 console.warn("Stage visualization container has zero dimensions after rAF. Aborting stage setup.");
@@ -312,10 +437,14 @@ export const Visuals = {
             StageVisualization.setMode(mode);
             StageVisualization.start();
             Visuals.handleColorSchemeChange();
-        });
+        } catch (error) {
+            console.error("Unable to initialize stage visualization.", error);
+        }
     },
 
     isSandBarsNearTop: function() {
+        const Physics = getPhysics();
+        if (!Physics) return false;
         if (!Physics.isInitialized || !Physics.isRunning) return false;
 
         const segmentTopYs = Physics.getSegmentTopYs();
@@ -327,10 +456,15 @@ export const Visuals = {
     },
 
     isWaterNearTop: function() {
-        return WaterBars.isNearTop();
+        return getWaterBars()?.isNearTop() ?? false;
     },
 
     checkAndAddParticles: function() {
+        const Physics = getPhysics();
+        if (!Physics) {
+            Visuals.stopPhysicsCheckInterval();
+            return;
+        }
         if (Settings.getVisualizationMode() !== 'sand' || !Physics.isRunning || State.totalParticlesForPeriod <= 0) {
             Visuals.stopPhysicsCheckInterval();
             return;
@@ -396,7 +530,8 @@ export const Visuals = {
     },
 
     checkAndAddWaterParticles: function() {
-        if (Settings.getVisualizationMode() !== 'water' || !WaterBars.isRunning || State.totalParticlesForPeriod <= 0) {
+        const WaterBars = getWaterBars();
+        if (!WaterBars || Settings.getVisualizationMode() !== 'water' || !WaterBars.isRunning || State.totalParticlesForPeriod <= 0) {
             Visuals.stopPhysicsCheckInterval();
             return;
         }
@@ -462,8 +597,11 @@ export const Visuals = {
 
     refreshActiveFillLayout: function() {
         const mode = Settings.getVisualizationMode();
+        const Physics = getPhysics();
+        const WaterBars = getWaterBars();
+        const StageVisualization = getStageVisualization();
 
-        if (mode === 'sand' && Physics.isInitialized && DOM.sandBarsCanvas && DOM.sandBarsContainerEl) {
+        if (mode === 'sand' && Physics?.isInitialized && DOM.sandBarsCanvas && DOM.sandBarsContainerEl) {
             const layout = Visuals.getSandFillLayout();
             if (layout.width > 0 && layout.height > 0) {
                 const metrics = Visuals.calculateSandMetrics(layout.width, layout.height);
@@ -479,7 +617,7 @@ export const Visuals = {
             }
         }
 
-        if (mode === 'water' && WaterBars.isInitialized && DOM.waterFillCanvas && DOM.waterFillContainerEl) {
+        if (mode === 'water' && WaterBars?.isInitialized && DOM.waterFillCanvas && DOM.waterFillContainerEl) {
             const layout = Visuals.getWaterFillLayout();
             if (layout.width > 0 && layout.height > 0) {
                 const metrics = Visuals.calculateWaterMetrics(layout);
@@ -493,7 +631,7 @@ export const Visuals = {
             }
         }
 
-        if (Settings.isStageVisualizationMode() && StageVisualization.isInitialized && DOM.stageVisualizationCanvas && DOM.stageVisualizationContainerEl) {
+        if (Settings.isStageVisualizationMode() && StageVisualization?.isInitialized && DOM.stageVisualizationCanvas && DOM.stageVisualizationContainerEl) {
             const layout = Visuals.getStageFillLayout();
             if (layout.width > 0 && layout.height > 0) {
                 StageVisualization.setMode(mode);
@@ -513,18 +651,19 @@ export const Visuals = {
     handlePeriodChange: function(periodInfo) {
         const mode = Settings.getVisualizationMode();
         if (mode === 'sand') {
-            Visuals.setupPhysicsSandBars(periodInfo);
+            void Visuals.setupPhysicsSandBars(periodInfo);
             return;
         }
         if (mode === 'water') {
-            Visuals.setupPhysicsWaterFill(periodInfo);
+            void Visuals.setupPhysicsWaterFill(periodInfo);
             return;
         }
         if (Settings.isStageVisualizationMode()) {
-            Visuals.setupStageVisualization();
+            void Visuals.setupStageVisualization();
             return;
         }
 
+        Visuals.beginVisualSetup();
         Visuals.stopLegacyVisualizations();
         Visuals.stopStageVisualization();
     },
@@ -534,18 +673,19 @@ export const Visuals = {
         const mode = Settings.getVisualizationMode();
 
         if (mode === 'sand') {
-            Visuals.setupPhysicsSandBars(periodInfo);
+            void Visuals.setupPhysicsSandBars(periodInfo);
             return;
         }
         if (mode === 'water') {
-            Visuals.setupPhysicsWaterFill(periodInfo);
+            void Visuals.setupPhysicsWaterFill(periodInfo);
             return;
         }
         if (Settings.isStageVisualizationMode()) {
-            Visuals.setupStageVisualization();
+            void Visuals.setupStageVisualization();
             return;
         }
 
+        Visuals.beginVisualSetup();
         Visuals.stopLegacyVisualizations();
         Visuals.stopStageVisualization();
     },

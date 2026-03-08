@@ -289,7 +289,6 @@ export const Settings = {
                 }
             } catch (e) { console.error("Error parsing saved alerts settings.", e); }
         }
-        console.log("Settings loaded");
     },
 
     save: function() {

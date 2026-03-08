@@ -28,6 +28,8 @@ function queryElements(): DOMCache {
         settingsMenu: document.getElementById("settings-menu"),
         menuResizer: document.getElementById("menu-resizer"),
         settingsNav: document.getElementById("settings-nav"),
+        navHomeButton: document.getElementById("nav-home-button"),
+        navFullscreenButton: document.getElementById("nav-fullscreen-button"),
         tabsContainer: document.getElementById("tabs"),
         tabContentsContainer: document.getElementById("tab-contents"),
         appearanceTab: document.getElementById("appearance-tab"),
@@ -60,5 +62,4 @@ export let DOM: DOMCache = {};
 
 export function updateDOMCache(): void {
     DOM = queryElements();
-    console.log("DOM Cache Updated", DOM); // For debugging
 }
