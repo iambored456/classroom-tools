@@ -119,6 +119,25 @@
         </div>
 
         <div class="settings-section">
+            <h4>Display Power</h4>
+            <div class="wake-lock-control">
+                <label class="wake-lock-toggle" for="wake-lock-toggle">
+                    <input type="checkbox" id="wake-lock-toggle">
+                    <span class="wake-lock-switch" aria-hidden="true"></span>
+                    <span class="wake-lock-copy">
+                        <span class="wake-lock-title">Keep Screen Awake</span>
+                        <span class="wake-lock-note">Keeps the display from dimming while classClock stays visible.</span>
+                    </span>
+                </label>
+                <div class="wake-lock-status-row">
+                    <span class="wake-lock-status-label">Status</span>
+                    <span id="wake-lock-status" class="wake-lock-status-pill" role="status" aria-live="polite">inactive</span>
+                </div>
+                <p id="wake-lock-message" class="wake-lock-message" aria-live="polite">Wake lock is off.</p>
+            </div>
+        </div>
+
+        <div class="settings-section">
             <h4>Timeline Visualization</h4>
             <div class="visualization-mode-grid">
                 <label class="visualization-mode-card">

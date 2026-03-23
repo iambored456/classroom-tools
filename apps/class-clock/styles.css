@@ -415,6 +415,139 @@ html, body {
 .settings-section { background: rgba(0,0,0,0.25); padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #444; }
 .settings-section h3, .settings-section h4 { margin-top: 0; margin-bottom: 15px; color: #00aaff; border-bottom: 1px solid #555; padding-bottom: 8px; font-size: 1.2em; }
 .settings-section p { font-size: 0.9em; color: #ccc; margin-bottom: 15px; line-height: 1.4; }
+.wake-lock-control {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.wake-lock-toggle {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background:
+    radial-gradient(circle at top right, rgba(0,170,255,0.12), transparent 52%),
+    rgba(255,255,255,0.04);
+  cursor: pointer;
+}
+.wake-lock-toggle input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.wake-lock-switch {
+  position: relative;
+  width: 54px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.15);
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.wake-lock-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.28);
+  transition: transform 0.2s ease;
+}
+.wake-lock-toggle input[type="checkbox"]:checked + .wake-lock-switch {
+  background: rgba(0,170,255,0.34);
+  border-color: rgba(0,170,255,0.7);
+}
+.wake-lock-toggle input[type="checkbox"]:checked + .wake-lock-switch::after {
+  transform: translateX(24px);
+}
+.wake-lock-toggle input[type="checkbox"]:disabled + .wake-lock-switch {
+  opacity: 0.45;
+}
+.wake-lock-toggle:has(input[type="checkbox"]:focus-visible) {
+  outline: 2px solid rgba(0,170,255,0.9);
+  outline-offset: 2px;
+}
+.wake-lock-toggle:has(input[type="checkbox"]:disabled) {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+.wake-lock-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wake-lock-title {
+  font-size: 0.98em;
+  font-weight: 700;
+  color: #fff;
+}
+.wake-lock-note {
+  font-size: 0.85em;
+  color: #b9c4cf;
+  line-height: 1.35;
+}
+.wake-lock-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.wake-lock-status-label {
+  font-size: 0.88em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9eb0bf;
+}
+.wake-lock-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.84em;
+  font-weight: 700;
+  text-transform: lowercase;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+.wake-lock-status-pill[data-status="active"] {
+  background: rgba(40,167,69,0.22);
+  color: #8ef0a4;
+}
+.wake-lock-status-pill[data-status="requesting"] {
+  background: rgba(0,123,255,0.22);
+  color: #86c7ff;
+}
+.wake-lock-status-pill[data-status="released"] {
+  background: rgba(255,193,7,0.2);
+  color: #ffd56c;
+}
+.wake-lock-status-pill[data-status="error"],
+.wake-lock-status-pill[data-status="unsupported"] {
+  background: rgba(220,53,69,0.2);
+  color: #ff9daa;
+}
+.wake-lock-message {
+  margin: 0;
+  font-size: 0.9em;
+  line-height: 1.45;
+  color: #d0dae2;
+}
+.wake-lock-message[data-state="error"],
+.wake-lock-message[data-state="unsupported"] {
+  color: #ffb7c0;
+}
 .visualization-mode-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
 .visualization-mode-card {
   position: relative;

@@ -11,6 +11,8 @@ import { Layout } from './layout.ts';
 import { Clock } from './clock.ts';
 import { State } from './state.ts';
 import { Visuals } from './visuals.ts';
+import { WakeLock } from './wakeLock.ts';
+import { WakeLockToggle } from './wakeLockToggle.ts';
 
 const MENU_OPEN_ICON = '\u25B2';
 const MENU_CLOSED_ICON = '\u25BC';
@@ -25,6 +27,7 @@ export const App = {
         updateDOMCache();
 
         Settings.load();
+        WakeLock.init();
 
         Layout.update();
 
@@ -44,6 +47,7 @@ export const App = {
                 ColorSchemes.renderTabs();
                 Schedule.renderTable();
                 TimeSync.updateOffsetDisplay();
+                WakeLockToggle.init();
 
                 Appearance.attachListeners();
                 ColorSchemes.attachListeners();
