@@ -55,6 +55,7 @@ export const App = {
                 Alerts.attachListeners();
                 TimeSync.attachListeners();
                 App.attachGlobalListeners();
+                App.constrainSettingsMenuWidth();
 
                 if (State.currentPeriodIndex === null && !Settings.isProgressBarMode() && Settings.hasTimelineVisualization()) {
                     Visuals.handleDisplayToggle();
@@ -291,15 +292,63 @@ export const App = {
              const targetContent = DOM.tabContentsContainer.querySelector(`#${tabId}`);
              if (targetContent) targetContent.classList.add("active");
          }
+         requestAnimationFrame(() => {
+             App.constrainSettingsMenuWidth();
+         });
     },
 
     scheduleFillLayoutRefresh: function() {
         if (App.fillResizeFrameId) return;
         App.fillResizeFrameId = requestAnimationFrame(() => {
             App.fillResizeFrameId = null;
+            App.constrainSettingsMenuWidth();
             Layout.applyFontAndSizePreferences();
             Visuals.refreshActiveFillLayout();
         });
+    },
+
+    getSettingsMenuWidthBounds: function() {
+        const viewportWidth = Math.max(window.innerWidth || 0, 320);
+        const minWidth = Math.min(480, Math.max(320, viewportWidth - 24));
+        const maxWidth = Math.max(minWidth, Math.min(980, viewportWidth - 8));
+        return { minWidth, maxWidth };
+    },
+
+    getPreferredSettingsMenuWidth: function() {
+        const defaultWidth = 720;
+        if (!DOM.settingsMenu) return defaultWidth;
+        if (!DOM.scheduleAlertsTab?.classList.contains('active')) return defaultWidth;
+
+        const tableWrap = DOM.scheduleTableWrapEl as HTMLElement | null;
+        const table = DOM.scheduleTableEl as HTMLElement | null;
+        if (!tableWrap || !table) return 820;
+
+        const menuWidth = DOM.settingsMenu.getBoundingClientRect().width || defaultWidth;
+        const wrapWidth = tableWrap.getBoundingClientRect().width || 0;
+        const tableMinWidth = Number.parseFloat(window.getComputedStyle(table).minWidth || '0');
+        const contentWidth = Math.max(table.scrollWidth || 0, Number.isFinite(tableMinWidth) ? tableMinWidth : 0);
+        if (contentWidth <= 0) return 820;
+
+        if (wrapWidth <= 0) {
+            return Math.max(defaultWidth, Math.ceil(contentWidth + 56));
+        }
+
+        const menuChromeWidth = Math.max(0, menuWidth - wrapWidth);
+        return Math.max(defaultWidth, Math.ceil(contentWidth + menuChromeWidth));
+    },
+
+    constrainSettingsMenuWidth: function() {
+        if (!DOM.settingsMenu) return;
+
+        const { minWidth, maxWidth } = App.getSettingsMenuWidthBounds();
+        const preferredWidth = App.getPreferredSettingsMenuWidth();
+        const inlineWidth = Number.parseFloat(DOM.settingsMenu.style.width || '');
+        const measuredWidth = DOM.settingsMenu.getBoundingClientRect().width;
+        const currentWidth = Number.isFinite(inlineWidth) && inlineWidth > 0 ? inlineWidth : measuredWidth;
+        const targetWidth = Math.max(preferredWidth, currentWidth || preferredWidth);
+        const clampedWidth = Math.max(minWidth, Math.min(maxWidth, targetWidth || maxWidth));
+
+        DOM.settingsMenu.style.width = `${Math.round(clampedWidth)}px`;
     },
 
     // --- Menu Resizer Handlers ---
@@ -312,11 +361,9 @@ export const App = {
      handleResizeMouseMove: function(e) {
           if (!State.isResizingMenu || !DOM.settingsMenu) return;
           const newWidth = window.innerWidth - e.clientX;
-          const minWidth = 400;
-          const maxWidth = Math.min(950, window.innerWidth - 50);
-          if (newWidth >= minWidth && newWidth <= maxWidth) {
-              DOM.settingsMenu.style.width = newWidth + "px";
-          }
+          const { minWidth, maxWidth } = App.getSettingsMenuWidthBounds();
+          const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+          DOM.settingsMenu.style.width = clampedWidth + "px";
      },
      handleResizeMouseUp: function(e) {
           if (State.isResizingMenu) {

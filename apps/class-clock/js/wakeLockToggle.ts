@@ -19,7 +19,7 @@ function getStatusMessage(snapshot: WakeLockSnapshot) {
             return snapshot.error || 'Could not keep the screen awake.';
         case 'inactive':
             if (snapshot.isEnabled && !snapshot.hasRequestedThisSession) {
-                return 'Preference restored. Some browsers require a fresh tap before this session can activate wake lock.';
+                return 'Wake lock preference is on. classClock will try to restore it while the tab is visible.';
             }
             return snapshot.isEnabled
                 ? 'Wake lock is enabled and will resume after the next successful request.'

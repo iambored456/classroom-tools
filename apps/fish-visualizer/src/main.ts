@@ -4,6 +4,7 @@ import {
     buildPrerequisiteModel,
     calculateProgressionMetrics,
     computeProgressMetrics,
+    expandSkillToken,
     PROGRESS_STATUS,
     normalizeProgressStatus,
     transitiveReduceLinks,
@@ -13,7 +14,7 @@ import {
     createLegend, applyHighlightFilter, findAndFocusNode, getSelectedNodeIds,
     updateWeightGuides,
 } from './graph';
-import { CATEGORY_LABELS } from './config';
+import { getCategoryLabel, getLegacyGroup } from './config';
 import type {
     SkillNode,
     SkillLink,
@@ -26,6 +27,8 @@ import type {
     OffOffDisplay,
     Theme,
     SavedPositions,
+    ReweightedSkillDataset,
+    ReweightedSkillMetadata,
 } from './types';
 
 // --- Constants ---
@@ -37,17 +40,23 @@ const DEFAULT_SETTINGS: Settings = {
     arrowSize: 6,
     repulsion: -250,
     spacing: 100,
-    progression: 0.22,
-    layoutMode: 'growth-axis',
+    progression: 0.56,
+    canvasWidth: 150,
+    canvasHeight: 170,
+    layoutMode: 'layered-lanes',
     transitiveReduction: false,
     progressMode: false,
     offOffDisplay: 'dim',
     snapToGuides: false,
 };
 
+const WEIGHT_MIN = 1;
+const WEIGHT_MAX = 9;
+
 const DROPDOWN_STATE_KEY = 'sidebarDropdownState';
 const SORT_STATE_KEY = 'skillSortState';
 const PROGRESS_STATE_KEY = 'skillGraphProgressState';
+type SortOrder = 'weighted' | 'alpha' | 'prereq';
 
 // --- Module-level State ---
 
@@ -55,13 +64,16 @@ let masterNodes: SkillNode[] = [];
 let masterLinks: SkillLink[] = [];
 let simulation: d3.Simulation<SkillNode, SkillLink> | null = null;
 let settings: Settings = { ...DEFAULT_SETTINGS };
-let currentSortOrder: string = storage.loadItem<string>(SORT_STATE_KEY) ?? 'alpha';
+let currentSortOrder: SortOrder = normalizeSortOrder(storage.loadItem<string>(SORT_STATE_KEY));
 let edgeTypeByKey = new Map<string, 'required' | 'or'>();
 let prerequisiteGroupsByTarget = new Map<string, string[][]>();
 let progressState: ProgressState = storage.loadItem<ProgressState>(PROGRESS_STATE_KEY) ?? {};
 let activeStudentIndex: number | null = null;
 let studentNames: string[] = [];
 let cachedSkills: Record<string, string> | null = null;
+let reweightedBySkillId = new Map<string, ReweightedSkillMetadata>();
+let functionalCategoryOrder = new Map<string, number>();
+let continuumBandByWeight = new Map<number, string>();
 
 const dataFile = (fileName: string): string => `${import.meta.env.BASE_URL}data/${fileName}`;
 
@@ -78,6 +90,22 @@ function normalizeOffOffDisplay(value: unknown): OffOffDisplay {
 
 function normalizeTheme(value: unknown): Theme {
     return value === 'light' ? 'light' : 'dark';
+}
+
+function normalizeSortOrder(value: unknown): SortOrder {
+    return value === 'alpha' || value === 'prereq' ? value : 'weighted';
+}
+
+function getSortLabel(sortOrder: SortOrder): string {
+    if (sortOrder === 'alpha') return 'A-Z';
+    if (sortOrder === 'prereq') return '# Pre';
+    return 'Map';
+}
+
+function getNextSortOrder(sortOrder: SortOrder): SortOrder {
+    if (sortOrder === 'weighted') return 'alpha';
+    if (sortOrder === 'alpha') return 'prereq';
+    return 'weighted';
 }
 
 function applyTheme(theme: Theme): void {
@@ -100,7 +128,7 @@ function getViewSettings(): Settings {
 }
 
 function formatSettingDisplay(key: NumericSettingKey, value: number): string {
-    if (key === 'spacing') return `${Math.round(value)}%`;
+    if (key === 'spacing' || key === 'canvasWidth' || key === 'canvasHeight') return `${Math.round(value)}%`;
     if (key === 'progression') return `${Math.round(value * 100)}%`;
     return String(value);
 }
@@ -136,6 +164,62 @@ function syncChecklistInputsFromProgress(): void {
     });
 }
 
+function getWeightRatio(weight: number): number {
+    const span = Math.max(1, WEIGHT_MAX - WEIGHT_MIN);
+    return Math.max(0, Math.min(1, (weight - WEIGHT_MIN) / span));
+}
+
+function getVisualGroupOrder(group: string): number {
+    return functionalCategoryOrder.get(group) ?? Number.MAX_SAFE_INTEGER;
+}
+
+function hydrateNodeMetadata(node: SkillNode, derivedScore: number): void {
+    const metadata = reweightedBySkillId.get(node.id);
+    const legacyGroup = getLegacyGroup(node.id);
+    const fallbackWeight = WEIGHT_MIN + Math.round(derivedScore * (WEIGHT_MAX - WEIGHT_MIN));
+
+    node.visualGroup = metadata?.functionalCategory ?? legacyGroup;
+    node.visualGroupOrder = getVisualGroupOrder(node.visualGroup);
+    node.categoryWeight = metadata?.categoryWeight ?? fallbackWeight;
+    node.continuumBand = metadata?.continuumBand ?? 'Derived continuum';
+    node.continuumBandOrder = metadata?.continuumBandOrder ?? 0;
+    node.priorityTier = metadata?.priorityTier ?? 'Core';
+    node.safetyFlag = Boolean(metadata?.safetyFlag);
+    node.originalFamily = metadata?.originalFamily ?? legacyGroup;
+    node.originalLevel = metadata?.originalLevel ?? node.categoryWeight;
+    node.scoreDelta = metadata?.scoreDelta ?? 0;
+    node.weightingNote = metadata?.weightingNote ?? '';
+    node.sourceCode = metadata?.sourceCode ?? node.id;
+    node.sourceSkill = metadata?.sourceSkill ?? node.description;
+    node.groupSize = metadata?.groupSize ?? 1;
+    node.groupIndex = metadata?.groupIndex ?? 1;
+    node.grouped = Boolean(metadata?.grouped);
+    node.withinCategoryOrder = metadata?.withinCategoryOrder ?? 0;
+    node.progressionScore = metadata ? getWeightRatio(node.categoryWeight) : derivedScore;
+}
+
+function getGraphViewport(): { width: number; height: number } {
+    const graphContainer = document.getElementById('graph-container');
+    const viewportRect = graphContainer?.getBoundingClientRect();
+    if (viewportRect && viewportRect.width > 0 && viewportRect.height > 0) {
+        return { width: viewportRect.width, height: viewportRect.height };
+    }
+
+    const graphElement = d3.select<SVGSVGElement, unknown>('#network-graph').node();
+    const graphRect = graphElement?.getBoundingClientRect();
+    return {
+        width: graphRect?.width ?? 800,
+        height: graphRect?.height ?? 600,
+    };
+}
+
+function setGraphCanvasSize(width: number, height: number): void {
+    const graphElement = document.getElementById('network-graph');
+    if (!(graphElement instanceof SVGSVGElement)) return;
+    graphElement.style.width = `${Math.max(1, Math.round(width))}px`;
+    graphElement.style.height = `${Math.max(1, Math.round(height))}px`;
+}
+
 // --- Initialization ---
 
 async function initializeApp(): Promise<void> {
@@ -146,13 +230,18 @@ async function initializeApp(): Promise<void> {
     let skillsData: Record<string, string> | undefined;
     let appendixAData: Record<string, string[]> | undefined;
     let appendixBData: Record<string, string[]> | undefined;
+    let reweightedData: ReweightedSkillDataset | null | undefined = null;
 
     try {
-        [edgeData, skillsData, appendixAData, appendixBData] = await Promise.all([
+        [edgeData, skillsData, appendixAData, appendixBData, reweightedData] = await Promise.all([
             d3.json<RawEdge[]>(dataFile('edges.json')),
             d3.json<Record<string, string>>(dataFile('skills.json')),
             d3.json<Record<string, string[]>>(dataFile('appendixA.json')),
             d3.json<Record<string, string[]>>(dataFile('appendixB.json')),
+            d3.json<ReweightedSkillDataset>(dataFile('reweighted-skills.json')).catch((error) => {
+                console.warn('Continuing without reweighted skill metadata.', error);
+                return null;
+            }),
         ]);
     } catch (error) {
         console.error("Failed to load data files. Ensure data/ folder is correct.", error);
@@ -162,6 +251,17 @@ async function initializeApp(): Promise<void> {
 
     if (!edgeData || !skillsData || !appendixAData || !appendixBData) return;
 
+    reweightedBySkillId = new Map(Object.entries(reweightedData?.bySkill ?? {}));
+    functionalCategoryOrder = new Map(
+        (reweightedData?.categories ?? []).map((category, index) => [category, index]),
+    );
+    continuumBandByWeight = new Map();
+    if (reweightedData) {
+        Object.values(reweightedData.bySkill).forEach((metadata) => {
+            continuumBandByWeight.set(metadata.categoryWeight, metadata.continuumBand);
+        });
+    }
+
     // 2. Prepare Master Data Lists
     masterNodes = Object.keys(skillsData).map(id => ({
         id,
@@ -169,12 +269,29 @@ async function initializeApp(): Promise<void> {
         prereqCount: appendixAData[id]?.length ?? 0,
         progressionScore: 0,
         progressionDepth: 0,
+        visualGroup: getLegacyGroup(id),
+        visualGroupOrder: Number.MAX_SAFE_INTEGER,
+        categoryWeight: 0,
+        continuumBand: 'Derived continuum',
+        continuumBandOrder: 0,
+        priorityTier: 'Core',
+        safetyFlag: false,
+        originalFamily: getLegacyGroup(id),
+        originalLevel: 0,
+        scoreDelta: 0,
+        weightingNote: '',
+        sourceCode: id,
+        sourceSkill: skillsData[id] ?? '',
+        groupSize: 1,
+        groupIndex: 1,
+        grouped: false,
+        withinCategoryOrder: 0,
     }));
 
     const { scoreById, depthById } = calculateProgressionMetrics(masterNodes, edgeData as SkillLink[]);
     masterNodes.forEach((node) => {
-        node.progressionScore = scoreById.get(node.id) ?? 0.5;
         node.progressionDepth = depthById.get(node.id) ?? 0;
+        hydrateNodeMetadata(node, scoreById.get(node.id) ?? 0.5);
     });
 
     const nodeMap = new Map(masterNodes.map(node => [node.id, node]));
@@ -202,8 +319,8 @@ async function initializeApp(): Promise<void> {
     populateSidebar(skillsData, appendixAData, appendixBData);
 
     // 5. Create the Force Simulation
-    const graphEl = d3.select<SVGSVGElement, unknown>("#network-graph").node();
-    const { width, height } = graphEl?.getBoundingClientRect() ?? { width: 800, height: 600 };
+    const { width, height } = getGraphViewport();
+    setGraphCanvasSize(width, height);
 
     simulation = d3.forceSimulation<SkillNode, SkillLink>()
         .force("link", d3.forceLink<SkillNode, SkillLink>().id(d => d.id))
@@ -258,7 +375,14 @@ function updateActiveGraph(): void {
     const progressStateById = progressMetrics.stateById;
 
     redrawGraph(activeNodes, activeLinks, (allNodes) => {
+        if (normalizeLayoutMode(effectiveSettings.layoutMode) === 'free-force') {
+            storage.savePositions(allNodes);
+            return;
+        }
+
+        applyLayoutForces(allNodes, effectiveSettings);
         storage.savePositions(allNodes);
+        simulation?.alpha(0.08).restart();
     }, {
         edgeTypeByKey,
         progressMode: effectiveSettings.progressMode,
@@ -276,30 +400,242 @@ function updateActiveGraph(): void {
     simulation!.alpha(0.18).restart();
 }
 
+function compareVisualGroups(left: string, right: string): number {
+    const leftOrder = getVisualGroupOrder(left);
+    const rightOrder = getVisualGroupOrder(right);
+    if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+    return left.localeCompare(right);
+}
+
+function weightedSort(a: SkillNode, b: SkillNode): number {
+    const groupDiff = compareVisualGroups(a.visualGroup, b.visualGroup);
+    if (groupDiff !== 0) return groupDiff;
+    const orderDiff = a.withinCategoryOrder - b.withinCategoryOrder;
+    if (orderDiff !== 0) return orderDiff;
+    const weightDiff = a.categoryWeight - b.categoryWeight;
+    if (weightDiff !== 0) return weightDiff;
+    const sourceDiff = a.sourceCode.localeCompare(b.sourceCode, undefined, { numeric: true });
+    if (sourceDiff !== 0) return sourceDiff;
+    const groupedDiff = a.groupIndex - b.groupIndex;
+    if (groupedDiff !== 0) return groupedDiff;
+    return naturalSort(a, b);
+}
+
+function getNodeSortComparator(sortOrder: SortOrder): (a: SkillNode, b: SkillNode) => number {
+    if (sortOrder === 'alpha') return naturalSort;
+    if (sortOrder === 'prereq') return prereqSort;
+    return weightedSort;
+}
+
+function buildContinuumBands(): Array<{ label: string; startLevel: number; endLevel: number }> {
+    const bands: Array<{ label: string; startLevel: number; endLevel: number }> = [];
+    let currentLabel = '';
+    let bandStart = WEIGHT_MIN;
+
+    for (let weight = WEIGHT_MIN; weight <= WEIGHT_MAX; weight += 1) {
+        const nextLabel = continuumBandByWeight.get(weight) ?? `Weight ${weight}`;
+        if (!currentLabel) {
+            currentLabel = nextLabel;
+            bandStart = weight;
+            continue;
+        }
+        if (nextLabel !== currentLabel) {
+            bands.push({ label: currentLabel, startLevel: bandStart, endLevel: weight - 1 });
+            currentLabel = nextLabel;
+            bandStart = weight;
+        }
+    }
+
+    if (currentLabel) {
+        bands.push({ label: currentLabel, startLevel: bandStart, endLevel: WEIGHT_MAX });
+    }
+
+    return bands;
+}
+
+function buildLaneLayout(
+    activeNodes: SkillNode[],
+    config: {
+        topInset: number;
+        bottomInset: number;
+        minCanvasHeight: number;
+        laneGap: number;
+        lanePadding: number;
+        laneSpacer: number;
+        laneLabelGap: number;
+    },
+): {
+    laneTargets: Map<string, number>;
+    lanes: Array<{ key: string; label: string; top: number; bottom: number }>;
+    canvasHeight: number;
+} {
+    const categories = [...new Set(activeNodes.map((node) => node.visualGroup))].sort(compareVisualGroups);
+    const rawTargets = new Map<string, number>();
+    const rawLanes: Array<{ key: string; label: string; top: number; bottom: number }> = [];
+    let cursor = config.topInset;
+
+    categories.forEach((category) => {
+        const nodesInLane = activeNodes
+            .filter((node) => node.visualGroup === category)
+            .sort(weightedSort);
+
+        nodesInLane.forEach((node, nodeIndex) => {
+            const y = cursor + config.lanePadding + config.laneLabelGap + nodeIndex * config.laneGap;
+            rawTargets.set(node.id, y);
+        });
+
+        const lastNodeY = nodesInLane.length > 0
+            ? cursor + config.lanePadding + config.laneLabelGap + (nodesInLane.length - 1) * config.laneGap
+            : cursor + config.lanePadding + config.laneLabelGap;
+        const bottom = Math.max(
+            cursor + config.lanePadding * 2 + config.laneLabelGap,
+            lastNodeY + config.lanePadding,
+        );
+
+        rawLanes.push({
+            key: category,
+            label: getCategoryLabel(category),
+            top: cursor,
+            bottom,
+        });
+
+        cursor = bottom + config.laneSpacer;
+    });
+
+    const contentBottom = rawLanes.length > 0 ? rawLanes[rawLanes.length - 1]!.bottom : config.topInset;
+    const canvasHeight = Math.max(config.minCanvasHeight, contentBottom + config.bottomInset);
+    const extraSpace = Math.max(0, canvasHeight - (contentBottom + config.bottomInset));
+    const verticalOffset = rawLanes.length > 0 ? extraSpace / 2 : 0;
+    const laneTargets = new Map<string, number>();
+    rawTargets.forEach((value, key) => laneTargets.set(key, value + verticalOffset));
+    const lanes = rawLanes.map((lane) => ({
+        ...lane,
+        top: lane.top + verticalOffset,
+        bottom: lane.bottom + verticalOffset,
+    }));
+
+    return { laneTargets, lanes, canvasHeight };
+}
+
+function buildColumnLayout(
+    activeNodes: SkillNode[],
+    config: {
+        topInset: number;
+        bottomInset: number;
+        minCanvasHeight: number;
+        rowGap: number;
+        rowPadding: number;
+    },
+): {
+    yTargets: Map<string, number>;
+    canvasHeight: number;
+} {
+    const columns = new Map<number, SkillNode[]>();
+    activeNodes.forEach((node) => {
+        const nodes = columns.get(node.categoryWeight) ?? [];
+        nodes.push(node);
+        columns.set(node.categoryWeight, nodes);
+    });
+    columns.forEach((nodes) => nodes.sort(weightedSort));
+
+    const maxColumnCount = Math.max(1, ...Array.from(columns.values(), (nodes) => nodes.length));
+    const maxColumnHeight = config.rowPadding * 2 + Math.max(0, maxColumnCount - 1) * config.rowGap;
+    const canvasHeight = Math.max(
+        config.minCanvasHeight,
+        config.topInset + config.bottomInset + maxColumnHeight,
+    );
+
+    const yTargets = new Map<string, number>();
+    columns.forEach((nodes) => {
+        const columnHeight = config.rowPadding * 2 + Math.max(0, nodes.length - 1) * config.rowGap;
+        const startY = config.topInset + Math.max(0, (canvasHeight - config.topInset - config.bottomInset - columnHeight) / 2);
+        nodes.forEach((node, index) => {
+            yTargets.set(node.id, startY + config.rowPadding + index * config.rowGap);
+        });
+    });
+
+    return { yTargets, canvasHeight };
+}
+
 /** Applies layout forces for the selected mode. */
 function applyLayoutForces(activeNodes: SkillNode[], currentSettings: Settings): void {
     if (!simulation) return;
 
-    const graphElement = d3.select<Element, unknown>('#network-graph').node();
-    if (!graphElement) return;
-
-    const { width, height } = graphElement.getBoundingClientRect();
-    const spacingFactor = Math.max(0.5, Math.min(2, currentSettings.spacing / 100));
-    const usableWidth = Math.min(width * 0.95, Math.max(width * 0.3, width * 0.82 * spacingFactor));
-    const leftEdge = (width - usableWidth) / 2;
-    const progressionStrength = Math.max(0, Math.min(1, currentSettings.progression));
+    const { width: viewportWidth, height: viewportHeight } = getGraphViewport();
     const mode = normalizeLayoutMode(currentSettings.layoutMode);
-    const centerX = width / 2;
-    const centerY = height / 2;
+    const spacingFactor = Math.max(0.5, Math.min(2, currentSettings.spacing / 100));
+    const baseCanvasWidth = Math.max(viewportWidth, viewportWidth * (currentSettings.canvasWidth / 100));
+    const structuredHeightFactor = 1 + Math.max(0, (currentSettings.canvasHeight - 100) / 100) * 0.4;
+    const baseCanvasHeight = Math.max(
+        viewportHeight,
+        viewportHeight * (mode === 'free-force' ? (currentSettings.canvasHeight / 100) : structuredHeightFactor),
+    );
+    const stepCount = Math.max(1, WEIGHT_MAX - WEIGHT_MIN);
+    const horizontalPadding = Math.max(56, currentSettings.nodeSize * 6);
+    const columnGap = Math.max(96, currentSettings.nodeSize * 6.4) * (0.78 + spacingFactor * 0.48);
+    const minUsableWidth = stepCount * columnGap;
+    const canvasWidth = Math.max(baseCanvasWidth, minUsableWidth + horizontalPadding * 2);
+    const usableWidth = Math.max(1, canvasWidth - horizontalPadding * 2);
+    const leftEdge = horizontalPadding;
+    const progressionStrength = Math.max(0, Math.min(1, currentSettings.progression));
     const shouldSnapToGuides = mode !== 'free-force' && Boolean(currentSettings.snapToGuides);
+    const stepWidth = usableWidth / stepCount;
+    const topInset = mode === 'layered-lanes' ? 32 : 22;
+    const bottomInset = mode === 'layered-lanes' ? 18 : 14;
+    const laneGap = Math.max(18, currentSettings.nodeSize * 2.7) * (0.76 + spacingFactor * 0.26);
+    const lanePadding = Math.max(12, currentSettings.nodeSize * 1.2);
+    const laneSpacer = Math.max(12, laneGap * 0.48);
+    const laneLabelGap = Math.max(16, currentSettings.nodeSize * 1.45);
+    const rowGap = Math.max(18, currentSettings.nodeSize * 2.9) * (0.68 + spacingFactor * 0.22);
+    const rowPadding = Math.max(12, currentSettings.nodeSize * 1.2);
     const snapRatioToGuides = (ratio: number): number => {
         const clamped = Math.max(0, Math.min(1, ratio));
         if (!shouldSnapToGuides) return clamped;
-        return Math.round(clamped * 9) / 9;
+        return Math.round(clamped * stepCount) / stepCount;
+    };
+    const laneLayout = mode === 'layered-lanes'
+        ? buildLaneLayout(activeNodes, {
+            topInset,
+            bottomInset,
+            minCanvasHeight: baseCanvasHeight,
+            laneGap,
+            lanePadding,
+            laneSpacer,
+            laneLabelGap,
+        })
+        : null;
+    const columnLayout = mode === 'growth-axis'
+        ? buildColumnLayout(activeNodes, {
+            topInset,
+            bottomInset,
+            minCanvasHeight: baseCanvasHeight,
+            rowGap,
+            rowPadding,
+        })
+        : null;
+    const forceCanvasHeight = Math.max(
+        baseCanvasHeight,
+        viewportHeight + Math.sqrt(Math.max(1, activeNodes.length)) * laneGap * 2.2,
+    );
+    const canvasHeight = laneLayout?.canvasHeight ?? columnLayout?.canvasHeight ?? forceCanvasHeight;
+    const centerX = canvasWidth / 2;
+    const centerY = canvasHeight / 2;
+    setGraphCanvasSize(canvasWidth, canvasHeight);
+    const getWeightedX = (node: SkillNode): number => {
+        const snappedRatio = snapRatioToGuides(getWeightRatio(node.categoryWeight));
+        const anchor = leftEdge + snappedRatio * usableWidth;
+        if (shouldSnapToGuides) return anchor;
+        const tieOffset = ((node.progressionScore ?? getWeightRatio(node.categoryWeight)) - 0.5) * stepWidth * 0.55;
+        return Math.max(leftEdge, Math.min(leftEdge + usableWidth, anchor + tieOffset));
+    };
+    const getTargetY = (node: SkillNode): number => {
+        if (mode === 'layered-lanes') return laneLayout?.laneTargets.get(node.id) ?? centerY;
+        if (mode === 'growth-axis') return columnLayout?.yTargets.get(node.id) ?? centerY;
+        return centerY;
     };
 
     const chargeForce = simulation.force<d3.ForceManyBody<SkillNode>>('charge');
-    chargeForce?.strength(currentSettings.repulsion);
+    chargeForce?.strength(mode === 'free-force' ? currentSettings.repulsion : 0);
 
     const collideForce = simulation.force<d3.ForceCollide<SkillNode>>('collide');
     collideForce?.radius(currentSettings.nodeSize + 10);
@@ -312,28 +648,45 @@ function applyLayoutForces(activeNodes: SkillNode[], currentSettings: Settings):
             .force('x', d3.forceX<SkillNode>(centerX).strength(0.03))
             .force('y', d3.forceY<SkillNode>(centerY).strength(0.03));
     } else if (mode === 'layered-lanes') {
-        const activeMaxDepth = Math.max(1, ...activeNodes.map((node) => node.progressionDepth ?? 0));
         simulation
-            .force('x', d3.forceX<SkillNode>((node) => {
-                const depth = Math.max(0, node.progressionDepth ?? 0);
-                const laneRatio = snapRatioToGuides(depth / activeMaxDepth);
-                return leftEdge + laneRatio * usableWidth;
-            }).strength(Math.max(0.75, progressionStrength)))
-            .force('y', d3.forceY<SkillNode>(centerY).strength(0.05));
+            .force('x', d3.forceX<SkillNode>(getWeightedX).strength(Math.max(0.82, progressionStrength)))
+            .force('y', d3.forceY<SkillNode>((node) => laneLayout?.laneTargets.get(node.id) ?? centerY).strength(0.34));
     } else {
         simulation
-            .force('x', d3.forceX<SkillNode>((node) => {
-                const ratio = snapRatioToGuides(node.progressionScore ?? 0.5);
-                return leftEdge + ratio * usableWidth;
-            }).strength(progressionStrength))
+            .force('x', d3.forceX<SkillNode>(getWeightedX).strength(Math.max(0.55, progressionStrength)))
             .force('y', d3.forceY<SkillNode>(centerY).strength(0.05));
     }
+
+    activeNodes.forEach((node) => {
+        if (mode === 'free-force') {
+            if (node.layoutPinned) {
+                node.layoutPinned = false;
+                node.fx = null;
+                node.fy = null;
+            }
+            return;
+        }
+
+        const targetX = getWeightedX(node);
+        const targetY = getTargetY(node);
+        node.layoutPinned = true;
+        node.fx = targetX;
+        node.fy = targetY;
+        node.x = targetX;
+        node.y = targetY;
+    });
 
     updateWeightGuides({
         visible: mode !== 'free-force',
         leftEdge,
         usableWidth,
-        height,
+        height: canvasHeight,
+        topInset,
+        bottomInset,
+        minLevel: WEIGHT_MIN,
+        maxLevel: WEIGHT_MAX,
+        bands: buildContinuumBands(),
+        lanes: mode === 'layered-lanes' ? laneLayout?.lanes ?? [] : [],
         snapNodes: shouldSnapToGuides,
     });
 
@@ -341,13 +694,32 @@ function applyLayoutForces(activeNodes: SkillNode[], currentSettings: Settings):
 }
 
 function updateLayoutControls(currentSettings: Settings): void {
-    const progressionSlider = document.getElementById('progression-slider');
-    const progressionValue = document.getElementById('progression-value');
-    if (!(progressionSlider instanceof HTMLInputElement) || !(progressionValue instanceof HTMLElement)) return;
-
     const isFreeMode = normalizeLayoutMode(currentSettings.layoutMode) === 'free-force';
-    progressionSlider.disabled = isFreeMode;
-    progressionValue.style.opacity = isFreeMode ? '0.55' : '1';
+    const setSliderEnabled = (sliderId: string, valueId: string, enabled: boolean): void => {
+        const slider = document.getElementById(sliderId);
+        const value = document.getElementById(valueId);
+        if (!(slider instanceof HTMLInputElement) || !(value instanceof HTMLElement)) return;
+
+        slider.disabled = !enabled;
+        const container = slider.closest('.slider-container');
+        if (container instanceof HTMLElement) {
+            container.style.opacity = enabled ? '1' : '0.55';
+        } else {
+            value.style.opacity = enabled ? '1' : '0.55';
+        }
+    };
+
+    setSliderEnabled('repulsion-slider', 'repulsion-value', isFreeMode);
+    setSliderEnabled('progression-slider', 'progression-value', isFreeMode);
+
+    const snapToggle = document.getElementById('snap-to-guides-toggle');
+    if (snapToggle instanceof HTMLInputElement) {
+        snapToggle.disabled = isFreeMode;
+        const toggleRow = snapToggle.closest('.toggle-row');
+        if (toggleRow instanceof HTMLElement) {
+            toggleRow.style.opacity = isFreeMode ? '0.55' : '1';
+        }
+    }
 }
 
 function saveProgressState(): void {
@@ -379,7 +751,7 @@ function updateProgressPanel(progressMetrics: ProgressMetrics, activeNodeIds: Se
 
     const counts = progressMetrics.counts;
     summaryElement.textContent =
-        `Mastered ${counts.mastered} • In Progress ${counts['in-progress']} • Not Started ${counts['not-started']}`;
+        `Mastered ${counts.mastered} | In Progress ${counts['in-progress']} | Not Started ${counts['not-started']}`;
 
     const readyIds = progressMetrics.readyNowIds
         .filter((nodeId) => activeNodeIds.has(nodeId))
@@ -440,23 +812,34 @@ function prereqSort(a: SkillNode, b: SkillNode): number {
     return countDiff !== 0 ? countDiff : naturalSort(a, b);
 }
 
-function groupDataByCategory(
-    data: Record<string, unknown>,
+type GroupedCategory<T> = {
+    key: string;
+    label: string;
+    items: Array<[string, T]>;
+};
+
+function groupDataByCategory<T>(
+    data: Record<string, T>,
     nodeObjects: SkillNode[],
-): Record<string, Record<string, unknown>> {
-    const grouped: Record<string, Record<string, unknown>> = {};
-    const dataKeys = Object.keys(data);
+): GroupedCategory<T>[] {
+    const grouped = new Map<string, Array<[string, T]>>();
+    const dataKeys = new Set(Object.keys(data));
 
     for (const node of nodeObjects) {
-        if (dataKeys.includes(node.id)) {
-            const category = node.id.split(' ')[0].replace('&', 'and');
-            if (!grouped[category]) {
-                grouped[category] = {};
-            }
-            grouped[category][node.id] = data[node.id];
-        }
+        if (!dataKeys.has(node.id)) continue;
+        const category = node.visualGroup;
+        const items = grouped.get(category) ?? [];
+        items.push([node.id, data[node.id]]);
+        grouped.set(category, items);
     }
-    return grouped;
+
+    return [...grouped.entries()]
+        .sort(([left], [right]) => compareVisualGroups(left, right))
+        .map(([key, items]) => ({
+            key,
+            label: getCategoryLabel(key),
+            items,
+        }));
 }
 
 function populateSidebar(
@@ -467,15 +850,15 @@ function populateSidebar(
     const summary = d3.select("#checklist-section > summary");
     summary.append("button")
         .attr("class", "sort-button")
-        .text(`Sort: ${currentSortOrder === 'alpha' ? 'A-Z' : '# Pre'}`)
+        .text(`Sort: ${getSortLabel(currentSortOrder)}`)
         .on('click', (event: MouseEvent) => {
             event.preventDefault();
             event.stopPropagation();
 
-            currentSortOrder = currentSortOrder === 'alpha' ? 'prereq' : 'alpha';
+            currentSortOrder = getNextSortOrder(currentSortOrder);
             storage.saveItem(SORT_STATE_KEY, currentSortOrder);
 
-            d3.select(event.currentTarget as Element).text(`Sort: ${currentSortOrder === 'alpha' ? 'A-Z' : '# Pre'}`);
+            d3.select(event.currentTarget as Element).text(`Sort: ${getSortLabel(currentSortOrder)}`);
             renderSkillChecklist(skills);
         });
 
@@ -495,36 +878,34 @@ function renderSkillChecklist(skills: Record<string, string>): void {
     checklistToggleLabels.append('span').text('M');
     checklistHeader.append('div').attr('class', 'skill-checklist-header-skill').text('Skill');
 
-    const sortedMasterNodes = [...masterNodes].sort(currentSortOrder === 'alpha' ? naturalSort : prereqSort);
+    const sortedMasterNodes = [...masterNodes].sort(getNodeSortComparator(currentSortOrder));
     const groupedSkills = groupDataByCategory(skills, sortedMasterNodes);
 
-    type CategoryEntry = [string, Record<string, unknown>];
-
-    const categoryGroups = listContainer.selectAll<HTMLDetailsElement, CategoryEntry>('.category-group')
-        .data(Object.entries(groupedSkills) as CategoryEntry[])
+    const categoryGroups = listContainer.selectAll<HTMLDetailsElement, GroupedCategory<string>>('.category-group')
+        .data(groupedSkills)
         .join('details')
         .attr('class', 'category-group')
-        .property('open', (d) => savedDropdownState[d[0]] ?? true);
+        .property('open', (d) => savedDropdownState[d.key] ?? true);
 
     const summaries = categoryGroups.append('summary').attr('class', 'category-summary')
         .on('click', function(this: HTMLElement) {
             const parent = this.parentElement as HTMLDetailsElement | null;
             if (!parent) return;
-            const category = d3.select<HTMLDetailsElement, CategoryEntry>(parent).datum()[0];
+            const category = d3.select<HTMLDetailsElement, GroupedCategory<string>>(parent).datum().key;
             savedDropdownState[category] = !parent.open;
             storage.saveItem(DROPDOWN_STATE_KEY, savedDropdownState);
         });
 
-    summaries.append('span').text((d) => CATEGORY_LABELS[d[0]] ?? d[0]);
+    summaries.append('span').text((d) => d.label);
 
     const btnGroup = summaries.append('span').attr('class', 'category-btn-group');
     btnGroup.append('button')
         .attr('class', 'category-check-btn')
         .text('Work All')
-        .on('click', (event: MouseEvent, d: CategoryEntry) => {
+        .on('click', (event: MouseEvent, d: GroupedCategory<string>) => {
             event.preventDefault();
             event.stopPropagation();
-            Object.keys(d[1]).forEach((id) => {
+            d.items.forEach(([id]) => {
                 const status = getStatusForSkill(id);
                 if (status !== PROGRESS_STATUS.MASTERED) {
                     setStatusForSkill(id, PROGRESS_STATUS.IN_PROGRESS);
@@ -538,19 +919,19 @@ function renderSkillChecklist(skills: Record<string, string>): void {
     btnGroup.append('button')
         .attr('class', 'category-check-btn')
         .text('Clear All')
-        .on('click', (event: MouseEvent, d: CategoryEntry) => {
+        .on('click', (event: MouseEvent, d: GroupedCategory<string>) => {
             event.preventDefault();
             event.stopPropagation();
-            Object.keys(d[1]).forEach((id) => setStatusForSkill(id, PROGRESS_STATUS.NOT_STARTED));
+            d.items.forEach(([id]) => setStatusForSkill(id, PROGRESS_STATUS.NOT_STARTED));
             saveProgressState();
             syncChecklistInputsFromProgress();
             updateActiveGraph();
         });
 
-    type SkillEntry = [string, unknown];
+    type SkillEntry = [string, string];
 
     const items = categoryGroups.selectAll<HTMLDivElement, SkillEntry>('.list-item')
-        .data((d) => Object.entries(d[1]) as SkillEntry[])
+        .data((d) => d.items)
         .join('div')
         .attr('class', 'list-item')
         .attr('data-id', (d) => d[0]);
@@ -604,54 +985,45 @@ function handleSkillStatusToggleChange(event: Event): void {
 function renderAppendix(selector: string, data: Record<string, string[]>): void {
     const listContainer = d3.select(selector);
     listContainer.html('');
-    const groupedData = groupDataByCategory(data, [...masterNodes].sort(naturalSort));
+    const groupedData = groupDataByCategory(data, [...masterNodes].sort(weightedSort));
     const savedDropdownState = storage.loadItem<Record<string, boolean>>(DROPDOWN_STATE_KEY) ?? {};
 
-    type CategoryEntry = [string, Record<string, unknown>];
-
-    const categoryGroups = listContainer.selectAll<HTMLDetailsElement, CategoryEntry>('.category-group')
-        .data(Object.entries(groupedData) as CategoryEntry[])
+    const categoryGroups = listContainer.selectAll<HTMLDetailsElement, GroupedCategory<string[]>>('.category-group')
+        .data(groupedData)
         .join('details').attr('class', 'category-group')
-        .property('open', (d) => savedDropdownState[d[0]] ?? false);
+        .property('open', (d) => savedDropdownState[d.key] ?? false);
 
-    categoryGroups.append('summary').attr('class', 'category-summary').text(d => d[0])
+    categoryGroups.append('summary').attr('class', 'category-summary').text((d) => d.label)
         .on('click', function(this: HTMLElement) {
             const parent = this.parentElement as HTMLDetailsElement | null;
             if (!parent) return;
-            const category = d3.select<HTMLDetailsElement, CategoryEntry>(parent).datum()[0];
+            const category = d3.select<HTMLDetailsElement, GroupedCategory<string[]>>(parent).datum().key;
             savedDropdownState[category] = !parent.open;
             storage.saveItem(DROPDOWN_STATE_KEY, savedDropdownState);
         });
 
-    type SkillEntry = [string, unknown];
+    type SkillEntry = [string, string[]];
 
     categoryGroups.selectAll<HTMLDivElement, SkillEntry>('.list-item')
-        .data(d => Object.entries(d[1]) as SkillEntry[])
+        .data((d) => d.items)
         .join('div').attr('class', 'list-item')
-        .attr('data-id', d => d[0])
+        .attr('data-id', (d) => d[0])
         .on('mouseover', (_e: MouseEvent, d: SkillEntry) => applyHighlightFilter([d[0], ...parseRange(d[1])]))
         .on('mouseout', () => applyHighlightFilter([]))
-        .html(d => `<span class="code">${d[0]}</span><span class="skill">${String(d[1])}</span>`);
+        .html((d) => `<span class="code">${d[0]}</span><span class="skill">${String(d[1])}</span>`);
 }
 
 function parseRange(rangeString: unknown): string[] {
     if (Array.isArray(rangeString)) {
-        return (rangeString as unknown[]).map(s => String(s).trim()).filter(s => s);
+        return (rangeString as unknown[])
+            .map((value) => String(value).trim())
+            .filter(Boolean)
+            .flatMap((token) => expandSkillToken(token));
     }
 
     const str = String(rangeString).trim();
-    const rangeRegex = /^([A-Z&]+)\s*(\d+)\s*[–-]\s*(?:([A-Z&]+)\s*)?(\d+)$/i;
-    const match = str.match(rangeRegex);
-
-    if (match) {
-        const prefix = match[1];
-        const start = parseInt(match[2], 10);
-        const end = parseInt(match[4], 10);
-        if (!isNaN(start) && !isNaN(end)) {
-            return Array.from({ length: Math.abs(end - start) + 1 }, (_, i) => `${prefix} ${start + (start < end ? i : -i)}`);
-        }
-    }
-    return [str].filter(s => s);
+    const expanded = expandSkillToken(str);
+    return expanded.length > 0 ? expanded : [str].filter(Boolean);
 }
 
 // --- Sidebar Resize ---
@@ -667,6 +1039,17 @@ function setupSidebarResize(): void {
     let isResizing = false;
     let startX = 0;
     let startWidth = 0;
+    let resizeFrame = 0;
+
+    const queueLayoutRefresh = (): void => {
+        if (resizeFrame !== 0) return;
+        resizeFrame = window.requestAnimationFrame(() => {
+            resizeFrame = 0;
+            if (!simulation) return;
+            applyLayoutForces(simulation.nodes(), settings);
+            simulation.alpha(0.08).restart();
+        });
+    };
 
     handle.addEventListener('mousedown', (e: MouseEvent) => {
         isResizing = true;
@@ -682,6 +1065,7 @@ function setupSidebarResize(): void {
         if (!isResizing) return;
         const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + (e.clientX - startX)));
         sidebar.style.width = `${newWidth}px`;
+        queueLayoutRefresh();
     });
 
     document.addEventListener('mouseup', () => {
@@ -690,6 +1074,7 @@ function setupSidebarResize(): void {
         handle.classList.remove('dragging');
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
+        queueLayoutRefresh();
     });
 }
 
@@ -807,6 +1192,8 @@ function setupUIListeners(): void {
         ['arrowSize', 'arrow-size'],
         ['repulsion', 'repulsion'],
         ['spacing', 'spacing'],
+        ['canvasWidth', 'canvas-width'],
+        ['canvasHeight', 'canvas-height'],
         ['progression', 'progression'],
     ];
 
@@ -894,6 +1281,8 @@ function syncSettingsToUI(): void {
         ['arrowSize', 'arrow-size'],
         ['repulsion', 'repulsion'],
         ['spacing', 'spacing'],
+        ['canvasWidth', 'canvas-width'],
+        ['canvasHeight', 'canvas-height'],
         ['progression', 'progression'],
     ];
     for (const [key, id] of sliderMap) {
@@ -944,7 +1333,7 @@ function switchToStudent(newIndex: number): void {
 
     storage.saveItem(DROPDOWN_STATE_KEY, newState.sidebarDropdownState ?? {});
 
-    currentSortOrder = newState.skillSortState ?? 'alpha';
+    currentSortOrder = normalizeSortOrder(newState.skillSortState);
     storage.saveItem(SORT_STATE_KEY, currentSortOrder);
 
     const newViewSettings: Settings = {
@@ -979,7 +1368,7 @@ function switchToStudent(newIndex: number): void {
 
     const sortButton = document.querySelector('#checklist-section .sort-button');
     if (sortButton instanceof HTMLButtonElement) {
-        sortButton.textContent = `Sort: ${currentSortOrder === 'alpha' ? 'A-Z' : '# Pre'}`;
+        sortButton.textContent = `Sort: ${getSortLabel(currentSortOrder)}`;
     }
 
     activeStudentIndex = newIndex;

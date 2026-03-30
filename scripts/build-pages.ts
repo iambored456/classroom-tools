@@ -125,6 +125,7 @@ runBuild('read-along-highlighter', appendPath(rootBase, 'read-along-highlighter'
 runBuild('launchpad-whack-a-mole', appendPath(rootBase, 'launchpad-whack-a-mole'))
 runBuild('fish-visualizer', appendPath(rootBase, 'fish-visualizer'))
 runBuild('launchpad-controller', appendPath(rootBase, 'launchpad-controller'))
+runBuild('tax-brackets-marble-visual', appendPath(rootBase, 'tax-brackets-marble-visual'))
 runNodeScript(['scripts/capture-previews.ts'], {
   ...process.env,
   CAPTURE_ROOT_BASE: rootBase,

@@ -269,6 +269,16 @@ export const WaterBars = {
         }
     },
 
+    setFillUnits: function(fillUnitsByBar = []) {
+        WaterBars.droplets = [];
+        WaterBars.splashParticles = [];
+        WaterBars.bars.forEach((bar, index) => {
+            bar.fillUnits = clamp(Number(fillUnitsByBar[index]) || 0, 0, WaterBars.barCapacity);
+            resetSurface(bar);
+        });
+        WaterBars.renderOnce();
+    },
+
     reset: function() {
         WaterBars.droplets = [];
         WaterBars.splashParticles = [];

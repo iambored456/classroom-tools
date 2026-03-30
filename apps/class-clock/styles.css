@@ -358,11 +358,11 @@ html, body {
 /* ====== Settings Menu & Components ====== */
 /* ... (Settings Menu, Tabs, Sections, Schedule Table styles remain the same as previous version) ... */
 #menu-toggle { position: fixed; top: 10px; right: 10px; background: none; border: none; color: #fff; font-size: 2em; cursor: pointer; z-index: 1050; text-shadow: 0 0 3px #000; }
-#settings-menu { position: fixed; top: 0; right: 0; width: 650px; max-width: 90dvw; height: 100dvh; background: rgba(30, 30, 30, 0.95); color: #eee; padding: 20px; padding-bottom: 50px; box-shadow: -3px 0 8px rgba(0,0,0,0.6); overflow-y: auto; transform: translateX(100%); transition: transform 0.3s ease; z-index: 1000; }
+#settings-menu { position: fixed; top: 0; right: 0; width: min(720px, calc(100dvw - 16px)); min-width: min(480px, calc(100dvw - 16px)); max-width: calc(100dvw - 8px); height: 100dvh; background: rgba(30, 30, 30, 0.95); color: #eee; padding: 18px; padding-bottom: 46px; box-shadow: -3px 0 8px rgba(0,0,0,0.6); overflow-y: auto; transform: translateX(100%); transition: transform 0.3s ease; z-index: 1000; }
 #settings-menu.open { transform: translateX(0); }
 #menu-resizer { position: absolute; left: 0; top: 0; width: 10px; height: 100%; cursor: ew-resize; background: rgba(255,255,255,0.1); z-index: 1001; }
-#settings-nav { background-color: #111; min-height: 60px; width: calc(100% + 40px); margin: -20px -20px 15px -20px; padding: 10px 20px; box-sizing: border-box; }
-.nav-container { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 40px; }
+#settings-nav { background-color: #111; min-height: 60px; width: calc(100% + 36px); margin: -18px -18px 14px -18px; padding: 10px 18px; box-sizing: border-box; }
+.nav-container { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 40px; }
 .brand { flex: 1 1 auto; min-width: 0; }
 .brand h1 { font-size: 1.3rem; margin: 0; color: #fff; line-height: 1.1; }
 .nav-actions { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; }
@@ -403,8 +403,8 @@ html, body {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-#tabs, #colour-scheme-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid #555; margin-bottom: 15px; padding-bottom: 5px; }
-#tabs .tab-button, #colour-scheme-tabs .colour-tab { background: rgba(255,255,255,0.1); border: none; border-bottom: 3px solid transparent; padding: 10px 20px; cursor: pointer; color: #ddd; font-size: 1.05em; margin-right: 5px; margin-bottom: 5px; border-radius: 4px 4px 0 0; transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s; }
+#tabs, #colour-scheme-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid #555; margin-bottom: 14px; padding-bottom: 5px; }
+#tabs .tab-button, #colour-scheme-tabs .colour-tab { background: rgba(255,255,255,0.1); border: none; border-bottom: 3px solid transparent; padding: 10px 16px; cursor: pointer; color: #ddd; font-size: 1.05em; margin-right: 5px; margin-bottom: 5px; border-radius: 4px 4px 0 0; transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s; }
 #tabs .tab-button:hover, #colour-scheme-tabs .colour-tab:hover { background: rgba(255,255,255,0.15); color: #fff; }
 #tabs .tab-button.active, #colour-scheme-tabs .colour-tab.active { background: rgba(0, 170, 255, 0.2); color: #fff; border-bottom: 3px solid #00aaff; font-weight: bold; }
 #colour-scheme-tabs .colour-tab.add-colour { background: rgba(40, 167, 69, 0.2); border-color: transparent; color: #28a745; font-weight: bold; padding: 10px 15px; }
@@ -412,7 +412,7 @@ html, body {
 .tab-content { display: none; padding: 10px 0; animation: fadeIn 0.3s ease-in-out; }
 .tab-content.active { display: block; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-.settings-section { background: rgba(0,0,0,0.25); padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #444; }
+.settings-section { background: rgba(0,0,0,0.25); padding: 16px; border-radius: 8px; margin-bottom: 18px; border: 1px solid #444; }
 .settings-section h3, .settings-section h4 { margin-top: 0; margin-bottom: 15px; color: #00aaff; border-bottom: 1px solid #555; padding-bottom: 8px; font-size: 1.2em; }
 .settings-section p { font-size: 0.9em; color: #ccc; margin-bottom: 15px; line-height: 1.4; }
 .wake-lock-control {
@@ -587,22 +587,73 @@ html, body {
 }
 .visualization-mode-title { font-size: 0.98em; font-weight: 700; color: #fff; line-height: 1.2; }
 .visualization-mode-note { font-size: 0.84em; color: #b9c4cf; line-height: 1.35; }
-#schedule-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; table-layout: fixed; }
-#schedule-table th, #schedule-table td { border: 1px solid #444; padding: 8px 10px; text-align: left; font-size: 0.9em; vertical-align: middle; word-wrap: break-word; }
-#schedule-table th { background-color: rgba(255, 255, 255, 0.1); font-weight: bold; }
-#schedule-table th:nth-child(1) { width: 40px; text-align: center; }
-#schedule-table th:nth-child(2) { width: auto; }
-#schedule-table th:nth-child(3), #schedule-table th:nth-child(4) { width: 85px; }
-#schedule-table th:nth-child(5) { width: 65px; text-align: center; }
-#schedule-table th:nth-child(6), #schedule-table th:nth-child(7) { width: 75px; text-align: center; }
+.schedule-table-wrap {
+  overflow-x: auto;
+  margin: 0 0 0.9rem;
+  padding: 0 0 4px;
+}
+#schedule-table {
+  width: 100%;
+  min-width: 800px;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  margin-bottom: 0;
+  table-layout: auto;
+}
+#schedule-table th, #schedule-table td {
+  padding: 8px 8px;
+  text-align: left;
+  font-size: 0.9em;
+  vertical-align: middle;
+  word-break: break-word;
+}
+#schedule-table thead th {
+  border: none;
+  background: transparent;
+  color: #9eb0bf;
+  font-weight: 700;
+  font-size: 0.78em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding-top: 0;
+  padding-bottom: 2px;
+}
+#schedule-table tbody td {
+  border: none;
+  background:
+    radial-gradient(circle at top right, rgba(0,170,255,0.08), transparent 56%),
+    rgba(255,255,255,0.045);
+}
+#schedule-table tbody td:first-child {
+  border-radius: 12px 0 0 12px;
+}
+#schedule-table tbody td:last-child {
+  border-radius: 0 12px 12px 0;
+}
+#schedule-table th:nth-child(1), #schedule-table .schedule-drag-cell { width: 42px; text-align: center; }
+#schedule-table th:nth-child(2), #schedule-table .schedule-label-cell { min-width: 220px; width: 31%; }
+#schedule-table th:nth-child(3), #schedule-table th:nth-child(4), #schedule-table .schedule-time-cell { width: 88px; min-width: 88px; }
+#schedule-table th:nth-child(5), #schedule-table .schedule-scheme-cell { width: 72px; min-width: 72px; text-align: center; }
+#schedule-table th:nth-child(6), #schedule-table th:nth-child(7), #schedule-table .schedule-alert-cell, #schedule-table .schedule-circles-cell { width: 84px; min-width: 84px; text-align: center; }
 .drag-handle { cursor: move; text-align: center; color: #888; user-select: none; }
-tr.selected { background-color: rgba(0, 170, 255, 0.2); }
-tr.dragging { opacity: 0.6; background: #555; }
-tr.drag-over { border-top: 2px dashed #00aaff; }
+#schedule-table tbody tr.selected td {
+  background:
+    radial-gradient(circle at top right, rgba(0,170,255,0.18), transparent 56%),
+    rgba(0, 170, 255, 0.17);
+}
+#schedule-table tbody tr.dragging td {
+  opacity: 0.7;
+  background: rgba(94, 105, 120, 0.78);
+}
+#schedule-table tbody tr.drag-over td {
+  box-shadow: inset 0 3px 0 #00aaff;
+}
 .scheme-swatch { display: inline-block; width: 25px; height: 25px; border: 1px solid #888; border-radius: 4px; cursor: pointer; vertical-align: middle; transition: transform 0.2s; box-shadow: inset 0 0 2px rgba(255,255,255,0.3); }
 .scheme-swatch:hover { transform: scale(1.1); border-color: #fff; }
 .alert-edit-btn { font-size: 1.4em; padding: 0; margin: 0; cursor: pointer; border: none; background: none; vertical-align: middle; line-height: 1; }
-#schedule-table td input[type="text"], #schedule-table td input[type="time"] { width: 95%; box-sizing: border-box; background-color: #333; color: #eee; border: 1px solid #555; border-radius: 3px; padding: 4px 6px; font-size: 0.95em; }
+#schedule-table td input[type="text"], #schedule-table td input[type="time"] { width: 100%; box-sizing: border-box; background-color: #2f3338; color: #eee; border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 6px 8px; font-size: 0.95em; }
+#schedule-table .schedule-label-cell input[type="text"] { min-width: 200px; }
 #schedule-table td input[type="time"].locked-time {
   background-color: #2a2a2a;
   color: #bcbcbc;

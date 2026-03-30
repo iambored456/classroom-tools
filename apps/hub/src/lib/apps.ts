@@ -61,4 +61,14 @@ export const appCards: AppCard[] = [
     tags: ['MIDI', 'Music', 'Visualization'],
     accent: '#9d65e0',
   },
+  {
+    id: 'tax-brackets-marble-visual',
+    name: 'Tax Brackets - Marble Visual',
+    description:
+      'A progressive-tax animation with marbles, bracket buckets, and a second pass that drops only the taxed share into a shared trough.',
+    href: withBase('tax-brackets-marble-visual/'),
+    preview: withBase('images/TaxBracketsMarbleVisual-screenshot.png'),
+    tags: ['Math', 'Tax', 'Visualization'],
+    accent: '#0c7f7a',
+  },
 ]

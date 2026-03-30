@@ -16,6 +16,7 @@ export const State = {
     physicsCheckIntervalMs: 100,       // Check more frequently (e.g., 10 times a second)
     physicsParticlesAdded: 0,          // Counter for particles successfully added
     visualMaxParticlesPerSegment: 0,   // Estimated max particles per segment for current size
+    visualTargetParticlesPerSegment: 0,// Slightly higher end-state target so completed bars stay visually full
     totalParticlesForPeriod: 0,        // Total particles calculated for the current period duration
     visualTargetParticlesForPeriod: 0, // Slightly higher end-state target so the pile reaches the visible top
 };

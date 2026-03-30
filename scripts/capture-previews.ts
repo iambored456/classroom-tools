@@ -89,6 +89,7 @@ function buildTargets(rootBase) {
   const whackAMoleBase = appendPath(rootBase, 'launchpad-whack-a-mole')
   const fishVisualizerBase = appendPath(rootBase, 'fish-visualizer')
   const launchpadControllerBase = appendPath(rootBase, 'launchpad-controller')
+  const taxBracketsMarbleVisualBase = appendPath(rootBase, 'tax-brackets-marble-visual')
 
   return [
     {
@@ -195,6 +196,32 @@ button {
 }
 .status-text {
   display: none !important;
+}
+`,
+    },
+    {
+      id: 'tax-brackets-marble-visual',
+      outputFile: 'TaxBracketsMarbleVisual-screenshot.png',
+      distDir: 'apps/tax-brackets-marble-visual/dist',
+      basePath: taxBracketsMarbleVisualBase,
+      route: taxBracketsMarbleVisualBase,
+      waitFor: '#scene .bucket-rate',
+      delayMs: 250,
+      injectCss: `
+.toolbar {
+  display: none !important;
+}
+.content {
+  padding-top: 0 !important;
+}
+.summary-grid,
+.detail-card {
+  display: none !important;
+}
+.stage-card {
+  box-shadow: none !important;
+  border: none !important;
+  background: transparent !important;
 }
 `,
     },

@@ -1,7 +1,34 @@
 import * as d3 from 'd3';
-import { getGroup, createColorScale, CATEGORY_LABELS } from './config';
+import { createColorScale, getCategoryLabel, getNodeGroup } from './config';
 import { PROGRESS_STATUS, normalizeProgressStatus, getNodeId } from './utils';
 import type { SkillNode, SkillLink, ResolvedSkillLink, StyleOptions, Settings } from './types';
+
+type GuideBand = {
+    label: string;
+    startLevel: number;
+    endLevel: number;
+};
+
+type GuideLane = {
+    key: string;
+    label: string;
+    top: number;
+    bottom: number;
+};
+
+type WeightGuideConfig = {
+    visible: boolean;
+    leftEdge: number;
+    usableWidth: number;
+    height: number;
+    topInset: number;
+    bottomInset: number;
+    minLevel: number;
+    maxLevel: number;
+    snapNodes: boolean;
+    bands: GuideBand[];
+    lanes: GuideLane[];
+};
 
 // --- Module-level State ---
 
@@ -11,17 +38,24 @@ let markerSelection: d3.Selection<SVGMarkerElement, unknown, HTMLElement, unknow
 let svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, unknown> | null = null;
 let container: d3.Selection<SVGGElement, unknown, HTMLElement, unknown> | null = null;
 let weightGuideLayer: d3.Selection<SVGGElement, unknown, HTMLElement, unknown> | null = null;
+let weightBandLayer: d3.Selection<SVGGElement, unknown, HTMLElement, unknown> | null = null;
+let laneGuideLayer: d3.Selection<SVGGElement, unknown, HTMLElement, unknown> | null = null;
+let weightLineLayer: d3.Selection<SVGGElement, unknown, HTMLElement, unknown> | null = null;
 let zoom: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
 let simulation: d3.Simulation<SkillNode, SkillLink> | null = null;
 let color: d3.ScaleOrdinal<string, string, never> | null = null;
-let weightGuideConfig = {
+let weightGuideConfig: WeightGuideConfig = {
     visible: false,
     leftEdge: 0,
     usableWidth: 1,
     height: 0,
+    topInset: 0,
+    bottomInset: 0,
     minLevel: 1,
     maxLevel: 10,
     snapNodes: false,
+    bands: [],
+    lanes: [],
 };
 
 const selectedNodes = new Set<string>();
@@ -52,9 +86,13 @@ function getNodeProgressStatus(nodeId: string): string {
     return normalizeProgressStatus(styleOptions.progressStateById.get(nodeId));
 }
 
-function getNodeFill(nodeId: string): string {
-    if (!styleOptions.progressMode) return color!(getGroup(nodeId));
-    const status = getNodeProgressStatus(nodeId);
+function getNodeCategoryColor(node: SkillNode): string {
+    return color!(getNodeGroup(node));
+}
+
+function getNodeFill(node: SkillNode): string {
+    if (!styleOptions.progressMode) return getNodeCategoryColor(node);
+    const status = getNodeProgressStatus(node.id);
     if (status === PROGRESS_STATUS.MASTERED) return '#52b788';
     if (status === PROGRESS_STATUS.IN_PROGRESS) return '#f4a261';
     return '#d4dce7';
@@ -65,6 +103,10 @@ function applyNodeVisualState(): void {
 
     nodeSelection
         .classed('progress-mode', styleOptions.progressMode)
+        .classed('tier-optional', (node) => node.priorityTier === 'Optional')
+        .classed('tier-needs-reframe', (node) => node.priorityTier === 'Needs reframe')
+        .classed('safety-critical', (node) => node.safetyFlag)
+        .classed('grouped-skill', (node) => node.grouped)
         .classed('status-not-started', (node) => styleOptions.progressMode && getNodeProgressStatus(node.id) === PROGRESS_STATUS.NOT_STARTED)
         .classed('status-in-progress', (node) => styleOptions.progressMode && getNodeProgressStatus(node.id) === PROGRESS_STATUS.IN_PROGRESS)
         .classed('status-mastered', (node) => styleOptions.progressMode && getNodeProgressStatus(node.id) === PROGRESS_STATUS.MASTERED)
@@ -75,9 +117,9 @@ function applyNodeVisualState(): void {
             return status !== PROGRESS_STATUS.MASTERED && readiness >= 1;
         });
 
-    nodeSelection.select<SVGCircleElement>('circle')
-        .attr('fill', (node) => getNodeFill(node.id))
-        .attr('stroke', (node) => styleOptions.progressMode ? color!(getGroup(node.id)) : null)
+    nodeSelection.select<SVGCircleElement>('.node-body')
+        .attr('fill', (node) => getNodeFill(node))
+        .attr('stroke', (node) => styleOptions.progressMode ? getNodeCategoryColor(node) : null)
         .attr('stroke-width', () => styleOptions.progressMode ? 2 : 1.5);
 }
 
@@ -94,8 +136,21 @@ function applySuppressedVisualState(): void {
 }
 
 function buildTooltipHtml(node: SkillNode): string {
+    const metaLines = [
+        `Category: ${getCategoryLabel(node.visualGroup)}`,
+        `Continuum: ${node.continuumBand} | Weight ${node.categoryWeight}`,
+        node.priorityTier !== 'Core' ? `Priority: ${node.priorityTier}` : '',
+        node.safetyFlag ? 'Safety-critical milestone' : '',
+        node.grouped ? `Grouped source: ${node.sourceCode} (${node.groupIndex}/${node.groupSize})` : `Source row: ${node.sourceCode}`,
+        node.weightingNote ? node.weightingNote : '',
+    ].filter(Boolean);
+
     if (!styleOptions.progressMode) {
-        return `<div class="code">${node.id}</div><div>${node.description}</div>`;
+        return [
+            `<div class="code">${node.id}</div>`,
+            `<div>${node.description}</div>`,
+            ...metaLines.map((line) => `<div class="tooltip-meta">${line}</div>`),
+        ].join('');
     }
 
     const status = getNodeProgressStatus(node.id);
@@ -115,7 +170,37 @@ function buildTooltipHtml(node: SkillNode): string {
         `<div>${node.description}</div>`,
         `<div class="tooltip-meta">Status: ${readableStatus[status] ?? status}</div>`,
         `<div class="tooltip-meta">Readiness: ${satisfied}/${total} (${readinessPercent})</div>`,
+        ...metaLines.map((line) => `<div class="tooltip-meta">${line}</div>`),
     ].join('');
+}
+
+function positionTooltip(
+    tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown>,
+    event: MouseEvent,
+): void {
+    const tooltipNode = tooltip.node();
+    const containerNode = svg?.node()?.parentElement;
+    if (!tooltipNode || !(containerNode instanceof HTMLElement)) return;
+
+    const pad = 14;
+    const containerRect = containerNode.getBoundingClientRect();
+    const tooltipWidth = tooltipNode.offsetWidth;
+    const tooltipHeight = tooltipNode.offsetHeight;
+
+    let left = event.clientX - containerRect.left + pad;
+    let top = event.clientY - containerRect.top + pad;
+
+    const maxLeft = Math.max(8, containerRect.width - tooltipWidth - 8);
+    const maxTop = Math.max(8, containerRect.height - tooltipHeight - 8);
+
+    if (left > maxLeft) {
+        left = Math.max(8, event.clientX - containerRect.left - tooltipWidth - pad);
+    }
+    if (top > maxTop) {
+        top = Math.max(8, event.clientY - containerRect.top - tooltipHeight - pad);
+    }
+
+    tooltip.style('left', `${left}px`).style('top', `${top}px`);
 }
 
 /** Creates and returns the drag handler for nodes. */
@@ -157,16 +242,17 @@ function createNodeDrag(
         .on("end", function(event: d3.D3DragEvent<SVGGElement, SkillNode, SkillNode>) {
             if (!event.active) simulation!.alphaTarget(0);
 
-            if (!(event.sourceEvent as MouseEvent).shiftKey) {
-                selectedNodes.forEach(nodeId => {
-                    const node = allNodeData.find(n => n.id === nodeId);
-                    if (node) {
+            const shouldKeepPinned = (event.sourceEvent as MouseEvent).shiftKey;
+            selectedNodes.forEach(nodeId => {
+                const node = allNodeData.find(n => n.id === nodeId);
+                if (node) {
+                    if (!shouldKeepPinned && !node.layoutPinned) {
                         node.fx = null;
                         node.fy = null;
-                        delete node.dragStart;
                     }
-                });
-            }
+                    delete node.dragStart;
+                }
+            });
             onDragEnd(allNodeData);
         });
 }
@@ -275,6 +361,9 @@ export function setupGraph(selector: string, forceSimulation: d3.Simulation<Skil
 
     // Background guide layer for weighted maturity lines
     weightGuideLayer = container!.append<SVGGElement>('g').attr('class', 'weight-guides');
+    weightBandLayer = weightGuideLayer.append<SVGGElement>('g').attr('class', 'weight-band-layer');
+    laneGuideLayer = weightGuideLayer.append<SVGGElement>('g').attr('class', 'lane-guide-layer');
+    weightLineLayer = weightGuideLayer.append<SVGGElement>('g').attr('class', 'weight-line-layer');
 
     // Create groups for links and nodes to manage them as layers
     container!.append("g").attr("class", "links");
@@ -335,7 +424,8 @@ export function redrawGraph(
         .join(
             enter => {
                 const g = enter.append("g").attr("class", "node");
-                g.append("circle");
+                g.append("circle").attr('class', 'node-accent-ring');
+                g.append("circle").attr('class', 'node-body');
                 g.call(createNodeDrag(onDragEnd));
                 return g;
             },
@@ -344,28 +434,15 @@ export function redrawGraph(
         );
 
     // Tooltip logic
-    const tooltip = d3.select("#tooltip");
-    nodeSelection.on('mouseover', function(_event: MouseEvent, d: SkillNode) {
+    const tooltip = d3.select<HTMLDivElement, unknown>("#tooltip");
+    nodeSelection.on('mouseover', function(event: MouseEvent, d: SkillNode) {
+        d3.select(this).raise();
         tooltip.style('display', 'block')
             .html(buildTooltipHtml(d));
+        positionTooltip(tooltip, event);
     })
     .on('mousemove', function(event: MouseEvent) {
-        const tooltipNode = tooltip.node() as HTMLElement | null;
-        if (!tooltipNode) return;
-        const pad = 15;
-        const tw = tooltipNode.offsetWidth;
-        const th = tooltipNode.offsetHeight;
-
-        let left = event.pageX + pad;
-        let top  = event.pageY + pad;
-
-        if (event.clientX + pad + tw > window.innerWidth)  left = event.pageX - tw - pad;
-        if (event.clientY + pad + th > window.innerHeight) top  = event.pageY - th - pad;
-
-        left = Math.max(0, left);
-        top  = Math.max(0, top);
-
-        tooltip.style('left', left + 'px').style('top', top + 'px');
+        positionTooltip(tooltip, event);
     })
     .on('mouseout', function() {
         tooltip.style('display', 'none');
@@ -420,7 +497,8 @@ export function updateGraphView(settings: Partial<Settings>): void {
     if (!nodeSelection || !linkSelection || !markerSelection) return;
     const { nodeSize = 8, lineWidth = 1.5, arrowSize = 6 } = settings;
     const linkColor = getComputedStyle(document.documentElement).getPropertyValue('--link-color').trim() || '#999';
-    nodeSelection.selectAll<SVGCircleElement, SkillNode>('circle').attr('r', nodeSize);
+    nodeSelection.selectAll<SVGCircleElement, SkillNode>('.node-body').attr('r', nodeSize);
+    nodeSelection.selectAll<SVGCircleElement, SkillNode>('.node-accent-ring').attr('r', nodeSize + 4);
     linkSelection.style('stroke-width', `${lineWidth}px`);
     markerSelection
         .attr('markerWidth', arrowSize).attr('markerHeight', arrowSize)
@@ -433,14 +511,34 @@ export function createLegend(selector: string): void {
     if (!color) return;
     const legendContainer = d3.select(selector);
     legendContainer.html('');
-    legendContainer.append("h3").style("margin", "0 0 10px 0").text("Categories");
+    legendContainer.append("h3").style("margin", "0 0 10px 0").text("Functional Categories");
 
-    const legendItems = legendContainer.selectAll(".legend-item")
+    const legendGrid = legendContainer.append('div').attr('class', 'legend-grid');
+    const legendItems = legendGrid.selectAll(".legend-item")
         .data(color.domain())
         .join("div")
         .attr("class", "legend-item");
     legendItems.append("div").attr("class", "legend-color").style("background-color", d => color!(d));
-    legendItems.append("span").text(d => CATEGORY_LABELS[d] ?? d);
+    legendItems.append("span").text((d) => getCategoryLabel(d));
+
+    legendContainer.append('div')
+        .attr('class', 'legend-note')
+        .text('Continuum weights 1-9 run left to right. Functional lanes organize the graph vertically.');
+
+    const nodeLegend = legendContainer.append('div').attr('class', 'edge-legend');
+    nodeLegend.append('div').attr('class', 'edge-legend-title').text('Node Cues');
+
+    const optionalRow = nodeLegend.append('div').attr('class', 'edge-legend-row');
+    optionalRow.append('span').attr('class', 'legend-swatch legend-swatch-optional');
+    optionalRow.append('span').text('Optional skill');
+
+    const reframeRow = nodeLegend.append('div').attr('class', 'edge-legend-row');
+    reframeRow.append('span').attr('class', 'legend-swatch legend-swatch-reframe');
+    reframeRow.append('span').text('Needs reframe');
+
+    const safetyRow = nodeLegend.append('div').attr('class', 'edge-legend-row');
+    safetyRow.append('span').attr('class', 'legend-swatch legend-swatch-safety');
+    safetyRow.append('span').text('Safety-critical');
 
     const edgeLegend = legendContainer.append('div').attr('class', 'edge-legend');
     edgeLegend.append('div').attr('class', 'edge-legend-title').text('Links');
@@ -482,8 +580,9 @@ export function findAndFocusNode(query: string): boolean {
     highlightNeighbors(targetNode);
 
     const svgNode = svg.node();
-    const width = svgNode?.clientWidth ?? 0;
-    const height = svgNode?.clientHeight ?? 0;
+    const viewportNode = svgNode?.parentElement;
+    const width = viewportNode?.clientWidth ?? svgNode?.clientWidth ?? 0;
+    const height = viewportNode?.clientHeight ?? svgNode?.clientHeight ?? 0;
     const targetScale = 1.4;
     const transform = d3.zoomIdentity
         .translate(width / 2 - (targetNode.x ?? 0) * targetScale, height / 2 - (targetNode.y ?? 0) * targetScale)
@@ -506,32 +605,112 @@ export function updateWeightGuides(config: {
     leftEdge: number;
     usableWidth: number;
     height: number;
+    topInset?: number;
+    bottomInset?: number;
     minLevel?: number;
     maxLevel?: number;
+    bands?: GuideBand[];
+    lanes?: GuideLane[];
     snapNodes?: boolean;
 }): void {
-    if (!weightGuideLayer) return;
+    if (!weightGuideLayer || !weightBandLayer || !laneGuideLayer || !weightLineLayer) return;
 
     const minLevel = config.minLevel ?? 1;
     const maxLevel = config.maxLevel ?? 10;
-    const yTop = 0;
-    const yBottom = Math.max(0, config.height);
-    const data = config.visible
-        ? d3.range(minLevel, maxLevel + 1)
-        : [];
+    const yTop = Math.max(0, config.topInset ?? 0);
+    const yBottom = Math.max(yTop, config.height - (config.bottomInset ?? 0));
+    const levelSpan = Math.max(1, maxLevel - minLevel);
+    const stepWidth = config.usableWidth / levelSpan;
+    const xForLevel = (level: number): number =>
+        config.leftEdge + ((level - minLevel) / levelSpan) * config.usableWidth;
+    const clampX = (x: number): number => {
+        const svgWidth = svg?.node()?.clientWidth ?? (config.leftEdge + config.usableWidth + stepWidth);
+        return Math.max(0, Math.min(svgWidth, x));
+    };
+    const guideLeft = clampX(config.leftEdge - stepWidth / 2);
+    const guideRight = clampX(config.leftEdge + config.usableWidth + stepWidth / 2);
+    const lineData = config.visible ? d3.range(minLevel, maxLevel + 1) : [];
+    const bandData = config.visible ? (config.bands ?? []) : [];
+    const laneData = config.visible ? (config.lanes ?? []) : [];
     weightGuideConfig = {
         visible: config.visible,
         leftEdge: config.leftEdge,
         usableWidth: config.usableWidth,
         height: config.height,
+        topInset: yTop,
+        bottomInset: config.bottomInset ?? 0,
         minLevel,
         maxLevel,
         snapNodes: Boolean(config.snapNodes),
+        bands: bandData,
+        lanes: laneData,
     };
 
-    const guides = weightGuideLayer
+    const bands = weightBandLayer
+        .selectAll<SVGGElement, GuideBand>('g.weight-band')
+        .data(bandData, (band) => band.label);
+
+    const bandsEnter = bands.enter()
+        .append('g')
+        .attr('class', 'weight-band');
+
+    bandsEnter.append('rect').attr('class', 'weight-band-fill');
+    bandsEnter.append('text').attr('class', 'weight-band-label');
+
+    bandsEnter.merge(bands).each(function applyBand(band: GuideBand, index: number) {
+        const selection = d3.select(this);
+        const startX = clampX(xForLevel(band.startLevel) - stepWidth / 2);
+        const endX = clampX(xForLevel(band.endLevel) + stepWidth / 2);
+        selection.classed('alt', index % 2 === 1);
+        selection.select<SVGRectElement>('rect')
+            .attr('x', startX)
+            .attr('y', yTop)
+            .attr('width', Math.max(0, endX - startX))
+            .attr('height', Math.max(0, yBottom - yTop));
+        selection.select<SVGTextElement>('text')
+            .attr('x', (startX + endX) / 2)
+            .attr('y', Math.max(12, yTop - 14))
+            .text(band.label);
+    });
+
+    bands.exit().remove();
+
+    const laneBoundaryData = laneData.length === 0
+        ? []
+        : [laneData[0].top, ...laneData.map((lane) => lane.bottom)];
+
+    const laneLines = laneGuideLayer
+        .selectAll<SVGLineElement, number>('line.lane-guide-line')
+        .data(laneBoundaryData, (value) => String(value));
+
+    laneLines.enter()
+        .append('line')
+        .attr('class', 'lane-guide-line')
+        .merge(laneLines)
+        .attr('x1', guideLeft)
+        .attr('x2', guideRight)
+        .attr('y1', (value) => value)
+        .attr('y2', (value) => value);
+
+    laneLines.exit().remove();
+
+    const laneLabels = laneGuideLayer
+        .selectAll<SVGTextElement, GuideLane>('text.lane-guide-label')
+        .data(laneData, (lane) => lane.key);
+
+    laneLabels.enter()
+        .append('text')
+        .attr('class', 'lane-guide-label')
+        .merge(laneLabels)
+        .attr('x', Math.max(12, config.leftEdge - 12))
+        .attr('y', (lane) => (lane.top + lane.bottom) / 2)
+        .text((lane) => lane.label);
+
+    laneLabels.exit().remove();
+
+    const guides = weightLineLayer
         .selectAll<SVGGElement, number>('g.weight-guide')
-        .data(data, (level) => String(level));
+        .data(lineData, (level) => String(level));
 
     const guidesEnter = guides.enter()
         .append('g')
@@ -542,8 +721,7 @@ export function updateWeightGuides(config: {
 
     const merged = guidesEnter.merge(guides);
     merged.each(function applyGuide(level: number) {
-        const ratio = (level - minLevel) / Math.max(1, maxLevel - minLevel);
-        const x = config.leftEdge + ratio * config.usableWidth;
+        const x = xForLevel(level);
         const selection = d3.select(this);
         selection.classed('boundary', level === minLevel || level === maxLevel);
         selection.select<SVGLineElement>('line')

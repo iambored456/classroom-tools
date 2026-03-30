@@ -44,6 +44,11 @@ const appDistTargets = [
     distPath: join(rootDir, 'apps/launchpad-controller/dist'),
     targetSubdir: 'launchpad-controller',
   },
+  {
+    name: 'tax-brackets-marble-visual',
+    distPath: join(rootDir, 'apps/tax-brackets-marble-visual/dist'),
+    targetSubdir: 'tax-brackets-marble-visual',
+  },
 ]
 
 console.log(`Assembling Pages output into ${outputDirName}/`)

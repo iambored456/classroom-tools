@@ -7,6 +7,7 @@ export type ProgressState = Record<string, ProgressStatus>;
 export type LayoutMode = 'free-force' | 'growth-axis' | 'layered-lanes';
 export type OffOffDisplay = 'dim' | 'remove';
 export type Theme = 'dark' | 'light';
+export type SkillPriorityTier = 'Core' | 'Optional' | 'Needs reframe' | string;
 
 /** Keys in Settings that are numeric (used for the slider loop). */
 export type NumericSettingKey =
@@ -15,7 +16,9 @@ export type NumericSettingKey =
   | 'arrowSize'
   | 'repulsion'
   | 'spacing'
-  | 'progression';
+  | 'progression'
+  | 'canvasWidth'
+  | 'canvasHeight';
 
 // --- Node & Link Types ---
 
@@ -25,6 +28,24 @@ export interface SkillNode extends d3.SimulationNodeDatum {
   prereqCount: number;
   progressionScore: number;
   progressionDepth: number;
+  visualGroup: string;
+  visualGroupOrder: number;
+  categoryWeight: number;
+  continuumBand: string;
+  continuumBandOrder: number;
+  priorityTier: SkillPriorityTier;
+  safetyFlag: boolean;
+  originalFamily: string;
+  originalLevel: number;
+  scoreDelta: number;
+  weightingNote: string;
+  sourceCode: string;
+  sourceSkill: string;
+  groupSize: number;
+  groupIndex: number;
+  grouped: boolean;
+  withinCategoryOrder: number;
+  layoutPinned?: boolean;
   /** Temporary: set by calculateNodeLevels, not persisted. */
   inDegree?: number;
   /** Temporary: set by calculateNodeLevels, not persisted. */
@@ -65,6 +86,8 @@ export interface Settings {
   repulsion: number;
   spacing: number;
   progression: number;
+  canvasWidth: number;
+  canvasHeight: number;
   layoutMode: LayoutMode;
   transitiveReduction: boolean;
   progressMode: boolean;
@@ -101,6 +124,64 @@ export interface StyleOptions {
   satisfiedById: Map<string, number>;
   totalById: Map<string, number>;
   suppressedNodeIds: Set<string>;
+}
+
+export interface ReweightedSkillMetadata {
+  id: string;
+  description: string;
+  functionalCategory: string;
+  withinCategoryOrder: number;
+  categoryWeight: number;
+  scoreDelta: number;
+  continuumBand: string;
+  continuumBandOrder: number;
+  safetyFlag: boolean;
+  priorityTier: SkillPriorityTier;
+  originalFamily: string;
+  originalLevel: number;
+  weightingNote: string;
+  sourceCode: string;
+  sourceSkill: string;
+  groupSize: number;
+  groupIndex: number;
+  grouped: boolean;
+}
+
+export interface ReweightedSkillRow {
+  functionalCategory: string;
+  withinCategoryOrder: number;
+  categoryWeight: number;
+  scoreDelta: number;
+  continuumBand: string;
+  continuumBandOrder: number;
+  safetyFlag: boolean;
+  priorityTier: SkillPriorityTier;
+  originalFamily: string;
+  sourceCode: string;
+  sourceSkill: string;
+  originalLevel: number;
+  weightingNote: string;
+  expandedCodes: string[];
+}
+
+export interface ReweightedSkillDataset {
+  generatedAt: string;
+  sourceCsv: string;
+  skillsSource: string;
+  summary: {
+    rowCount: number;
+    groupedRowCount: number;
+    representedSkillCount: number;
+    categoryCount: number;
+    continuumBandCount: number;
+    safetySkillCount: number;
+    needsReframeSkillCount: number;
+    optionalSkillCount: number;
+  };
+  categories: string[];
+  continuumBands: string[];
+  rows: ReweightedSkillRow[];
+  bySkill: Record<string, ReweightedSkillMetadata>;
 }
 
 // --- Storage Types ---

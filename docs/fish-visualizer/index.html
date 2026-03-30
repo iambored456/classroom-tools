@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FISH Skills Prerequisite Network</title>
-  <script type="module" crossorigin src="/classroom-tools/fish-visualizer/assets/index-JwPYLKIk.js"></script>
-  <link rel="stylesheet" crossorigin href="/classroom-tools/fish-visualizer/assets/index-BTUhpk_A.css">
+  <script type="module" crossorigin src="/classroom-tools/fish-visualizer/assets/index-DczXTRSN.js"></script>
+  <link rel="stylesheet" crossorigin href="/classroom-tools/fish-visualizer/assets/index-Daggif2g.css">
 </head>
 <body>
     <div id="main-container">
@@ -43,13 +43,13 @@
                             <label for="layout-mode-select">Layout Mode:</label>
                             <select id="layout-mode-select">
                                 <option value="free-force">Free Force</option>
-                                <option value="growth-axis">Growth Axis</option>
-                                <option value="layered-lanes">Layered Lanes</option>
+                                <option value="growth-axis">Weighted Continuum</option>
+                                <option value="layered-lanes">Functional Lanes</option>
                             </select>
                         </div>
                         <label class="toggle-row">
                             <input type="checkbox" id="snap-to-guides-toggle">
-                            Snap nodes to maturity guide lines
+                            Snap nodes to continuum guide lines
                         </label>
                         <div class="control-group sliders">
                             <div class="slider-container">
@@ -78,7 +78,17 @@
                                 <span id="spacing-value" class="value-display"></span>
                             </div>
                             <div class="slider-container">
-                                <label for="progression-slider">Growth Pull:</label>
+                                <label for="canvas-width-slider">Canvas Width:</label>
+                                <input type="range" id="canvas-width-slider" min="100" max="260" step="10">
+                                <span id="canvas-width-value" class="value-display"></span>
+                            </div>
+                            <div class="slider-container">
+                                <label for="canvas-height-slider">Canvas Height:</label>
+                                <input type="range" id="canvas-height-slider" min="100" max="420" step="10">
+                                <span id="canvas-height-value" class="value-display"></span>
+                            </div>
+                            <div class="slider-container">
+                                <label for="progression-slider">Continuum Pull:</label>
                                 <input type="range" id="progression-slider" min="0" max="1" step="0.02">
                                 <span id="progression-value" class="value-display"></span>
                             </div>
@@ -135,15 +145,16 @@
             <svg id="network-graph"></svg>
 
             <div id="info-panel">
-                <button id="info-panel-close" title="Dismiss">✕</button>
+                <button id="info-panel-close" title="Dismiss">x</button>
                  <h2>Skills Network</h2>
                  <p>
                     - Hover over a node for details.<br>
                     - In Skill Checklist: W = working, M = mastered.<br>
                     - Use the sidebar to search, configure appearance, and explore connections.<br>
-                    - Growth-axis layouts use manual 1-10 maturity weights, smoothed to preserve prerequisite flow left-to-right.<br>
-                    - Background guide lines show maturity levels 1-10 across the growth axis.<br>
-                    - Optional: snap node x-positions directly to those maturity lines.<br>
+                    - Weighted-continuum layouts use the reweighted 1-9 continuum across the x-axis.<br>
+                    - Functional-lanes layouts group the graph by the recategorized functional domains.<br>
+                    - Background guides show the five continuum bands and the 1-9 weight lines.<br>
+                    - Optional: snap node x-positions directly to those weight guides.<br>
                     - Dashed links represent OR prerequisites.
                  </p>
             </div>

@@ -59,12 +59,13 @@ export const Schedule = {
     createDragCell: function() {
         const td = document.createElement("td");
         td.innerHTML = "☰"; // Drag handle symbol
-        td.className = "drag-handle";
+        td.className = "drag-handle schedule-drag-cell";
         td.title = "Drag to reorder";
         return td;
     },
     createLabelCell: function(item, index) {
         const td = document.createElement("td");
+        td.className = "schedule-label-cell";
         const input = document.createElement("input");
         input.type = "text";
         input.value = item.label || "";
@@ -82,6 +83,7 @@ export const Schedule = {
     },
     createTimeCell: function(item, index, type) { // type is 'start' or 'end'
          const td = document.createElement("td");
+         td.className = "schedule-time-cell";
          const input = document.createElement("input");
          input.type = "time";
 
@@ -130,6 +132,7 @@ export const Schedule = {
     },
     createSchemeCell: function(item, index) {
          const td = document.createElement("td");
+         td.className = "schedule-scheme-cell";
          const swatch = document.createElement("div");
          swatch.className = "scheme-swatch";
          // Find scheme safely
@@ -147,6 +150,7 @@ export const Schedule = {
     },
     createAlertCell: function(item, index) {
          const td = document.createElement("td");
+         td.className = "schedule-alert-cell";
          const visualAlertBtn = document.createElement("button");
          // Check Settings.alerts safely
          const isAlertEnabled = Settings.alerts[index]?.colour?.enabled || false;
@@ -163,6 +167,7 @@ export const Schedule = {
     },
     createCirclesCell: function(item, index) {
          const td = document.createElement("td");
+         td.className = "schedule-circles-cell";
          const circlesCheckbox = document.createElement("input");
          circlesCheckbox.type = "checkbox";
          circlesCheckbox.checked = item.showCircles || false;

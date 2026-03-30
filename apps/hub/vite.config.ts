@@ -33,6 +33,10 @@ export default defineConfig({
         target: 'http://localhost:5178',
         changeOrigin: true,
       },
+      '/tax-brackets-marble-visual': {
+        target: 'http://localhost:5179',
+        changeOrigin: true,
+      },
     },
   },
 })

@@ -57,9 +57,18 @@
     --student-active-bg: #3f9ab1;
     --student-active-border: #57b7cf;
     --student-active-text: #ffffff;
+    --weight-band-fill: rgba(130, 149, 169, 0.08);
+    --weight-band-fill-alt: rgba(130, 149, 169, 0.14);
+    --weight-band-label: rgba(206, 218, 231, 0.76);
     --weight-guide-line: rgba(180, 198, 217, 0.35);
     --weight-guide-label: rgba(202, 215, 229, 0.82);
     --weight-guide-boundary: rgba(223, 236, 250, 0.5);
+    --lane-guide-line: rgba(198, 211, 226, 0.18);
+    --lane-guide-label: rgba(198, 211, 226, 0.7);
+    --legend-note: #bac7d3;
+    --optional-ring: #c8d0d8;
+    --reframe-ring: #efba59;
+    --safety-ring: #ff6b6b;
 }
 
 :root[data-theme='light'] {
@@ -121,9 +130,18 @@
     --student-active-bg: #4ea6b9;
     --student-active-border: #3d8fa0;
     --student-active-text: #ffffff;
+    --weight-band-fill: rgba(95, 115, 138, 0.06);
+    --weight-band-fill-alt: rgba(95, 115, 138, 0.11);
+    --weight-band-label: rgba(81, 99, 121, 0.84);
     --weight-guide-line: rgba(74, 94, 118, 0.28);
     --weight-guide-label: rgba(80, 98, 120, 0.8);
     --weight-guide-boundary: rgba(74, 94, 118, 0.5);
+    --lane-guide-line: rgba(89, 108, 131, 0.14);
+    --lane-guide-label: rgba(89, 108, 131, 0.7);
+    --legend-note: #536171;
+    --optional-ring: #9aa8b7;
+    --reframe-ring: #cf9836;
+    --safety-ring: #d64545;
 }
 
 body {
@@ -298,12 +316,17 @@ input[type='checkbox'] {
     flex-grow: 1;
     height: 100vh;
     background-color: var(--graph-bg);
+    overflow: auto;
+    overscroll-behavior: contain;
 }
 
 /* --- Graph Styles --- */
 svg {
+    display: block;
     width: 100%;
     height: 100%;
+    min-width: 100%;
+    min-height: 100%;
     cursor: grab;
 }
 
@@ -328,6 +351,22 @@ svg:active {
     pointer-events: none;
 }
 
+.weight-band-fill {
+    fill: var(--weight-band-fill);
+}
+
+.weight-band.alt .weight-band-fill {
+    fill: var(--weight-band-fill-alt);
+}
+
+.weight-band-label {
+    fill: var(--weight-band-label);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-anchor: middle;
+}
+
 .weight-guide-line {
     stroke: var(--weight-guide-line);
     stroke-width: 1;
@@ -341,24 +380,64 @@ svg:active {
 
 .weight-guide-label {
     fill: var(--weight-guide-label);
-    font-size: 10px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
     text-anchor: middle;
     dominant-baseline: hanging;
 }
 
-.node circle {
+.lane-guide-line {
+    stroke: var(--lane-guide-line);
+    stroke-width: 1;
+}
+
+.lane-guide-label {
+    fill: var(--lane-guide-label);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-anchor: end;
+    dominant-baseline: middle;
+}
+
+.node .node-accent-ring {
+    fill: none;
+    stroke-width: 2;
+    opacity: 0;
+    transition: opacity 0.2s, stroke 0.2s;
+}
+
+.node.tier-optional .node-accent-ring {
+    opacity: 1;
+    stroke: var(--optional-ring);
+    stroke-dasharray: 4 3;
+}
+
+.node.tier-needs-reframe .node-accent-ring {
+    opacity: 1;
+    stroke: var(--reframe-ring);
+}
+
+.node.safety-critical .node-accent-ring {
+    opacity: 1;
+    stroke: var(--safety-ring);
+    stroke-width: 2.5;
+}
+
+.node .node-body {
     stroke-width: 1.5px;
     cursor: pointer;
     transition: all 0.2s;
 }
 
-.node:hover circle {
+.node:hover .node-body {
     stroke: var(--node-hover-stroke);
 }
 
 .node-label {
+    font-size: 13px;
     font-weight: bold;
+    letter-spacing: 0.01em;
     fill: var(--node-label-color);
     text-shadow:
         0 1px 0 var(--node-label-shadow),
@@ -415,21 +494,60 @@ svg:active {
 #legend {
     top: 10px;
     right: 10px;
+    max-width: 360px;
+    max-height: calc(100vh - 20px);
+    overflow-y: auto;
+}
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 6px 10px;
 }
 
 .legend-item {
     display: flex;
     align-items: center;
-    margin-bottom: 4px;
+    gap: 8px;
     font-size: 0.9em;
 }
 
 .legend-color {
     width: 15px;
     height: 15px;
-    margin-right: 8px;
     border-radius: 50%;
     border: 1px solid var(--legend-border);
+    flex-shrink: 0;
+}
+
+.legend-note {
+    margin-top: 10px;
+    font-size: 0.8em;
+    line-height: 1.35;
+    color: var(--legend-note);
+}
+
+.legend-swatch {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid var(--legend-border);
+    flex-shrink: 0;
+}
+
+.legend-swatch-optional {
+    border-color: var(--optional-ring);
+    border-style: dashed;
+}
+
+.legend-swatch-reframe {
+    border-color: var(--reframe-ring);
+}
+
+.legend-swatch-safety {
+    border-color: var(--safety-ring);
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.18);
 }
 
 .edge-legend {
@@ -668,7 +786,7 @@ svg:active {
     stroke-dasharray: 4 2;
 }
 
-.node.greyed-out circle {
+.node.greyed-out .node-body {
     fill-opacity: 0.1;
     stroke-opacity: 0.2;
 }
@@ -685,17 +803,17 @@ svg:active {
     stroke-opacity: 0.12;
 }
 
-.node.selected circle {
+.node.selected .node-body {
     stroke: var(--selection-stroke);
     stroke-width: 3px;
 }
 
-.node.neighbor circle {
+.node.neighbor .node-body {
     stroke: var(--highlight-neighbor);
     stroke-width: 3px;
 }
 
-.node.primary-selection circle {
+.node.primary-selection .node-body {
     stroke: var(--highlight-primary);
     stroke-width: 4px;
 }
@@ -710,16 +828,16 @@ svg:active {
     stroke-opacity: 0.9;
 }
 
-.node.status-ready-now circle {
+.node.status-ready-now .node-body {
     stroke: var(--ready-ring);
     stroke-width: 3px;
 }
 
-.node.status-mastered circle {
+.node.status-mastered .node-body {
     filter: drop-shadow(0 0 2px var(--mastered-shadow));
 }
 
-.node.status-in-progress circle {
+.node.status-in-progress .node-body {
     filter: drop-shadow(0 0 2px var(--progress-shadow));
 }
 
@@ -761,23 +879,27 @@ svg:active {
     display: none;
     background-color: var(--tooltip-bg);
     color: var(--tooltip-text);
-    padding: 8px 12px;
+    border: 1px solid var(--legend-border);
+    padding: 10px 14px;
     border-radius: 4px;
-    font-size: 0.9em;
+    font-size: 0.97em;
     pointer-events: none;
-    max-width: 300px;
-    line-height: 1.4;
+    max-width: 340px;
+    line-height: 1.45;
     z-index: 10;
+    box-shadow: var(--panel-shadow);
+    backdrop-filter: blur(6px);
 }
 
 #tooltip .code {
     font-weight: bold;
     margin-bottom: 4px;
+    font-size: 1.02em;
 }
 
 #tooltip .tooltip-meta {
     margin-top: 4px;
-    font-size: 0.82em;
+    font-size: 0.88em;
     color: var(--tooltip-meta);
 }
 

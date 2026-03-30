@@ -241,6 +241,25 @@ export const Physics = {
         return segmentTopYs;
     },
 
+    getDynamicBodyCountsBySegment: function() {
+        if (!Physics.world || !Physics.render?.options?.width) return null;
+
+        const numSegments = Math.max(1, Physics.currentSegments || State.SAND_COLORS.length);
+        const segmentWidth = Physics.render.options.width / numSegments;
+        const counts = Array(numSegments).fill(0);
+        const dynamicBodies = Matter.Composite.allBodies(Physics.world).filter(body => !body.isStatic);
+
+        dynamicBodies.forEach(body => {
+            const x = body.position?.x;
+            if (typeof x !== 'number' || Number.isNaN(x)) return;
+
+            const segmentIndex = Math.max(0, Math.min(numSegments - 1, Math.floor(x / segmentWidth)));
+            counts[segmentIndex] += 1;
+        });
+
+        return counts;
+    },
+
     getTopY: function() {
         if (!Physics.world) return null;
         const dynamicBodies = Matter.Composite.allBodies(Physics.world).filter(body => !body.isStatic);

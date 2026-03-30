@@ -47,6 +47,8 @@ function queryElements(): DOMCache {
         resetSchemesBtn: document.getElementById('reset-schemes-defaults'),
         colorSchemeTabsContainer: document.getElementById("colour-scheme-tabs"),
         colorSchemeContentContainer: document.getElementById("colour-scheme-content"),
+        scheduleTableWrapEl: document.querySelector(".schedule-table-wrap"),
+        scheduleTableEl: document.getElementById("schedule-table"),
         scheduleTableBody: document.querySelector("#schedule-table tbody"),
         addScheduleRowBtn: document.getElementById("add-schedule-row"),
         deleteScheduleRowBtn: document.getElementById("delete-schedule-row"),

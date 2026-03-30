@@ -153,15 +153,20 @@ export const WakeLock = {
 
         WakeLock.isSupported = Boolean(navigator.wakeLock && typeof navigator.wakeLock.request === 'function');
         WakeLock.isEnabled = loadEnabledPreference();
+        WakeLock.hasRequestedThisSession = WakeLock.isEnabled;
         WakeLock.status = WakeLock.isSupported ? 'inactive' : 'unsupported';
         WakeLock.error = WakeLock.isSupported ? null : 'Not supported in this browser.';
 
         if (WakeLock.isEnabled) {
-            debugLog('Loaded persisted enabled preference. Waiting for a session activation before auto re-acquire.');
+            debugLog('Loaded persisted enabled preference. Will auto re-acquire while the document is visible.');
         }
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
         notifySubscribers();
+
+        if (WakeLock.isSupported && WakeLock.isEnabled && document.visibilityState === 'visible') {
+            void WakeLock.requestWakeLock('visibility');
+        }
     },
 
     getSnapshot: function(): WakeLockSnapshot {

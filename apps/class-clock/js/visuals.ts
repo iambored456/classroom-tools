@@ -87,7 +87,7 @@ function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
-function getEmptyStageState() {
+function getEmptyTimelineState() {
     return {
         active: false,
         overallProgress: 0,
@@ -169,15 +169,14 @@ export const Visuals = {
         return measureFillLayout(DOM.stageVisualizationContainerEl, DOM.stageVisualizationOutlineEls, State.SAND_COLORS.length);
     },
 
-    getStageProgressState: function() {
-        const now = getCurrentOffsetTime();
-        const periodInfo = Clock.getCurrentPeriodInfo(now);
-        if (!periodInfo) return getEmptyStageState();
+    getTimelineProgressState: function(now = getCurrentOffsetTime(), periodInfo = undefined) {
+        const activePeriod = periodInfo === undefined ? Clock.getCurrentPeriodInfo(now) : periodInfo;
+        if (!activePeriod) return getEmptyTimelineState();
 
-        const periodDurationMs = periodInfo.end.getTime() - periodInfo.start.getTime();
-        if (periodDurationMs <= 0) return getEmptyStageState();
+        const periodDurationMs = activePeriod.end.getTime() - activePeriod.start.getTime();
+        if (periodDurationMs <= 0) return getEmptyTimelineState();
 
-        const overallProgress = clamp((now.getTime() - periodInfo.start.getTime()) / periodDurationMs, 0, 0.999999);
+        const overallProgress = clamp((now.getTime() - activePeriod.start.getTime()) / periodDurationMs, 0, 0.999999);
         const bars = Array.from({ length: State.SAND_COLORS.length }, (_, index) => {
             const stageStart = index / State.SAND_COLORS.length;
             const stageEnd = (index + 1) / State.SAND_COLORS.length;
@@ -201,6 +200,28 @@ export const Visuals = {
             overallProgress,
             bars
         };
+    },
+
+    getTimelineTargetUnits: function(unitsPerBar, periodInfo = undefined, now = getCurrentOffsetTime()) {
+        const safeUnitsPerBar = Math.max(1, Math.floor(Number(unitsPerBar) || 0));
+        const timelineState = Visuals.getTimelineProgressState(now, periodInfo);
+        const targetUnits = timelineState.bars.map(barState => {
+            if (barState.status === 'completed') return safeUnitsPerBar;
+            if (barState.status === 'future' || barState.progress <= 0) return 0;
+            if (safeUnitsPerBar === 1) return 1;
+
+            const partialUnits = Math.floor(barState.progress * safeUnitsPerBar);
+            return clamp(partialUnits, 1, safeUnitsPerBar - 1);
+        });
+
+        return {
+            timelineState,
+            targetUnits
+        };
+    },
+
+    getStageProgressState: function() {
+        return Visuals.getTimelineProgressState();
     },
 
     calculateSandMetrics: function(containerWidth, containerHeight) {
@@ -255,6 +276,72 @@ export const Visuals = {
         return Visuals.visualSetupRequestId === requestId && Settings.getVisualizationMode() === expectedMode;
     },
 
+    syncWaterBarsToCurrentProgress: function(periodInfo = undefined, now = getCurrentOffsetTime()) {
+        const WaterBars = getWaterBars();
+        if (!WaterBars?.isInitialized) return;
+
+        const { targetUnits } = Visuals.getTimelineTargetUnits(WaterBars.barCapacity, periodInfo, now);
+        WaterBars.setFillUnits(targetUnits);
+        State.physicsParticlesAdded = WaterBars.getTotalFillUnits();
+    },
+
+    syncSandBarsToCurrentProgress: async function(periodInfo = undefined, now = getCurrentOffsetTime(), maxToAddPerFrame = 180) {
+        const Physics = getPhysics();
+        if (!Physics?.isInitialized || Settings.getVisualizationMode() !== 'sand') return;
+
+        const targetParticlesPerSegment = Math.floor(Number(State.visualTargetParticlesPerSegment || State.visualMaxParticlesPerSegment || 0));
+        if (targetParticlesPerSegment <= 0) return;
+
+        const { targetUnits } = Visuals.getTimelineTargetUnits(targetParticlesPerSegment, periodInfo, now);
+        let countsBySegment = Physics.getDynamicBodyCountsBySegment();
+        if (!Array.isArray(countsBySegment) || countsBySegment.length !== State.SAND_COLORS.length) {
+            countsBySegment = Array.from({ length: State.SAND_COLORS.length }, () => 0);
+        }
+
+        const safeMaxToAddPerFrame = Math.max(20, Math.floor(Number(maxToAddPerFrame) || 0));
+        State.physicsParticlesAdded = countsBySegment.reduce((sum, count) => sum + count, 0);
+
+        while (Physics.isInitialized && Settings.getVisualizationMode() === 'sand') {
+            const deficits = targetUnits.map((target, index) => Math.max(0, target - (countsBySegment[index] || 0)));
+            const totalDeficit = deficits.reduce((sum, deficit) => sum + deficit, 0);
+            if (totalDeficit <= 0) {
+                State.physicsParticlesAdded = countsBySegment.reduce((sum, count) => sum + count, 0);
+                return;
+            }
+
+            let addedThisFrame = 0;
+            let madeProgress = false;
+
+            // Round-robin across deficit bars so completed bars stay full while the active bar catches up too.
+            while (addedThisFrame < safeMaxToAddPerFrame) {
+                let addedInPass = false;
+
+                for (let index = 0; index < deficits.length; index++) {
+                    if (deficits[index] <= 0 || addedThisFrame >= safeMaxToAddPerFrame) continue;
+
+                    const added = Physics.addParticle(index, State.SAND_COLORS[index]);
+                    if (!added) continue;
+
+                    countsBySegment[index] += 1;
+                    deficits[index] -= 1;
+                    addedThisFrame += 1;
+                    addedInPass = true;
+                    madeProgress = true;
+                }
+
+                if (!addedInPass) break;
+            }
+
+            State.physicsParticlesAdded = countsBySegment.reduce((sum, count) => sum + count, 0);
+            if (!madeProgress) return;
+
+            const stillBehind = targetUnits.some((target, index) => target > (countsBySegment[index] || 0));
+            if (!stillBehind) return;
+
+            await nextFrame();
+        }
+    },
+
     stopLegacyVisualizations: function() {
         const WaterBars = getWaterBars();
         const Physics = getPhysics();
@@ -277,6 +364,7 @@ export const Visuals = {
         getWaterBars()?.reset();
         getPhysics()?.clearDynamicBodies();
         State.physicsParticlesAdded = 0;
+        State.visualTargetParticlesPerSegment = 0;
         State.totalParticlesForPeriod = 0;
         State.visualTargetParticlesForPeriod = 0;
 
@@ -305,6 +393,7 @@ export const Visuals = {
 
             const metrics = Visuals.calculateSandMetrics(layout.width, layout.height);
             State.visualMaxParticlesPerSegment = metrics.capacityPerSegment;
+            State.visualTargetParticlesPerSegment = metrics.visualTargetPerSegment;
             State.totalParticlesForPeriod = metrics.totalCapacity;
             State.visualTargetParticlesForPeriod = metrics.totalVisualTarget;
 
@@ -324,6 +413,10 @@ export const Visuals = {
 
             const periodDurationMs = activePeriod.end.getTime() - activePeriod.start.getTime();
             if (periodDurationMs > 0) {
+                await Visuals.syncSandBarsToCurrentProgress(activePeriod);
+                if (!Visuals.isVisualSetupCurrent(requestId, 'sand')) {
+                    return;
+                }
                 Visuals.checkAndAddParticles();
                 State.physicsCheckIntervalId = setInterval(Visuals.checkAndAddParticles, State.physicsCheckIntervalMs);
             } else {
@@ -341,6 +434,7 @@ export const Visuals = {
         getPhysics()?.clearDynamicBodies();
         getPhysics()?.stop();
         State.physicsParticlesAdded = 0;
+        State.visualTargetParticlesPerSegment = 0;
         State.totalParticlesForPeriod = 0;
         State.visualTargetParticlesForPeriod = 0;
 
@@ -381,10 +475,10 @@ export const Visuals = {
             WaterBars.setCapacity(metrics.capacityPerBar);
             WaterBars.setParticleRadius(metrics.particleRadius);
             WaterBars.reset();
+            const activePeriod = periodInfo || Clock.getCurrentPeriodInfo(getCurrentOffsetTime());
+            Visuals.syncWaterBarsToCurrentProgress(activePeriod);
             WaterBars.start();
             Visuals.handleColorSchemeChange();
-
-            const activePeriod = periodInfo || Clock.getCurrentPeriodInfo(getCurrentOffsetTime());
             if (!activePeriod) return;
 
             const periodDurationMs = activePeriod.end.getTime() - activePeriod.start.getTime();
@@ -477,54 +571,62 @@ export const Visuals = {
             return;
         }
 
-        const periodStartMs = periodInfo.start.getTime();
-        const periodEndMs = periodInfo.end.getTime();
-        const periodDurationMs = periodEndMs - periodStartMs;
-        if (periodDurationMs <= 0) {
+        if ((periodInfo.end.getTime() - periodInfo.start.getTime()) <= 0) {
             Visuals.stopPhysicsCheckInterval();
             return;
         }
+
+        const countsBySegment = Physics.getDynamicBodyCountsBySegment();
+        if (!Array.isArray(countsBySegment) || countsBySegment.length !== State.SAND_COLORS.length) {
+            return;
+        }
+
+        const currentParticleCount = countsBySegment.reduce((sum, count) => sum + count, 0);
+        State.physicsParticlesAdded = currentParticleCount;
 
         if (Visuals.isSandBarsNearTop()) {
             Visuals.stopPhysicsCheckInterval();
             return;
         }
 
-        const timeElapsedMs = Math.max(0, now.getTime() - periodStartMs);
-        const totalFillPercentage = Math.min(1, timeElapsedMs / periodDurationMs);
-        const visualTargetTotalParticles = Math.max(
-            State.totalParticlesForPeriod,
-            State.visualTargetParticlesForPeriod || State.totalParticlesForPeriod
-        );
-        const baseTargetTotalParticles = Math.floor(totalFillPercentage * visualTargetTotalParticles);
-        const hardParticleCap = Math.ceil(visualTargetTotalParticles * 1.08);
-        const shouldTopOffAtEnd = totalFillPercentage >= 1;
-        const desiredTargetTotalParticles = shouldTopOffAtEnd ? hardParticleCap : baseTargetTotalParticles;
-        const targetTotalParticles = Math.min(desiredTargetTotalParticles, hardParticleCap);
-        const particlesToAdd = targetTotalParticles - State.physicsParticlesAdded;
-        if (particlesToAdd <= 0) {
-            if (shouldTopOffAtEnd) {
+        const targetParticlesPerSegment = Math.floor(Number(State.visualTargetParticlesPerSegment || State.visualMaxParticlesPerSegment || 0));
+        if (targetParticlesPerSegment <= 0) {
+            return;
+        }
+
+        const { timelineState, targetUnits } = Visuals.getTimelineTargetUnits(targetParticlesPerSegment, periodInfo, now);
+        const deficits = targetUnits.map((target, index) => Math.max(0, target - (countsBySegment[index] || 0)));
+        const totalDeficit = deficits.reduce((sum, deficit) => sum + deficit, 0);
+        if (totalDeficit <= 0) {
+            if (timelineState.overallProgress >= 0.999 && Visuals.isSandBarsNearTop()) {
                 Visuals.stopPhysicsCheckInterval();
             }
             return;
         }
 
-        const maxToAddThisTick = 6;
-        for (let i = 0; i < Math.min(particlesToAdd, maxToAddThisTick); ++i) {
-            if (State.physicsParticlesAdded >= hardParticleCap) break;
+        const maxToAddThisTick = Math.min(40, Math.max(8, totalDeficit));
+        let addedThisTick = 0;
 
-            const segmentDuration = periodDurationMs / State.SAND_COLORS.length;
-            const nextParticleIndex = State.physicsParticlesAdded;
-            const segmentIndex = nextParticleIndex < visualTargetTotalParticles
-                ? Math.min(State.SAND_COLORS.length - 1, Math.floor((((nextParticleIndex + 0.5) / visualTargetTotalParticles) * periodDurationMs) / segmentDuration))
-                : nextParticleIndex % State.SAND_COLORS.length;
+        while (addedThisTick < maxToAddThisTick) {
+            let addedInPass = false;
 
-            const added = Physics.addParticle(segmentIndex, State.SAND_COLORS[segmentIndex]);
-            if (!added) break;
-            State.physicsParticlesAdded++;
+            for (let index = 0; index < deficits.length; index++) {
+                if (deficits[index] <= 0 || addedThisTick >= maxToAddThisTick) continue;
+
+                const added = Physics.addParticle(index, State.SAND_COLORS[index]);
+                if (!added) continue;
+
+                deficits[index] -= 1;
+                countsBySegment[index] += 1;
+                addedThisTick += 1;
+                addedInPass = true;
+            }
+
+            if (!addedInPass) break;
         }
 
-        if (State.physicsParticlesAdded >= hardParticleCap) {
+        State.physicsParticlesAdded = countsBySegment.reduce((sum, count) => sum + count, 0);
+        if (timelineState.overallProgress >= 0.999 && deficits.every(deficit => deficit <= 0) && Visuals.isSandBarsNearTop()) {
             Visuals.stopPhysicsCheckInterval();
         }
     },
@@ -543,10 +645,7 @@ export const Visuals = {
             return;
         }
 
-        const periodStartMs = periodInfo.start.getTime();
-        const periodEndMs = periodInfo.end.getTime();
-        const periodDurationMs = periodEndMs - periodStartMs;
-        if (periodDurationMs <= 0) {
+        if ((periodInfo.end.getTime() - periodInfo.start.getTime()) <= 0) {
             Visuals.stopPhysicsCheckInterval();
             return;
         }
@@ -564,33 +663,41 @@ export const Visuals = {
             return;
         }
 
-        const timeElapsedMs = Math.max(0, now.getTime() - periodStartMs);
-        const totalFillPercentage = Math.min(1, timeElapsedMs / periodDurationMs);
-        const baseTargetTotalParticles = Math.floor(totalFillPercentage * totalCapacity);
-        const hardParticleCap = Math.ceil(totalCapacity * 1.6);
-        const targetTotalParticles = Math.min(baseTargetTotalParticles, hardParticleCap);
-        const particlesToAdd = targetTotalParticles - producedUnits;
-        if (particlesToAdd <= 0) return;
-
-        const maxToAddThisTick = 5;
-        for (let i = 0; i < Math.min(particlesToAdd, maxToAddThisTick); ++i) {
-            const projectedProduced = producedUnits + i;
-            if (projectedProduced >= hardParticleCap) break;
-
-            const segmentDuration = periodDurationMs / State.SAND_COLORS.length;
-            const nextParticleIndex = projectedProduced;
-            const preferredSegmentIndex = nextParticleIndex < totalCapacity
-                ? Math.min(State.SAND_COLORS.length - 1, Math.floor((((nextParticleIndex + 0.5) / totalCapacity) * periodDurationMs) / segmentDuration))
-                : nextParticleIndex % State.SAND_COLORS.length;
-
-            const segmentIndex = WaterBars.findBestBarIndex(preferredSegmentIndex);
-            if (segmentIndex < 0) break;
-
-            const added = WaterBars.addDroplet(segmentIndex, State.SAND_COLORS[segmentIndex]);
-            if (!added) break;
+        const { timelineState, targetUnits } = Visuals.getTimelineTargetUnits(WaterBars.barCapacity, periodInfo, now);
+        const projectedUnitsByBar = WaterBars.bars.map((bar, index) => {
+            return clamp((bar.fillUnits || 0) + WaterBars.getPendingForBar(index), 0, WaterBars.barCapacity);
+        });
+        const deficits = targetUnits.map((target, index) => Math.max(0, target - (projectedUnitsByBar[index] || 0)));
+        const totalDeficit = deficits.reduce((sum, deficit) => sum + deficit, 0);
+        if (totalDeficit <= 0) {
+            if (timelineState.overallProgress >= 0.999 && WaterBars.getPendingDropletCount() === 0 && Visuals.isWaterNearTop()) {
+                Visuals.stopPhysicsCheckInterval();
+            }
+            return;
         }
 
-        if (Visuals.isWaterNearTop() && WaterBars.getPendingDropletCount() === 0) {
+        const maxToAddThisTick = Math.min(18, Math.max(6, totalDeficit));
+        let addedThisTick = 0;
+
+        while (addedThisTick < maxToAddThisTick) {
+            let addedInPass = false;
+
+            for (let index = 0; index < deficits.length; index++) {
+                if (deficits[index] <= 0 || addedThisTick >= maxToAddThisTick) continue;
+
+                const added = WaterBars.addDroplet(index, State.SAND_COLORS[index]);
+                if (!added) continue;
+
+                deficits[index] -= 1;
+                addedThisTick += 1;
+                addedInPass = true;
+            }
+
+            if (!addedInPass) break;
+        }
+
+        State.physicsParticlesAdded = WaterBars.getTotalFillUnits() + WaterBars.getPendingDropletCount();
+        if (timelineState.overallProgress >= 0.999 && WaterBars.getPendingDropletCount() === 0 && Visuals.isWaterNearTop()) {
             Visuals.stopPhysicsCheckInterval();
         }
     },
@@ -606,6 +713,7 @@ export const Visuals = {
             if (layout.width > 0 && layout.height > 0) {
                 const metrics = Visuals.calculateSandMetrics(layout.width, layout.height);
                 State.visualMaxParticlesPerSegment = metrics.capacityPerSegment;
+                State.visualTargetParticlesPerSegment = metrics.visualTargetPerSegment;
                 State.totalParticlesForPeriod = metrics.totalCapacity;
                 State.visualTargetParticlesForPeriod = metrics.totalVisualTarget;
                 Physics.init(DOM.sandBarsCanvas, layout.width, layout.height, {
@@ -614,6 +722,7 @@ export const Visuals = {
                     measureLayout: Visuals.getSandFillLayout
                 });
                 Physics.start();
+                void Visuals.syncSandBarsToCurrentProgress();
             }
         }
 
@@ -626,6 +735,7 @@ export const Visuals = {
                 WaterBars.setCapacity(metrics.capacityPerBar);
                 WaterBars.setParticleRadius(metrics.particleRadius);
                 WaterBars.resize(layout.width, layout.height);
+                Visuals.syncWaterBarsToCurrentProgress();
                 State.physicsParticlesAdded = WaterBars.getTotalFillUnits() + WaterBars.getPendingDropletCount();
                 WaterBars.renderOnce();
             }
