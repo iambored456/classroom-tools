@@ -1,0 +1,18 @@
+{
+  "name": "oklch-visualizer",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "culori": "^4.0.1",
+    "three": "^0.177.0"
+  },
+  "devDependencies": {
+    "vite": "^7.2.4"
+  }
+}

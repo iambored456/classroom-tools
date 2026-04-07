@@ -17,6 +17,10 @@ export default defineConfig({
         target: 'http://localhost:5174',
         changeOrigin: true,
       },
+      '/class-schedule-widget': {
+        target: 'http://localhost:5181',
+        changeOrigin: true,
+      },
       '/read-along-highlighter': {
         target: 'http://localhost:5175',
         changeOrigin: true,
@@ -35,6 +39,10 @@ export default defineConfig({
       },
       '/tax-brackets-marble-visual': {
         target: 'http://localhost:5179',
+        changeOrigin: true,
+      },
+      '/oklch-visualizer': {
+        target: 'http://localhost:5180',
         changeOrigin: true,
       },
     },

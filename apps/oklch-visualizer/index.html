@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OKLCH Visualizer</title>
+  </head>
+  <body>
+    <header>
+      <h1>OKLCH Visualizer</h1>
+      <p>
+        Explore equidistant palettes, trace the safe gamut edge, and map color progressions across
+        pitch ranges.
+      </p>
+    </header>
+
+    <main class="container">
+      <div class="controls-panel">
+        <h2>Controls</h2>
+
+        <div class="control-group">
+          <div class="input-group-header">
+            <label class="checkbox-label" for="lock-to-edge-checkbox">
+              <input type="checkbox" id="lock-to-edge-checkbox" />
+              Lock to Gamut Edge
+            </label>
+            <div class="input-with-steppers">
+              <input
+                type="text"
+                id="sweet-spot-value-input"
+                class="value-input"
+                value="0.700"
+                disabled
+              />
+              <div class="stepper-buttons">
+                <button class="stepper" data-for="sweet-spot-slider" data-step="1" disabled>+</button>
+                <button class="stepper" data-for="sweet-spot-slider" data-step="-1" disabled>-</button>
+              </div>
+            </div>
+            <button id="find-max-sweet-spot-btn" class="button-secondary" disabled>Find Max</button>
+          </div>
+          <input type="range" id="sweet-spot-slider" min="0" max="200" step="1" value="140" disabled />
+        </div>
+
+        <div class="control-group">
+          <canvas id="lc-graph-canvas" width="400" height="150"></canvas>
+        </div>
+
+        <div class="control-group">
+          <div class="input-group-header">
+            <label for="lightness-slider">Lightness (L)</label>
+            <div class="input-with-steppers">
+              <input type="text" id="lightness-value-input" class="value-input" value="0.700" />
+              <div class="stepper-buttons">
+                <button class="stepper" data-for="lightness-slider" data-step="0.005">+</button>
+                <button class="stepper" data-for="lightness-slider" data-step="-0.005">-</button>
+              </div>
+            </div>
+            <button id="find-max-l-btn" class="button-secondary">Find Max</button>
+          </div>
+          <input type="range" id="lightness-slider" min="0" max="1" step="0.005" value="0.7" />
+        </div>
+
+        <div class="control-group">
+          <div class="input-group-header">
+            <label for="chroma-slider">Chroma (C)</label>
+            <div class="input-with-steppers">
+              <input type="text" id="chroma-value-input" class="value-input" value="0.100" />
+              <div class="stepper-buttons">
+                <button class="stepper" data-for="chroma-slider" data-step="0.001">+</button>
+                <button class="stepper" data-for="chroma-slider" data-step="-0.001">-</button>
+              </div>
+            </div>
+            <button id="find-max-c-btn" class="button-secondary">Find Max</button>
+          </div>
+          <input type="range" id="chroma-slider" min="0" max="0.4" step="0.001" value="0.1" />
+        </div>
+
+        <div class="control-group">
+          <label for="color-count">Number of Colors</label>
+          <input type="number" id="color-count" min="2" max="128" value="8" />
+        </div>
+
+        <div class="control-group">
+          <h3>Spiral / Pitch Mapping</h3>
+          <label class="checkbox-label" for="spiral-mode-checkbox">
+            <input type="checkbox" id="spiral-mode-checkbox" />
+            Enable Spiral L/H Mapping
+          </label>
+
+          <div class="input-group-header">
+            <label for="spiral-color-count">Spiral Color Count / Pitches</label>
+            <div class="input-with-steppers">
+              <input type="number" id="spiral-color-count" class="value-input" min="2" max="128" value="88" />
+              <div class="stepper-buttons">
+                <button class="stepper" data-for="spiral-color-count" data-step="1">+</button>
+                <button class="stepper" data-for="spiral-color-count" data-step="-1">-</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-group-header">
+            <label for="spiral-lmin-input">L min</label>
+            <div class="input-with-steppers">
+              <input type="text" id="spiral-lmin-input" class="value-input" value="0.350" />
+              <div class="stepper-buttons">
+                <button class="stepper" data-for="spiral-lmin-input" data-step="0.005">+</button>
+                <button class="stepper" data-for="spiral-lmin-input" data-step="-0.005">-</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-group-header">
+            <label for="spiral-lmax-input">L max</label>
+            <div class="input-with-steppers">
+              <input type="text" id="spiral-lmax-input" class="value-input" value="0.900" />
+              <div class="stepper-buttons">
+                <button class="stepper" data-for="spiral-lmax-input" data-step="0.005">+</button>
+                <button class="stepper" data-for="spiral-lmax-input" data-step="-0.005">-</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-group-header">
+            <label
+              for="hue-turns-input"
+              title="Number of full 360-degree hue rotations across the palette."
+            >
+              Hue Turns
+            </label>
+            <div class="input-with-steppers">
+              <input type="number" id="hue-turns-input" class="value-input" step="0.25" value="2" />
+              <div class="stepper-buttons">
+                <button class="stepper" data-for="hue-turns-input" data-step="0.25">+</button>
+                <button class="stepper" data-for="hue-turns-input" data-step="-0.25">-</button>
+              </div>
+            </div>
+          </div>
+
+          <label class="checkbox-label" for="spiral-per-hue-edge-checkbox">
+            <input type="checkbox" id="spiral-per-hue-edge-checkbox" />
+            Use per-hue max chroma (slower)
+          </label>
+
+          <div class="control-group">
+            <button
+              id="apply-pitch-mapping-btn"
+              class="button-secondary"
+              title="Set the spiral to 88 pitches from A0 to C8 with 30-degree hue steps."
+            >
+              Apply A0 -> C8 Mapping
+            </button>
+            <p class="info">
+              Uses 88 pitches from A0 to C8 with even 30-degree hue steps starting at 270 degrees.
+            </p>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <h3>Hue Gradient</h3>
+          <div class="gradient-container">
+            <div id="hue-markers-container"></div>
+            <canvas id="hue-canvas" width="500" height="50"></canvas>
+          </div>
+          <p class="info">Click the gradient to change the starting hue.</p>
+        </div>
+      </div>
+
+      <div class="visualizations-panel">
+        <div class="vis-box" id="three-d-view-panel">
+          <h3>3D Gamut View</h3>
+          <div id="three-d-placeholder">
+            <p class="info">The 3D visualization is interactive and may use more graphics power.</p>
+            <button id="show-three-d-btn" class="button-primary">Show 3D View</button>
+          </div>
+          <div id="three-d-container" class="hidden"></div>
+          <div id="three-d-controls" class="hidden">
+            <label class="checkbox-label">
+              <input type="checkbox" id="toggle-full-gamut" />
+              Show Full Gamut
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="toggle-safe-gamut" checked />
+              Show Safe Gamut
+            </label>
+          </div>
+          <p id="three-d-instructions" class="info hidden">
+            Drag to rotate | Scroll to zoom | Right-click to move
+          </p>
+        </div>
+      </div>
+
+      <div class="results-panel">
+        <div class="vis-box-header">
+          <h2>Generated Palette</h2>
+          <label class="checkbox-label" for="flip-palette-checkbox" title="Reverse the palette display order.">
+            <input type="checkbox" id="flip-palette-checkbox" />
+            Flip Order
+          </label>
+          <button id="copy-hex-btn" class="button-secondary">Copy Hex Codes</button>
+        </div>
+        <div id="palette-container" class="palette-grid"></div>
+        <div id="palette-table-container" class="table-container">
+          <h3>Palette Table</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Color</th>
+                <th>Pitch</th>
+                <th>Hex</th>
+                <th>OKLCH (L, C, H)</th>
+              </tr>
+            </thead>
+            <tbody id="palette-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

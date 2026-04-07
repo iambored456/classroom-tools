@@ -25,6 +25,11 @@ const appDistTargets = [
     targetSubdir: 'class-clock',
   },
   {
+    name: 'class-schedule-widget',
+    distPath: join(rootDir, 'apps/class-schedule-widget/dist'),
+    targetSubdir: 'class-schedule-widget',
+  },
+  {
     name: 'read-along-highlighter',
     distPath: join(rootDir, 'apps/read-along-highlighter/dist'),
     targetSubdir: 'read-along-highlighter',
@@ -48,6 +53,11 @@ const appDistTargets = [
     name: 'tax-brackets-marble-visual',
     distPath: join(rootDir, 'apps/tax-brackets-marble-visual/dist'),
     targetSubdir: 'tax-brackets-marble-visual',
+  },
+  {
+    name: 'oklch-visualizer',
+    distPath: join(rootDir, 'apps/oklch-visualizer/dist'),
+    targetSubdir: 'oklch-visualizer',
   },
 ]
 

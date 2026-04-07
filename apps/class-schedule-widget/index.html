@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Schedule Widget Launcher</title>
+    <link rel="stylesheet" href="styles/main.css" />
+  </head>
+  <body class="launcher">
+    <main class="container">
+      <h1>Class Schedule Widget</h1>
+      <p>This page launches the detachable pop-up widget.</p>
+      <div class="actions">
+        <button id="openWidget">Open Widget</button>
+        <button id="focusWidget" disabled>Focus/Restore</button>
+        <button id="showSettings" disabled>Show Settings</button>
+        <button id="openInTab">Open In Tab</button>
+      </div>
+      <div id="status" class="status" aria-live="polite"></div>
+
+      <details class="help">
+        <summary>Pop-up blocked?</summary>
+        <p>If your browser blocks pop-ups, use "Open In Tab" instead.</p>
+      </details>
+    </main>
+
+    <script src="scripts/main.js" type="module"></script>
+  </body>
+  </html>

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Class Schedule Widget</title>
+    <link rel="stylesheet" href="styles/main.css" />
+  </head>
+  <body data-view="schedule">
+    <div class="widget-shell">
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 class="widget-title" id="headerTitle">Class Schedule</h1>
+          <button type="button" id="renameTitle" class="ghost">Rename</button>
+        </div>
+        <div class="topbar-right">
+          <div id="nowTime">--:--</div>
+          <button id="toggleTimer" class="ghost">Timer</button>
+        </div>
+      </header>
+
+      <section class="main-area">
+        <div class="up-next" id="upNext">Up next: --</div>
+      </section>
+
+      <section class="control-bar">
+        <div class="control-group">
+          <button id="zoomOut">-</button>
+          <button id="zoomReset">100%</button>
+          <button id="zoomIn">+</button>
+        </div>
+        <div class="control-group">
+          <button id="barHeightDown">v</button>
+          <button id="barHeightReset">Bar</button>
+          <button id="barHeightUp">^</button>
+        </div>
+        <div class="control-group">
+          <button id="timeTextDown">a-</button>
+          <button id="timeTextReset">Time</button>
+          <button id="timeTextUp">a+</button>
+        </div>
+        <div class="control-group">
+          <button id="titleTextDown">T-</button>
+          <button id="titleTextReset">Title</button>
+          <button id="titleTextUp">T+</button>
+        </div>
+      </section>
+
+      <section class="bottom-panel">
+        <div class="bottom-tabs">
+          <button class="bottom-tab is-active" data-tab="schedule">Schedule</button>
+          <button class="bottom-tab" data-tab="settings">Settings</button>
+        </div>
+        <section class="panel is-active" id="panel-schedule">
+          <div class="list" id="list"></div>
+          <div class="footer" id="footer"></div>
+        </section>
+        <section class="panel" id="panel-settings">
+          <div class="section">
+            <h2>Display</h2>
+            <div class="field">
+              <label for="showTitle">Show header title</label>
+              <input type="checkbox" id="showTitle" />
+            </div>
+            <div class="field">
+              <label for="titleText">Title</label>
+              <input type="text" id="titleText" placeholder="Class Schedule" />
+            </div>
+            <div class="field">
+              <label for="startTime">Start time</label>
+              <input type="time" id="startTime" />
+            </div>
+            <div class="field">
+              <label for="autoChain">Auto-chain durations</label>
+              <input type="checkbox" id="autoChain" />
+            </div>
+            <div class="field">
+              <label for="iconSize">Icon size</label>
+              <select id="iconSize">
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+                <option value="xlarge">Extra Large</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="timeFormat">Time format</label>
+              <select id="timeFormat">
+                <option value="12">12-hour</option>
+                <option value="24">24-hour</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="clockOffset">Clock offset (+/-mm:ss)</label>
+              <div class="row">
+                <input type="text" id="clockOffset" class="short" placeholder="+00:00" />
+                <button type="button" id="minus5s">-5s</button>
+                <button type="button" id="plus5s">+5s</button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="showSeconds">Show seconds</label>
+              <input type="checkbox" id="showSeconds" />
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Activities</h2>
+            <div id="activitiesList" class="activities-list"></div>
+            <button type="button" id="addActivity">Add activity</button>
+          </div>
+
+          <div class="section">
+            <h2>Timer Audio</h2>
+            <div class="field">
+              <label for="alarmUpload">Custom alarm sound</label>
+              <div class="row">
+                <input type="file" id="alarmUpload" accept="audio/*" />
+                <button id="playAlarm">Play</button>
+                <button id="clearAlarm">Clear</button>
+              </div>
+              <div class="fine" id="alarmStatus">No custom sound loaded.</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Data</h2>
+            <div class="row" style="gap:0.4rem; flex-wrap:wrap;">
+              <button id="exportBtn">Export JSON</button>
+              <button id="importBtn">Import JSON</button>
+              <input id="importFile" type="file" accept="application/json" hidden />
+              <button id="resetToday">Reset Today</button>
+              <button id="clearAll">Clear All</button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="timer-panel hidden" id="timerPanel">
+        <div class="timer-card">
+          <div class="timer-header">
+            <h2>Timer</h2>
+            <button id="closeTimer" class="ghost">Close</button>
+          </div>
+          <div class="timer-circle" id="timerCircle">
+            <div id="timerDisplay" class="timer-display" contenteditable="false">5:00</div>
+          </div>
+          <div class="timer-presets">
+            <button data-add="30">+0:30</button>
+            <button data-add="60">+1:00</button>
+            <button data-add="300">+5:00</button>
+          </div>
+          <div class="timer-controls">
+            <button id="timerStart">Start</button>
+            <button id="timerPause">Pause</button>
+            <button id="timerReset">Reset</button>
+          </div>
+        </div>
+        <div class="timer-resize-handle" id="timerResizeHandle"></div>
+      </section>
+    </div>
+
+    <datalist id="emojiOptions"></datalist>
+
+    <script type="module" src="scripts/widget.js"></script>
+  </body>
+</html>

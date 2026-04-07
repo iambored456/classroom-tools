@@ -1,0 +1,13 @@
+:root.theme-light { }
+:root.theme-dark {
+  --bg: hsl(220 20% 10%);
+  --surface: hsl(220 15% 15%);
+  --text: hsl(0 0% 98%);
+  --muted: hsl(220 10% 70%);
+  --accent: hsl(220 90% 66%);
+  --accent-contrast: hsl(0 0% 0%);
+}
+:root.theme-high-contrast { }
+
+/* Additional tinted variants can be layered by applying classes like .tint-blue etc. */
+

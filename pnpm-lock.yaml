@@ -40,6 +40,12 @@ importers:
         specifier: ^7.2.4
         version: 7.3.1(@types/node@24.10.13)(tsx@4.21.0)
 
+  apps/class-schedule-widget:
+    devDependencies:
+      vite:
+        specifier: ^7.2.4
+        version: 7.3.1(@types/node@24.10.13)(tsx@4.21.0)
+
   apps/fish-visualizer:
     dependencies:
       d3:
@@ -132,6 +138,19 @@ importers:
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
+      vite:
+        specifier: ^7.2.4
+        version: 7.3.1(@types/node@24.10.13)(tsx@4.21.0)
+
+  apps/oklch-visualizer:
+    dependencies:
+      culori:
+        specifier: ^4.0.1
+        version: 4.0.2
+      three:
+        specifier: ^0.177.0
+        version: 0.177.0
+    devDependencies:
       vite:
         specifier: ^7.2.4
         version: 7.3.1(@types/node@24.10.13)(tsx@4.21.0)
@@ -618,6 +637,10 @@ packages:
     resolution: {integrity: sha512-QrWXB+ZQSVPmIWIhtEO9H+gwHaMGYiF5ChvoJ+K9ZGHG/sVsa6yiesAD1GC/x46sET00Xlwo1u49RVVVzvcSkw==}
     engines: {node: '>= 10'}
 
+  culori@4.0.2:
+    resolution: {integrity: sha512-1+BhOB8ahCn4O0cep0Sh2l9KCOfOdY+BXJnKMHFFzDEouSr/el18QwXEMRlOj9UY5nCeA8UN3a/82rUWRBeyBw==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
   d3-array@3.2.4:
     resolution: {integrity: sha512-tdQAmyA18i4J7wprpYq8ClcxZy3SC31QMeByyCFyRt7BVHdREQZ5lpzoe5mFEYZUWe+oq8HBvk9JjpibyEV4Jg==}
     engines: {node: '>=12'}
@@ -881,6 +904,9 @@ packages:
   svelte@5.53.0:
     resolution: {integrity: sha512-7dhHkSamGS2vtoBmIW2hRab+gl5Z60alEHZB4910ePqqJNxAWnDAxsofVmlZ2tREmWyHNE+A1nCKwICAquoD2A==}
     engines: {node: '>=18'}
+
+  three@0.177.0:
+    resolution: {integrity: sha512-EiXv5/qWAaGI+Vz2A+JfavwYCMdGjxVsrn3oBwllUoqYeaBO75J63ZfyaQKoiLrqNHoTlUc6PFgMXnS0kI45zg==}
 
   tinyglobby@0.2.15:
     resolution: {integrity: sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ==}
@@ -1290,6 +1316,8 @@ snapshots:
 
   commander@7.2.0: {}
 
+  culori@4.0.2: {}
+
   d3-array@3.2.4:
     dependencies:
       internmap: 2.0.3
@@ -1618,6 +1646,8 @@ snapshots:
       locate-character: 3.0.0
       magic-string: 0.30.21
       zimmerframe: 1.1.4
+
+  three@0.177.0: {}
 
   tinyglobby@0.2.15:
     dependencies:

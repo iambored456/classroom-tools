@@ -85,11 +85,13 @@ const resolveRootBase = () => {
 
 function buildTargets(rootBase) {
   const classClockBase = appendPath(rootBase, 'class-clock')
+  const classScheduleWidgetBase = appendPath(rootBase, 'class-schedule-widget')
   const readAlongBase = appendPath(rootBase, 'read-along-highlighter')
   const whackAMoleBase = appendPath(rootBase, 'launchpad-whack-a-mole')
   const fishVisualizerBase = appendPath(rootBase, 'fish-visualizer')
   const launchpadControllerBase = appendPath(rootBase, 'launchpad-controller')
   const taxBracketsMarbleVisualBase = appendPath(rootBase, 'tax-brackets-marble-visual')
+  const oklchVisualizerBase = appendPath(rootBase, 'oklch-visualizer')
 
   return [
     {
@@ -113,6 +115,30 @@ function buildTargets(rootBase) {
   height: 100vh !important;
 }
 `,
+    },
+    {
+      id: 'class-schedule-widget',
+      outputFile: 'ClassScheduleWidget-screenshot.png',
+      distDir: 'apps/class-schedule-widget/dist',
+      basePath: classScheduleWidgetBase,
+      route: `${classScheduleWidgetBase}widget.html`,
+      waitFor: '#list .card',
+      delayMs: 350,
+      injectCss: `
+.topbar .ghost,
+.bottom-tab[data-tab="settings"],
+#footer {
+  display: none !important;
+}
+.widget-shell {
+  max-width: 860px !important;
+  padding: 1rem !important;
+}
+.bottom-panel {
+  padding-top: 0 !important;
+}
+`,
+      theme: 'dark',
     },
     {
       id: 'read-along-highlighter',
@@ -224,6 +250,51 @@ button {
   background: transparent !important;
 }
 `,
+    },
+    {
+      id: 'oklch-visualizer',
+      outputFile: 'OKLCHVisualizer-screenshot.png',
+      distDir: 'apps/oklch-visualizer/dist',
+      basePath: oklchVisualizerBase,
+      route: oklchVisualizerBase,
+      waitFor: '#palette-table-body tr',
+      delayMs: 450,
+      postReadyScript: `
+(() => {
+  const countInput = document.getElementById('color-count');
+  if (countInput instanceof HTMLInputElement) {
+    countInput.value = '12';
+    countInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  const lockToEdge = document.getElementById('lock-to-edge-checkbox');
+  if (lockToEdge instanceof HTMLInputElement && !lockToEdge.checked) {
+    lockToEdge.click();
+  }
+})();
+`,
+      injectCss: `
+header {
+  margin-bottom: 1rem !important;
+}
+.container {
+  grid-template-columns: minmax(320px, 420px) 1fr !important;
+  grid-template-areas: "controls results" !important;
+  max-width: 1120px !important;
+  gap: 1rem !important;
+}
+.visualizations-panel,
+#palette-table-container {
+  display: none !important;
+}
+.results-panel {
+  min-height: 100% !important;
+}
+.palette-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+`,
+      theme: 'dark',
     },
   ]
 }

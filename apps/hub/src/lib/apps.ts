@@ -42,6 +42,16 @@ export const appCards: AppCard[] = [
     accent: '#7abd6e',
   },
   {
+    id: 'class-schedule-widget',
+    name: 'Class Schedule Widget',
+    description:
+      'A detachable classroom schedule with live progress bars, quick editing controls, and a built-in timer panel.',
+    href: withBase('class-schedule-widget/'),
+    preview: withBase('images/ClassScheduleWidget-screenshot.png'),
+    tags: ['Schedule', 'Timer', 'Classroom'],
+    accent: '#f19d5e',
+  },
+  {
     id: 'fish-visualizer',
     name: 'Fish Visualizer',
     description:
@@ -60,6 +70,16 @@ export const appCards: AppCard[] = [
     preview: withBase('images/LaunchpadController-screenshot.png'),
     tags: ['MIDI', 'Music', 'Visualization'],
     accent: '#9d65e0',
+  },
+  {
+    id: 'oklch-visualizer',
+    name: 'OKLCH Visualizer',
+    description:
+      'Generate equidistant palettes, inspect gamut-safe chroma paths, and map pitch ranges onto color spirals.',
+    href: withBase('oklch-visualizer/'),
+    preview: withBase('images/OKLCHVisualizer-screenshot.png'),
+    tags: ['Color', 'Music', 'Visualization'],
+    accent: '#4cc6ff',
   },
   {
     id: 'tax-brackets-marble-visual',
