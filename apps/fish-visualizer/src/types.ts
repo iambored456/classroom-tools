@@ -9,17 +9,6 @@ export type OffOffDisplay = 'dim' | 'remove';
 export type Theme = 'dark' | 'light';
 export type SkillPriorityTier = 'Core' | 'Optional' | 'Needs reframe' | string;
 
-/** Keys in Settings that are numeric (used for the slider loop). */
-export type NumericSettingKey =
-  | 'nodeSize'
-  | 'lineWidth'
-  | 'arrowSize'
-  | 'repulsion'
-  | 'spacing'
-  | 'progression'
-  | 'canvasWidth'
-  | 'canvasHeight';
-
 // --- Node & Link Types ---
 
 export interface SkillNode extends d3.SimulationNodeDatum {
@@ -54,6 +43,8 @@ export interface SkillNode extends d3.SimulationNodeDatum {
   level?: number;
   /** Temporary: set by drag handler, cleaned up on drag end. */
   dragStart?: { x: number; y: number };
+  /** Temporary: tracks whether a pointer interaction became a real drag. */
+  dragMoved?: boolean;
 }
 
 export interface SkillLink extends d3.SimulationLinkDatum<SkillNode> {
@@ -124,6 +115,8 @@ export interface StyleOptions {
   satisfiedById: Map<string, number>;
   totalById: Map<string, number>;
   suppressedNodeIds: Set<string>;
+  hiddenLinkKeys: Set<string>;
+  onPrimarySelection?: (nodeId: string) => void;
 }
 
 export interface ReweightedSkillMetadata {
@@ -199,7 +192,6 @@ export interface StudentState {
   skillGraphPositions: SavedPositions | null;
   skillChecklistState: unknown;
   sidebarDropdownState: Record<string, boolean> | null;
-  skillSortState: string | null;
   skillGraphViewSettings: Partial<Settings> | null;
   skillGraphProgressState: ProgressState | null;
 }

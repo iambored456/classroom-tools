@@ -115,7 +115,11 @@ export function loadActiveStudent(): number | null {
     return typeof val === 'number' ? val : null;
 }
 
-export function saveActiveStudent(index: number): void {
+export function saveActiveStudent(index: number | null): void {
+    if (index === null) {
+        localStorage.removeItem(ACTIVE_STUDENT_KEY);
+        return;
+    }
     saveItem(ACTIVE_STUDENT_KEY, index);
 }
 
@@ -133,7 +137,6 @@ export function saveStudentState(index: number, nodes: SkillNode[]): void {
     const snapshotKeys = [
         'skillChecklistState',
         'sidebarDropdownState',
-        'skillSortState',
         'skillGraphViewSettings',
         'skillGraphProgressState',
     ];
@@ -148,7 +151,6 @@ export function loadStudentState(index: number): StudentState {
         skillGraphPositions: loadItem<SavedPositions>(`student:${index}:skillGraphPositions`),
         skillChecklistState: loadItem(`student:${index}:skillChecklistState`),
         sidebarDropdownState: loadItem<Record<string, boolean>>(`student:${index}:sidebarDropdownState`),
-        skillSortState: loadItem<string>(`student:${index}:skillSortState`),
         skillGraphViewSettings: loadItem<Partial<Settings>>(`student:${index}:skillGraphViewSettings`),
         skillGraphProgressState: loadItem<ProgressState>(`student:${index}:skillGraphProgressState`),
     };

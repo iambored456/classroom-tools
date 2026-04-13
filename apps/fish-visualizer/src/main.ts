@@ -11,7 +11,7 @@ import {
 } from './utils';
 import {
     setupGraph, redrawGraph, renderPositions, updateGraphView,
-    createLegend, applyHighlightFilter, findAndFocusNode, getSelectedNodeIds,
+    createLegend, applyHighlightFilter, findAndFocusNode,
     updateWeightGuides,
 } from './graph';
 import { getCategoryLabel, getLegacyGroup } from './config';
@@ -20,13 +20,10 @@ import type {
     SkillLink,
     RawEdge,
     Settings,
+    ProgressStatus,
     ProgressState,
-    ProgressMetrics,
-    NumericSettingKey,
     LayoutMode,
-    OffOffDisplay,
     Theme,
-    SavedPositions,
     ReweightedSkillDataset,
     ReweightedSkillMetadata,
 } from './types';
@@ -43,7 +40,7 @@ const DEFAULT_SETTINGS: Settings = {
     progression: 0.56,
     canvasWidth: 150,
     canvasHeight: 170,
-    layoutMode: 'layered-lanes',
+    layoutMode: 'growth-axis',
     transitiveReduction: false,
     progressMode: false,
     offOffDisplay: 'dim',
@@ -54,9 +51,10 @@ const WEIGHT_MIN = 1;
 const WEIGHT_MAX = 9;
 
 const DROPDOWN_STATE_KEY = 'sidebarDropdownState';
-const SORT_STATE_KEY = 'skillSortState';
 const PROGRESS_STATE_KEY = 'skillGraphProgressState';
-type SortOrder = 'weighted' | 'alpha' | 'prereq';
+const ALL_SKILLS_LIST_STATE_KEY = 'skillsList:all';
+const WORKING_ON_LIST_STATE_KEY = 'skillsList:working';
+const NEXT_SKILLS_LIST_STATE_KEY = 'skillsList:next';
 
 // --- Module-level State ---
 
@@ -64,7 +62,6 @@ let masterNodes: SkillNode[] = [];
 let masterLinks: SkillLink[] = [];
 let simulation: d3.Simulation<SkillNode, SkillLink> | null = null;
 let settings: Settings = { ...DEFAULT_SETTINGS };
-let currentSortOrder: SortOrder = normalizeSortOrder(storage.loadItem<string>(SORT_STATE_KEY));
 let edgeTypeByKey = new Map<string, 'required' | 'or'>();
 let prerequisiteGroupsByTarget = new Map<string, string[][]>();
 let progressState: ProgressState = storage.loadItem<ProgressState>(PROGRESS_STATE_KEY) ?? {};
@@ -74,6 +71,7 @@ let cachedSkills: Record<string, string> | null = null;
 let reweightedBySkillId = new Map<string, ReweightedSkillMetadata>();
 let functionalCategoryOrder = new Map<string, number>();
 let continuumBandByWeight = new Map<number, string>();
+let checklistFlashTimeoutId: number | null = null;
 
 const dataFile = (fileName: string): string => `${import.meta.env.BASE_URL}data/${fileName}`;
 
@@ -84,28 +82,8 @@ function normalizeLayoutMode(value: unknown): LayoutMode {
     return 'growth-axis';
 }
 
-function normalizeOffOffDisplay(value: unknown): OffOffDisplay {
-    return value === 'remove' ? 'remove' : 'dim';
-}
-
 function normalizeTheme(value: unknown): Theme {
     return value === 'light' ? 'light' : 'dark';
-}
-
-function normalizeSortOrder(value: unknown): SortOrder {
-    return value === 'alpha' || value === 'prereq' ? value : 'weighted';
-}
-
-function getSortLabel(sortOrder: SortOrder): string {
-    if (sortOrder === 'alpha') return 'A-Z';
-    if (sortOrder === 'prereq') return '# Pre';
-    return 'Map';
-}
-
-function getNextSortOrder(sortOrder: SortOrder): SortOrder {
-    if (sortOrder === 'weighted') return 'alpha';
-    if (sortOrder === 'alpha') return 'prereq';
-    return 'weighted';
 }
 
 function applyTheme(theme: Theme): void {
@@ -113,24 +91,30 @@ function applyTheme(theme: Theme): void {
     document.documentElement.style.colorScheme = theme;
 }
 
-function getViewSettings(): Settings {
-    const savedSettings = storage.loadViewSettings() ?? {};
+function applySimplifiedViewSettings(viewSettings: Partial<Settings> | null | undefined): Settings {
+    const source = viewSettings ?? {};
     return {
         ...DEFAULT_SETTINGS,
-        ...savedSettings,
-        theme: normalizeTheme(savedSettings.theme ?? DEFAULT_SETTINGS.theme),
-        layoutMode: normalizeLayoutMode(savedSettings.layoutMode ?? DEFAULT_SETTINGS.layoutMode),
-        transitiveReduction: Boolean(savedSettings.transitiveReduction ?? DEFAULT_SETTINGS.transitiveReduction),
-        progressMode: Boolean(savedSettings.progressMode ?? DEFAULT_SETTINGS.progressMode),
-        offOffDisplay: normalizeOffOffDisplay(savedSettings.offOffDisplay ?? DEFAULT_SETTINGS.offOffDisplay),
-        snapToGuides: Boolean(savedSettings.snapToGuides ?? DEFAULT_SETTINGS.snapToGuides),
+        ...source,
+        theme: normalizeTheme(source.theme ?? DEFAULT_SETTINGS.theme),
+        progressMode: Boolean(source.progressMode ?? DEFAULT_SETTINGS.progressMode),
+        nodeSize: DEFAULT_SETTINGS.nodeSize,
+        lineWidth: DEFAULT_SETTINGS.lineWidth,
+        arrowSize: DEFAULT_SETTINGS.arrowSize,
+        repulsion: DEFAULT_SETTINGS.repulsion,
+        spacing: DEFAULT_SETTINGS.spacing,
+        progression: DEFAULT_SETTINGS.progression,
+        canvasWidth: DEFAULT_SETTINGS.canvasWidth,
+        canvasHeight: DEFAULT_SETTINGS.canvasHeight,
+        layoutMode: DEFAULT_SETTINGS.layoutMode,
+        transitiveReduction: DEFAULT_SETTINGS.transitiveReduction,
+        offOffDisplay: DEFAULT_SETTINGS.offOffDisplay,
+        snapToGuides: DEFAULT_SETTINGS.snapToGuides,
     };
 }
 
-function formatSettingDisplay(key: NumericSettingKey, value: number): string {
-    if (key === 'spacing' || key === 'canvasWidth' || key === 'canvasHeight') return `${Math.round(value)}%`;
-    if (key === 'progression') return `${Math.round(value * 100)}%`;
-    return String(value);
+function getViewSettings(): Settings {
+    return applySimplifiedViewSettings(storage.loadViewSettings());
 }
 
 function getStatusForSkill(skillId: string): string {
@@ -146,8 +130,12 @@ function setStatusForSkill(skillId: string, status: string): void {
     }
 }
 
+function hasActiveStudent(): boolean {
+    return activeStudentIndex !== null;
+}
+
 function syncChecklistInputsFromProgress(): void {
-    const rows = document.querySelectorAll('#skill-checklist-container .list-item[data-id]');
+    const rows = document.querySelectorAll('#skill-checklist-container .all-skills-body .list-item[data-id]');
     rows.forEach((row) => {
         if (!(row instanceof HTMLElement)) return;
         const skillId = row.dataset.id;
@@ -162,6 +150,192 @@ function syncChecklistInputsFromProgress(): void {
             masteredToggle.checked = status === PROGRESS_STATUS.MASTERED;
         }
     });
+}
+
+function syncProgressInteractivity(): void {
+    const progressEnabled = hasActiveStudent();
+
+    const disableSelectors = [
+        '#skill-checklist-container .skill-working-toggle',
+        '#skill-checklist-container .skill-mastered-toggle',
+        '#skill-checklist-container .category-check-btn',
+    ];
+
+    disableSelectors.forEach((selector) => {
+        document.querySelectorAll(selector).forEach((element) => {
+            if (element instanceof HTMLButtonElement || element instanceof HTMLInputElement) {
+                element.disabled = !progressEnabled;
+            }
+        });
+    });
+}
+
+function clearChecklistFlash(): void {
+    if (checklistFlashTimeoutId !== null) {
+        window.clearTimeout(checklistFlashTimeoutId);
+        checklistFlashTimeoutId = null;
+    }
+
+    document.querySelectorAll('#skill-checklist-container .list-item.checklist-focus').forEach((row) => {
+        row.classList.remove('checklist-focus');
+    });
+}
+
+function focusSkillInChecklist(skillId: string): void {
+    if (!hasActiveStudent()) return;
+
+    const checklistSection = document.getElementById('checklist-section');
+    if (checklistSection instanceof HTMLDetailsElement) {
+        checklistSection.open = true;
+    }
+
+    const allSkillsGroup = document.querySelector('#skill-checklist-container .skills-list-group[data-section="all-skills"]');
+    if (allSkillsGroup instanceof HTMLDetailsElement) {
+        allSkillsGroup.open = true;
+        const savedDropdownState = storage.loadItem<Record<string, boolean>>(DROPDOWN_STATE_KEY) ?? {};
+        if (savedDropdownState[ALL_SKILLS_LIST_STATE_KEY] !== true) {
+            savedDropdownState[ALL_SKILLS_LIST_STATE_KEY] = true;
+            storage.saveItem(DROPDOWN_STATE_KEY, savedDropdownState);
+        }
+    }
+
+    const row = Array.from(
+        document.querySelectorAll<HTMLElement>('#skill-checklist-container .all-skills-body .list-item[data-id]'),
+    ).find((element) => element.dataset.id === skillId);
+    if (!row) return;
+
+    const categoryGroup = row.closest('.category-group');
+    if (categoryGroup instanceof HTMLDetailsElement) {
+        categoryGroup.open = true;
+        const categoryKey = categoryGroup.dataset.category;
+        if (categoryKey) {
+            const savedDropdownState = storage.loadItem<Record<string, boolean>>(DROPDOWN_STATE_KEY) ?? {};
+            if (savedDropdownState[categoryKey] !== true) {
+                savedDropdownState[categoryKey] = true;
+                storage.saveItem(DROPDOWN_STATE_KEY, savedDropdownState);
+            }
+        }
+    }
+
+    clearChecklistFlash();
+
+    window.requestAnimationFrame(() => {
+        row.classList.add('checklist-focus');
+        row.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest',
+        });
+
+        checklistFlashTimeoutId = window.setTimeout(() => {
+            row.classList.remove('checklist-focus');
+            checklistFlashTimeoutId = null;
+        }, 1800);
+    });
+}
+
+function computeNextSkillIds(progressStateById: Map<string, ProgressStatus> | ProgressState): string[] {
+    if (!hasActiveStudent()) return [];
+
+    const rawStateMap: Map<string, ProgressStatus> = progressStateById instanceof Map
+        ? progressStateById
+        : new Map(Object.entries(progressStateById ?? {}) as Array<[string, ProgressStatus]>);
+
+    return [...masterNodes]
+        .sort(weightedSort)
+        .filter((node) => {
+            const status = normalizeProgressStatus(rawStateMap.get(node.id));
+            if (status !== PROGRESS_STATUS.NOT_STARTED) return false;
+
+            const prerequisiteGroups = prerequisiteGroupsByTarget.get(node.id) ?? [];
+            return prerequisiteGroups.every((group) => {
+                return group.some((alternativeId) => {
+                    const alternativeStatus = normalizeProgressStatus(rawStateMap.get(alternativeId));
+                    return alternativeStatus === PROGRESS_STATUS.IN_PROGRESS || alternativeStatus === PROGRESS_STATUS.MASTERED;
+                });
+            });
+        })
+        .map((node) => node.id);
+}
+
+function computeWorkingSkillIds(progressStateById: Map<string, ProgressStatus> | ProgressState): string[] {
+    if (!hasActiveStudent()) return [];
+
+    const rawStateMap: Map<string, ProgressStatus> = progressStateById instanceof Map
+        ? progressStateById
+        : new Map(Object.entries(progressStateById ?? {}) as Array<[string, ProgressStatus]>);
+
+    return [...masterNodes]
+        .sort(weightedSort)
+        .filter((node) => normalizeProgressStatus(rawStateMap.get(node.id)) === PROGRESS_STATUS.IN_PROGRESS)
+        .map((node) => node.id);
+}
+
+function renderSkillSummaryList(
+    selector: string,
+    skillIds: string[],
+    skills: Record<string, string>,
+    emptyMessage: string,
+): void {
+    const listBody = d3.select(selector);
+    if (listBody.empty()) return;
+
+    listBody.html('');
+
+    if (!hasActiveStudent()) {
+        listBody.append('div')
+            .attr('class', 'empty-list-message')
+            .text('Select a student to view this list.');
+        return;
+    }
+
+    if (skillIds.length === 0) {
+        listBody.append('div')
+            .attr('class', 'empty-list-message')
+            .text(emptyMessage);
+        return;
+    }
+
+    const items = listBody.selectAll<HTMLDivElement, string>('.list-item')
+        .data(skillIds)
+        .join('div')
+        .attr('class', 'list-item summary-skill-item')
+        .attr('data-id', (d) => d);
+
+    const text = items.append('div').attr('class', 'skill-list-text');
+    text.append('span').attr('class', 'code').text((d) => d);
+    text.append('span').attr('class', 'skill').text((d) => String(skills[d] ?? ''));
+
+    items
+        .on('mouseover', (_event: MouseEvent, skillId: string) => applyHighlightFilter([skillId]))
+        .on('mouseout', () => applyHighlightFilter([]))
+        .on('click', (_event: MouseEvent, skillId: string) => {
+            findAndFocusNode(skillId);
+        });
+}
+
+function renderWorkingOnList(
+    skills: Record<string, string>,
+    progressStateById: Map<string, ProgressStatus> | ProgressState = progressState,
+): void {
+    renderSkillSummaryList(
+        '#skill-checklist-container .working-on-body',
+        computeWorkingSkillIds(progressStateById),
+        skills,
+        'No skills are marked as working on.',
+    );
+}
+
+function renderNextSkillsList(
+    skills: Record<string, string>,
+    progressStateById: Map<string, ProgressStatus> | ProgressState = progressState,
+): void {
+    renderSkillSummaryList(
+        '#skill-checklist-container .next-skills-body',
+        computeNextSkillIds(progressStateById),
+        skills,
+        'No next skills available yet.',
+    );
 }
 
 function getWeightRatio(weight: number): number {
@@ -223,7 +397,9 @@ function setGraphCanvasSize(width: number, height: number): void {
 // --- Initialization ---
 
 async function initializeApp(): Promise<void> {
-    applyTheme(getViewSettings().theme);
+    settings = getViewSettings();
+    storage.saveViewSettings(settings);
+    applyTheme(settings.theme);
 
     // 1. Load All Data
     let edgeData: RawEdge[] | undefined;
@@ -336,20 +512,13 @@ async function initializeApp(): Promise<void> {
     createLegend('#legend');
     setupUIListeners();
     setupStudentSlots();
+    syncProgressInteractivity();
+    updateActiveGraph();
 }
 
 /** Builds the active graph view from progress state and current display settings. */
 function updateActiveGraph(): void {
-    const effectiveSettings: Settings = {
-        ...DEFAULT_SETTINGS,
-        ...settings,
-        theme: normalizeTheme(settings.theme),
-        layoutMode: normalizeLayoutMode(settings.layoutMode),
-        transitiveReduction: Boolean(settings.transitiveReduction),
-        progressMode: Boolean(settings.progressMode),
-        offOffDisplay: normalizeOffOffDisplay(settings.offOffDisplay),
-        snapToGuides: Boolean(settings.snapToGuides),
-    };
+    const effectiveSettings = applySimplifiedViewSettings(settings);
 
     const notStartedNodeIds = new Set(
         masterNodes
@@ -373,6 +542,7 @@ function updateActiveGraph(): void {
 
     const progressMetrics = computeProgressMetrics(masterNodes, prerequisiteGroupsByTarget, progressState);
     const progressStateById = progressMetrics.stateById;
+    const hiddenLinkKeys = getStudentHiddenLinkKeys(activeLinks, progressStateById, effectiveSettings.progressMode);
 
     redrawGraph(activeNodes, activeLinks, (allNodes) => {
         if (normalizeLayoutMode(effectiveSettings.layoutMode) === 'free-force') {
@@ -391,10 +561,14 @@ function updateActiveGraph(): void {
         satisfiedById: progressMetrics.satisfiedById,
         totalById: progressMetrics.totalById,
         suppressedNodeIds: removeOffOffNodes ? new Set() : notStartedNodeIds,
+        hiddenLinkKeys,
+        onPrimarySelection: focusSkillInChecklist,
     });
 
-    updateEdgeSummary(activeLinks.length, filteredLinks.length, effectiveSettings.transitiveReduction);
-    updateProgressPanel(progressMetrics, activeNodeIds, effectiveSettings.progressMode);
+    if (cachedSkills) {
+        renderWorkingOnList(cachedSkills, progressStateById);
+        renderNextSkillsList(cachedSkills, progressStateById);
+    }
 
     applyLayoutForces(activeNodes, effectiveSettings);
     simulation!.alpha(0.18).restart();
@@ -421,10 +595,47 @@ function weightedSort(a: SkillNode, b: SkillNode): number {
     return naturalSort(a, b);
 }
 
-function getNodeSortComparator(sortOrder: SortOrder): (a: SkillNode, b: SkillNode) => number {
-    if (sortOrder === 'alpha') return naturalSort;
-    if (sortOrder === 'prereq') return prereqSort;
-    return weightedSort;
+function getLinkEndpointIds(link: SkillLink): { sourceId: string; targetId: string } {
+    return {
+        sourceId: typeof link.source === 'string' ? link.source : link.source.id,
+        targetId: typeof link.target === 'string' ? link.target : link.target.id,
+    };
+}
+
+function getLinkKey(link: SkillLink): string {
+    const { sourceId, targetId } = getLinkEndpointIds(link);
+    return `${sourceId}=>${targetId}`;
+}
+
+function getStudentHiddenLinkKeys(
+    links: SkillLink[],
+    progressStateById: Map<string, ProgressStatus>,
+    progressModeEnabled: boolean,
+): Set<string> {
+    if (!progressModeEnabled || !hasActiveStudent()) {
+        return new Set();
+    }
+
+    const engagedNodeIds = new Set(
+        masterNodes
+            .filter((node) => normalizeProgressStatus(progressStateById.get(node.id)) !== PROGRESS_STATUS.NOT_STARTED)
+            .map((node) => node.id),
+    );
+
+    if (engagedNodeIds.size === 0) {
+        return new Set(links.map(getLinkKey));
+    }
+
+    const hiddenLinkKeys = new Set(
+        links
+            .filter((link) => {
+                const { sourceId, targetId } = getLinkEndpointIds(link);
+                return !engagedNodeIds.has(sourceId) && !engagedNodeIds.has(targetId);
+            })
+            .map(getLinkKey),
+    );
+
+    return hiddenLinkKeys;
 }
 
 function buildContinuumBands(): Array<{ label: string; startLevel: number; endLevel: number }> {
@@ -453,6 +664,32 @@ function buildContinuumBands(): Array<{ label: string; startLevel: number; endLe
     return bands;
 }
 
+function packLaneRows(nodesInLane: SkillNode[]): {
+    rowByNodeId: Map<string, number>;
+    rowCount: number;
+} {
+    const occupiedWeightsByRow: Array<Set<number>> = [];
+    const rowByNodeId = new Map<string, number>();
+
+    nodesInLane.forEach((node) => {
+        const weight = node.categoryWeight;
+        let rowIndex = occupiedWeightsByRow.findIndex((occupiedWeights) => !occupiedWeights.has(weight));
+
+        if (rowIndex === -1) {
+            rowIndex = occupiedWeightsByRow.length;
+            occupiedWeightsByRow.push(new Set<number>());
+        }
+
+        occupiedWeightsByRow[rowIndex]!.add(weight);
+        rowByNodeId.set(node.id, rowIndex);
+    });
+
+    return {
+        rowByNodeId,
+        rowCount: occupiedWeightsByRow.length,
+    };
+}
+
 function buildLaneLayout(
     activeNodes: SkillNode[],
     config: {
@@ -478,14 +715,16 @@ function buildLaneLayout(
         const nodesInLane = activeNodes
             .filter((node) => node.visualGroup === category)
             .sort(weightedSort);
+        const { rowByNodeId, rowCount } = packLaneRows(nodesInLane);
 
-        nodesInLane.forEach((node, nodeIndex) => {
-            const y = cursor + config.lanePadding + config.laneLabelGap + nodeIndex * config.laneGap;
+        nodesInLane.forEach((node) => {
+            const rowIndex = rowByNodeId.get(node.id) ?? 0;
+            const y = cursor + config.lanePadding + config.laneLabelGap + rowIndex * config.laneGap;
             rawTargets.set(node.id, y);
         });
 
-        const lastNodeY = nodesInLane.length > 0
-            ? cursor + config.lanePadding + config.laneLabelGap + (nodesInLane.length - 1) * config.laneGap
+        const lastNodeY = rowCount > 0
+            ? cursor + config.lanePadding + config.laneLabelGap + (rowCount - 1) * config.laneGap
             : cursor + config.lanePadding + config.laneLabelGap;
         const bottom = Math.max(
             cursor + config.lanePadding * 2 + config.laneLabelGap,
@@ -625,7 +864,8 @@ function applyLayoutForces(activeNodes: SkillNode[], currentSettings: Settings):
         const snappedRatio = snapRatioToGuides(getWeightRatio(node.categoryWeight));
         const anchor = leftEdge + snappedRatio * usableWidth;
         if (shouldSnapToGuides) return anchor;
-        const tieOffset = ((node.progressionScore ?? getWeightRatio(node.categoryWeight)) - 0.5) * stepWidth * 0.55;
+        const progressionRatio = Math.max(0, Math.min(1, node.progressionScore ?? snappedRatio));
+        const tieOffset = (progressionRatio - snappedRatio) * stepWidth * 0.55;
         return Math.max(leftEdge, Math.min(leftEdge + usableWidth, anchor + tieOffset));
     };
     const getTargetY = (node: SkillNode): number => {
@@ -693,123 +933,14 @@ function applyLayoutForces(activeNodes: SkillNode[], currentSettings: Settings):
     simulation.nodes(activeNodes);
 }
 
-function updateLayoutControls(currentSettings: Settings): void {
-    const isFreeMode = normalizeLayoutMode(currentSettings.layoutMode) === 'free-force';
-    const setSliderEnabled = (sliderId: string, valueId: string, enabled: boolean): void => {
-        const slider = document.getElementById(sliderId);
-        const value = document.getElementById(valueId);
-        if (!(slider instanceof HTMLInputElement) || !(value instanceof HTMLElement)) return;
-
-        slider.disabled = !enabled;
-        const container = slider.closest('.slider-container');
-        if (container instanceof HTMLElement) {
-            container.style.opacity = enabled ? '1' : '0.55';
-        } else {
-            value.style.opacity = enabled ? '1' : '0.55';
-        }
-    };
-
-    setSliderEnabled('repulsion-slider', 'repulsion-value', isFreeMode);
-    setSliderEnabled('progression-slider', 'progression-value', isFreeMode);
-
-    const snapToggle = document.getElementById('snap-to-guides-toggle');
-    if (snapToggle instanceof HTMLInputElement) {
-        snapToggle.disabled = isFreeMode;
-        const toggleRow = snapToggle.closest('.toggle-row');
-        if (toggleRow instanceof HTMLElement) {
-            toggleRow.style.opacity = isFreeMode ? '0.55' : '1';
-        }
-    }
-}
-
 function saveProgressState(): void {
     storage.saveItem(PROGRESS_STATE_KEY, progressState);
-}
-
-function updateEdgeSummary(displayedEdges: number, fullEdges: number, reduced: boolean): void {
-    const summaryElement = document.getElementById('edge-summary');
-    if (!(summaryElement instanceof HTMLElement)) return;
-
-    if (!reduced) {
-        summaryElement.textContent = `Edges shown: ${displayedEdges}`;
-        return;
-    }
-
-    const removed = Math.max(0, fullEdges - displayedEdges);
-    const removedPct = fullEdges > 0 ? Math.round((removed / fullEdges) * 100) : 0;
-    summaryElement.textContent = `Edges shown: ${displayedEdges}/${fullEdges} (${removedPct}% indirect removed)`;
-}
-
-function updateProgressPanel(progressMetrics: ProgressMetrics, activeNodeIds: Set<string>, progressModeEnabled: boolean): void {
-    const summaryElement = document.getElementById('progress-summary');
-    const readyListElement = document.getElementById('ready-list');
-    const readyCountElement = document.getElementById('ready-count');
-
-    if (!(summaryElement instanceof HTMLElement) || !(readyListElement instanceof HTMLElement) || !(readyCountElement instanceof HTMLElement)) {
-        return;
-    }
-
-    const counts = progressMetrics.counts;
-    summaryElement.textContent =
-        `Mastered ${counts.mastered} | In Progress ${counts['in-progress']} | Not Started ${counts['not-started']}`;
-
-    const readyIds = progressMetrics.readyNowIds
-        .filter((nodeId) => activeNodeIds.has(nodeId))
-        .sort((leftId, rightId) => {
-            const leftTotal = progressMetrics.totalById.get(leftId) ?? 0;
-            const rightTotal = progressMetrics.totalById.get(rightId) ?? 0;
-            if (rightTotal !== leftTotal) return rightTotal - leftTotal;
-            return leftId.localeCompare(rightId, undefined, { numeric: true });
-        })
-        .slice(0, 40);
-
-    readyCountElement.textContent = progressModeEnabled
-        ? `${readyIds.length} ready in current view`
-        : `${readyIds.length} ready (enable mode to visualize)`;
-
-    readyListElement.innerHTML = '';
-    if (readyIds.length === 0) {
-        const emptyItem = document.createElement('li');
-        emptyItem.className = 'ready-empty';
-        emptyItem.textContent = 'No ready-now skills in current filter.';
-        readyListElement.appendChild(emptyItem);
-        return;
-    }
-
-    for (const nodeId of readyIds) {
-        const listItem = document.createElement('li');
-        const satisfied = progressMetrics.satisfiedById.get(nodeId) ?? 0;
-        const total = progressMetrics.totalById.get(nodeId) ?? 0;
-        const score = `${satisfied}/${total}`;
-        listItem.innerHTML = `<span class="ready-id">${nodeId}</span><span class="ready-score">${score}</span>`;
-        readyListElement.appendChild(listItem);
-    }
-}
-
-function updateStatusForSelectedNodes(nextStatus: string): void {
-    const selectedIds = getSelectedNodeIds();
-    if (selectedIds.length === 0) {
-        alert('Select one or more nodes first, then set a progress status.');
-        return;
-    }
-
-    for (const nodeId of selectedIds) {
-        setStatusForSkill(nodeId, nextStatus);
-    }
-    saveProgressState();
-    syncChecklistInputsFromProgress();
-    updateActiveGraph();
 }
 
 // --- Sorting & Sidebar Management ---
 
 function naturalSort(a: SkillNode, b: SkillNode): number {
     return a.id.localeCompare(b.id, undefined, { numeric: true });
-}
-
-function prereqSort(a: SkillNode, b: SkillNode): number {
-    const countDiff = b.prereqCount - a.prereqCount;
-    return countDiff !== 0 ? countDiff : naturalSort(a, b);
 }
 
 type GroupedCategory<T> = {
@@ -847,44 +978,42 @@ function populateSidebar(
     appendixA: Record<string, string[]>,
     appendixB: Record<string, string[]>,
 ): void {
-    const summary = d3.select("#checklist-section > summary");
-    summary.append("button")
-        .attr("class", "sort-button")
-        .text(`Sort: ${getSortLabel(currentSortOrder)}`)
-        .on('click', (event: MouseEvent) => {
-            event.preventDefault();
-            event.stopPropagation();
-
-            currentSortOrder = getNextSortOrder(currentSortOrder);
-            storage.saveItem(SORT_STATE_KEY, currentSortOrder);
-
-            d3.select(event.currentTarget as Element).text(`Sort: ${getSortLabel(currentSortOrder)}`);
-            renderSkillChecklist(skills);
-        });
-
     renderSkillChecklist(skills);
-    renderAppendix('#appendix-a-container', appendixA);
-    renderAppendix('#appendix-b-container', appendixB);
+    renderAppendix('#appendix-a-modal-container', appendixA, 'appendixA');
+    renderAppendix('#appendix-b-modal-container', appendixB, 'appendixB');
 }
 
 function renderSkillChecklist(skills: Record<string, string>): void {
+    clearChecklistFlash();
     const listContainer = d3.select('#skill-checklist-container');
     listContainer.html('');
     const savedDropdownState = storage.loadItem<Record<string, boolean>>(DROPDOWN_STATE_KEY) ?? {};
 
-    const checklistHeader = listContainer.append('div').attr('class', 'skill-checklist-header');
-    const checklistToggleLabels = checklistHeader.append('div').attr('class', 'skill-checklist-toggle-labels');
-    checklistToggleLabels.append('span').text('W');
-    checklistToggleLabels.append('span').text('M');
-    checklistHeader.append('div').attr('class', 'skill-checklist-header-skill').text('Skill');
+    const allSkillsGroup = listContainer.append('details')
+        .attr('class', 'skills-list-group')
+        .attr('data-section', 'all-skills')
+        .property('open', savedDropdownState[ALL_SKILLS_LIST_STATE_KEY] ?? true);
 
-    const sortedMasterNodes = [...masterNodes].sort(getNodeSortComparator(currentSortOrder));
+    allSkillsGroup.append('summary')
+        .attr('class', 'skills-list-summary')
+        .text('All Skills Checklist')
+        .on('click', function(this: HTMLElement) {
+            const parent = this.parentElement as HTMLDetailsElement | null;
+            if (!parent) return;
+            savedDropdownState[ALL_SKILLS_LIST_STATE_KEY] = !parent.open;
+            storage.saveItem(DROPDOWN_STATE_KEY, savedDropdownState);
+        });
+
+    const allSkillsBody = allSkillsGroup.append('div').attr('class', 'skills-list-body all-skills-body');
+
+    const sortedMasterNodes = [...masterNodes].sort(weightedSort);
     const groupedSkills = groupDataByCategory(skills, sortedMasterNodes);
 
-    const categoryGroups = listContainer.selectAll<HTMLDetailsElement, GroupedCategory<string>>('.category-group')
+    const categoryGroups = allSkillsBody.selectAll<HTMLDetailsElement, GroupedCategory<string>>('.category-group')
         .data(groupedSkills)
         .join('details')
         .attr('class', 'category-group')
+        .attr('data-category', (d) => d.key)
         .property('open', (d) => savedDropdownState[d.key] ?? true);
 
     const summaries = categoryGroups.append('summary').attr('class', 'category-summary')
@@ -901,32 +1030,22 @@ function renderSkillChecklist(skills: Record<string, string>): void {
     const btnGroup = summaries.append('span').attr('class', 'category-btn-group');
     btnGroup.append('button')
         .attr('class', 'category-check-btn')
-        .text('Work All')
+        .text('Clear')
         .on('click', (event: MouseEvent, d: GroupedCategory<string>) => {
             event.preventDefault();
             event.stopPropagation();
-            d.items.forEach(([id]) => {
-                const status = getStatusForSkill(id);
-                if (status !== PROGRESS_STATUS.MASTERED) {
-                    setStatusForSkill(id, PROGRESS_STATUS.IN_PROGRESS);
-                }
-            });
-            saveProgressState();
-            syncChecklistInputsFromProgress();
-            updateActiveGraph();
-        });
-
-    btnGroup.append('button')
-        .attr('class', 'category-check-btn')
-        .text('Clear All')
-        .on('click', (event: MouseEvent, d: GroupedCategory<string>) => {
-            event.preventDefault();
-            event.stopPropagation();
+            if (!hasActiveStudent()) return;
             d.items.forEach(([id]) => setStatusForSkill(id, PROGRESS_STATUS.NOT_STARTED));
             saveProgressState();
             syncChecklistInputsFromProgress();
             updateActiveGraph();
         });
+
+    const checklistHeaders = categoryGroups.append('div').attr('class', 'skill-checklist-header');
+    const checklistToggleLabels = checklistHeaders.append('div').attr('class', 'skill-checklist-toggle-labels');
+    checklistToggleLabels.append('span').text('Developing');
+    checklistToggleLabels.append('span').text('Attained');
+    checklistHeaders.append('div').attr('class', 'skill-checklist-header-skill').text('Skill');
 
     type SkillEntry = [string, string];
 
@@ -950,11 +1069,53 @@ function renderSkillChecklist(skills: Record<string, string>): void {
     text.append('span').attr('class', 'code').text((d) => d[0]);
     text.append('span').attr('class', 'skill').text((d) => String(d[1]));
 
+    const workingOnGroup = listContainer.append('details')
+        .attr('class', 'skills-list-group')
+        .attr('data-section', 'working-on')
+        .property('open', savedDropdownState[WORKING_ON_LIST_STATE_KEY] ?? true);
+
+    workingOnGroup.append('summary')
+        .attr('class', 'skills-list-summary')
+        .text('Working On List')
+        .on('click', function(this: HTMLElement) {
+            const parent = this.parentElement as HTMLDetailsElement | null;
+            if (!parent) return;
+            savedDropdownState[WORKING_ON_LIST_STATE_KEY] = !parent.open;
+            storage.saveItem(DROPDOWN_STATE_KEY, savedDropdownState);
+        });
+
+    workingOnGroup.append('div').attr('class', 'skills-list-body working-on-body');
+
+    const nextSkillsGroup = listContainer.append('details')
+        .attr('class', 'skills-list-group')
+        .attr('data-section', 'next-skills')
+        .property('open', savedDropdownState[NEXT_SKILLS_LIST_STATE_KEY] ?? true);
+
+    nextSkillsGroup.append('summary')
+        .attr('class', 'skills-list-summary')
+        .text('Next Skills List')
+        .on('click', function(this: HTMLElement) {
+            const parent = this.parentElement as HTMLDetailsElement | null;
+            if (!parent) return;
+            savedDropdownState[NEXT_SKILLS_LIST_STATE_KEY] = !parent.open;
+            storage.saveItem(DROPDOWN_STATE_KEY, savedDropdownState);
+        });
+
+    nextSkillsGroup.append('div').attr('class', 'skills-list-body next-skills-body');
+
     listContainer.on('change', handleSkillStatusToggleChange);
+    renderWorkingOnList(skills);
+    renderNextSkillsList(skills);
     syncChecklistInputsFromProgress();
+    syncProgressInteractivity();
 }
 
 function handleSkillStatusToggleChange(event: Event): void {
+    if (!hasActiveStudent()) {
+        syncChecklistInputsFromProgress();
+        return;
+    }
+
     const target = event.target;
     if (!(target instanceof HTMLInputElement)) return;
     if (!target.classList.contains('skill-working-toggle') && !target.classList.contains('skill-mastered-toggle')) return;
@@ -982,7 +1143,7 @@ function handleSkillStatusToggleChange(event: Event): void {
     updateActiveGraph();
 }
 
-function renderAppendix(selector: string, data: Record<string, string[]>): void {
+function renderAppendix(selector: string, data: Record<string, string[]>, stateKeyPrefix: string): void {
     const listContainer = d3.select(selector);
     listContainer.html('');
     const groupedData = groupDataByCategory(data, [...masterNodes].sort(weightedSort));
@@ -991,14 +1152,14 @@ function renderAppendix(selector: string, data: Record<string, string[]>): void 
     const categoryGroups = listContainer.selectAll<HTMLDetailsElement, GroupedCategory<string[]>>('.category-group')
         .data(groupedData)
         .join('details').attr('class', 'category-group')
-        .property('open', (d) => savedDropdownState[d.key] ?? false);
+        .property('open', (d) => savedDropdownState[`${stateKeyPrefix}:${d.key}`] ?? false);
 
     categoryGroups.append('summary').attr('class', 'category-summary').text((d) => d.label)
         .on('click', function(this: HTMLElement) {
             const parent = this.parentElement as HTMLDetailsElement | null;
             if (!parent) return;
             const category = d3.select<HTMLDetailsElement, GroupedCategory<string[]>>(parent).datum().key;
-            savedDropdownState[category] = !parent.open;
+            savedDropdownState[`${stateKeyPrefix}:${category}`] = !parent.open;
             storage.saveItem(DROPDOWN_STATE_KEY, savedDropdownState);
         });
 
@@ -1092,6 +1253,7 @@ function setupUIListeners(): void {
     }
 
     settings = getViewSettings();
+    storage.saveViewSettings(settings);
     applyTheme(settings.theme);
 
     const themeToggle = document.getElementById('theme-toggle');
@@ -1105,151 +1267,21 @@ function setupUIListeners(): void {
         });
     }
 
-    const transitiveToggle = document.getElementById('transitive-reduction-toggle');
-    if (transitiveToggle instanceof HTMLInputElement) {
-        transitiveToggle.checked = settings.transitiveReduction;
-        transitiveToggle.addEventListener('change', () => {
-            settings.transitiveReduction = transitiveToggle.checked;
-            storage.saveViewSettings(settings);
-            updateActiveGraph();
-        });
-    }
-
-    const offOffRemoveToggle = document.getElementById('offoff-remove-toggle');
-    if (offOffRemoveToggle instanceof HTMLInputElement) {
-        offOffRemoveToggle.checked = settings.offOffDisplay === 'remove';
-        offOffRemoveToggle.addEventListener('change', () => {
-            settings.offOffDisplay = offOffRemoveToggle.checked ? 'remove' : 'dim';
-            storage.saveViewSettings(settings);
-            updateActiveGraph();
-        });
-    }
-
-    const snapToGuidesToggle = document.getElementById('snap-to-guides-toggle');
-    if (snapToGuidesToggle instanceof HTMLInputElement) {
-        snapToGuidesToggle.checked = settings.snapToGuides;
-        snapToGuidesToggle.addEventListener('change', () => {
-            settings.snapToGuides = snapToGuidesToggle.checked;
-            storage.saveViewSettings(settings);
-            applyLayoutForces(simulation!.nodes(), settings);
-            simulation!.alpha(0.22).restart();
-        });
-    }
-
-    const progressModeToggle = document.getElementById('progress-mode-toggle');
-    if (progressModeToggle instanceof HTMLInputElement) {
-        progressModeToggle.checked = settings.progressMode;
-        progressModeToggle.addEventListener('change', () => {
-            settings.progressMode = progressModeToggle.checked;
-            storage.saveViewSettings(settings);
-            updateActiveGraph();
-        });
-    }
-
-    const markNotStartedBtn = document.getElementById('progress-not-started-btn');
-    if (markNotStartedBtn instanceof HTMLButtonElement) {
-        markNotStartedBtn.addEventListener('click', () => updateStatusForSelectedNodes(PROGRESS_STATUS.NOT_STARTED));
-    }
-
-    const markInProgressBtn = document.getElementById('progress-in-progress-btn');
-    if (markInProgressBtn instanceof HTMLButtonElement) {
-        markInProgressBtn.addEventListener('click', () => updateStatusForSelectedNodes(PROGRESS_STATUS.IN_PROGRESS));
-    }
-
-    const markMasteredBtn = document.getElementById('progress-mastered-btn');
-    if (markMasteredBtn instanceof HTMLButtonElement) {
-        markMasteredBtn.addEventListener('click', () => updateStatusForSelectedNodes(PROGRESS_STATUS.MASTERED));
-    }
-
-    const clearProgressBtn = document.getElementById('progress-clear-btn');
-    if (clearProgressBtn instanceof HTMLButtonElement) {
-        clearProgressBtn.addEventListener('click', () => {
-            if (!confirm('Clear all student progress statuses?')) return;
-            progressState = {};
-            saveProgressState();
-            syncChecklistInputsFromProgress();
-            updateActiveGraph();
-        });
-    }
-
-    const layoutModeSelect = document.getElementById('layout-mode-select');
-    if (layoutModeSelect instanceof HTMLSelectElement) {
-        layoutModeSelect.value = settings.layoutMode;
-        layoutModeSelect.addEventListener('change', () => {
-            settings.layoutMode = normalizeLayoutMode(layoutModeSelect.value);
-            updateLayoutControls(settings);
-            applyLayoutForces(simulation!.nodes(), settings);
-            simulation!.alpha(0.22).restart();
-            storage.saveViewSettings(settings);
-        });
-    }
-
-    updateLayoutControls(settings);
-
-    const sliders: Array<[NumericSettingKey, string]> = [
-        ['nodeSize', 'node-size'],
-        ['lineWidth', 'line-width'],
-        ['arrowSize', 'arrow-size'],
-        ['repulsion', 'repulsion'],
-        ['spacing', 'spacing'],
-        ['canvasWidth', 'canvas-width'],
-        ['canvasHeight', 'canvas-height'],
-        ['progression', 'progression'],
-    ];
-
-    for (const [key, id] of sliders) {
-        const slider = document.getElementById(`${id}-slider`);
-        const display = document.getElementById(`${id}-value`);
-        if (!(slider instanceof HTMLInputElement) || !(display instanceof HTMLElement)) continue;
-
-        const initialValue = settings[key];
-        slider.value = String(initialValue);
-        display.textContent = formatSettingDisplay(key, initialValue);
-
-        slider.addEventListener('input', (e: Event) => {
-            const value = parseFloat((e.target as HTMLInputElement).value);
-            settings[key] = value;
-            display.textContent = formatSettingDisplay(key, value);
-            updateGraphView(settings);
-            applyLayoutForces(simulation!.nodes(), settings);
-            simulation!.alpha(0.1).restart();
-        });
-
-        slider.addEventListener('change', () => storage.saveViewSettings(settings));
-    }
-
     window.addEventListener('resize', () => {
         applyLayoutForces(simulation!.nodes(), settings);
         simulation!.alpha(0.1).restart();
     });
 
-    const resetBtn = document.getElementById('reset-btn');
-    if (resetBtn instanceof HTMLButtonElement) {
-        resetBtn.addEventListener('click', () => {
-            if (confirm("Reset everything? This will clear saved layout, checklist states, and student progress states.")) {
-                storage.clearAll();
-                window.location.reload();
-            }
-        });
-    }
-
-    const exportBtn = document.getElementById('export-btn');
-    if (exportBtn instanceof HTMLButtonElement) {
-        exportBtn.addEventListener('click', () => storage.handleExport(masterNodes));
-    }
-
-    const importBtn = document.getElementById('import-btn');
-    if (importBtn instanceof HTMLButtonElement) {
-        importBtn.addEventListener('click', () => {
-            storage.handleImport((newPositions: SavedPositions) => {
-                storage.saveItem('skillGraphPositions', newPositions);
-                window.location.reload();
-            });
-        });
-    }
-
     const searchInput = document.getElementById('search-input');
     const searchBtn = document.getElementById('search-btn');
+    const viewAppendixesBtn = document.getElementById('view-appendixes-btn');
+    const appendixModal = document.getElementById('appendix-modal');
+    const appendixModalClose = document.getElementById('appendix-modal-close');
+
+    const setAppendixModalOpen = (open: boolean): void => {
+        if (!(appendixModal instanceof HTMLElement)) return;
+        appendixModal.hidden = !open;
+    };
 
     function handleSearch(): void {
         if (!(searchInput instanceof HTMLInputElement)) return;
@@ -1270,60 +1302,58 @@ function setupUIListeners(): void {
             if (e.key === 'Enter') handleSearch();
         });
     }
+
+    if (viewAppendixesBtn instanceof HTMLButtonElement) {
+        viewAppendixesBtn.addEventListener('click', () => setAppendixModalOpen(true));
+    }
+
+    if (appendixModalClose instanceof HTMLButtonElement) {
+        appendixModalClose.addEventListener('click', () => setAppendixModalOpen(false));
+    }
+
+    if (appendixModal instanceof HTMLElement) {
+        appendixModal.addEventListener('click', (event: MouseEvent) => {
+            if (event.target === appendixModal) {
+                setAppendixModalOpen(false);
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            setAppendixModalOpen(false);
+        }
+    });
 }
 
 // --- Student Slots ---
 
 function syncSettingsToUI(): void {
-    const sliderMap: Array<[NumericSettingKey, string]> = [
-        ['nodeSize', 'node-size'],
-        ['lineWidth', 'line-width'],
-        ['arrowSize', 'arrow-size'],
-        ['repulsion', 'repulsion'],
-        ['spacing', 'spacing'],
-        ['canvasWidth', 'canvas-width'],
-        ['canvasHeight', 'canvas-height'],
-        ['progression', 'progression'],
-    ];
-    for (const [key, id] of sliderMap) {
-        const slider = document.getElementById(`${id}-slider`);
-        const display = document.getElementById(`${id}-value`);
-        if (slider instanceof HTMLInputElement && display instanceof HTMLElement) {
-            slider.value = String(settings[key]);
-            display.textContent = formatSettingDisplay(key, settings[key]);
-        }
-    }
-    const layoutModeSelect = document.getElementById('layout-mode-select');
-    if (layoutModeSelect instanceof HTMLSelectElement) {
-        layoutModeSelect.value = settings.layoutMode;
-    }
     const themeToggle = document.getElementById('theme-toggle');
     if (themeToggle instanceof HTMLInputElement) {
         themeToggle.checked = settings.theme === 'dark';
     }
-    const transitiveToggle = document.getElementById('transitive-reduction-toggle');
-    if (transitiveToggle instanceof HTMLInputElement) {
-        transitiveToggle.checked = settings.transitiveReduction;
-    }
-    const offOffRemoveToggle = document.getElementById('offoff-remove-toggle');
-    if (offOffRemoveToggle instanceof HTMLInputElement) {
-        offOffRemoveToggle.checked = settings.offOffDisplay === 'remove';
-    }
-    const snapToGuidesToggle = document.getElementById('snap-to-guides-toggle');
-    if (snapToGuidesToggle instanceof HTMLInputElement) {
-        snapToGuidesToggle.checked = Boolean(settings.snapToGuides);
-    }
-    const progressModeToggle = document.getElementById('progress-mode-toggle');
-    if (progressModeToggle instanceof HTMLInputElement) {
-        progressModeToggle.checked = settings.progressMode;
-    }
     applyTheme(settings.theme);
-    updateLayoutControls(settings);
     updateGraphView(settings);
+    syncProgressInteractivity();
 }
 
 function switchToStudent(newIndex: number): void {
-    if (activeStudentIndex === newIndex) return;
+    if (activeStudentIndex === newIndex) {
+        storage.saveStudentState(newIndex, masterNodes);
+        activeStudentIndex = null;
+        storage.saveActiveStudent(null);
+        settings.progressMode = false;
+        storage.saveViewSettings(settings);
+        progressState = {};
+        storage.saveItem(PROGRESS_STATE_KEY, progressState);
+        syncSettingsToUI();
+        syncChecklistInputsFromProgress();
+        updateActiveGraph();
+        if (cachedSkills) renderSkillChecklist(cachedSkills);
+        updateStudentButtonStates();
+        return;
+    }
 
     if (activeStudentIndex !== null) {
         storage.saveStudentState(activeStudentIndex, masterNodes);
@@ -1333,17 +1363,10 @@ function switchToStudent(newIndex: number): void {
 
     storage.saveItem(DROPDOWN_STATE_KEY, newState.sidebarDropdownState ?? {});
 
-    currentSortOrder = normalizeSortOrder(newState.skillSortState);
-    storage.saveItem(SORT_STATE_KEY, currentSortOrder);
-
-    const newViewSettings: Settings = {
-        ...DEFAULT_SETTINGS,
-        ...(newState.skillGraphViewSettings ?? {}),
-    };
-    newViewSettings.theme = normalizeTheme(newViewSettings.theme);
-    newViewSettings.layoutMode = normalizeLayoutMode(newViewSettings.layoutMode);
-    newViewSettings.offOffDisplay = normalizeOffOffDisplay(newViewSettings.offOffDisplay);
-    Object.assign(settings, newViewSettings);
+    const globalTheme = settings.theme;
+    Object.assign(settings, applySimplifiedViewSettings(newState.skillGraphViewSettings));
+    settings.theme = globalTheme;
+    settings.progressMode = true;
     storage.saveViewSettings(settings);
 
     progressState = newState.skillGraphProgressState ?? {};
@@ -1362,17 +1385,12 @@ function switchToStudent(newIndex: number): void {
     });
     if (positions) storage.saveItem('skillGraphPositions', positions);
 
+    activeStudentIndex = newIndex;
+    storage.saveActiveStudent(newIndex);
+
     syncSettingsToUI();
     updateActiveGraph();
     if (cachedSkills) renderSkillChecklist(cachedSkills);
-
-    const sortButton = document.querySelector('#checklist-section .sort-button');
-    if (sortButton instanceof HTMLButtonElement) {
-        sortButton.textContent = `Sort: ${getSortLabel(currentSortOrder)}`;
-    }
-
-    activeStudentIndex = newIndex;
-    storage.saveActiveStudent(newIndex);
     updateStudentButtonStates();
 }
 
@@ -1446,8 +1464,14 @@ function setupStudentSlots(): void {
 
     if (savedActiveIndex !== null) {
         activeStudentIndex = savedActiveIndex;
-        updateStudentButtonStates();
+    } else {
+        progressState = {};
+        storage.saveItem(PROGRESS_STATE_KEY, progressState);
     }
+    settings.progressMode = activeStudentIndex !== null;
+    storage.saveViewSettings(settings);
+    updateStudentButtonStates();
+    syncProgressInteractivity();
 }
 
 // --- App Start ---

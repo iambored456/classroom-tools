@@ -30,11 +30,17 @@ type WeightGuideConfig = {
     lanes: GuideLane[];
 };
 
+const GUIDE_FONT_SIZES = {
+    weightBand: 13,
+    weightGuide: 12,
+    laneGuide: 12,
+    nodeLabel: 13,
+} as const;
+
 // --- Module-level State ---
 
 let nodeSelection: d3.Selection<SVGGElement, SkillNode, SVGGElement, unknown> | null = null;
 let linkSelection: d3.Selection<SVGLineElement, SkillLink, SVGGElement, unknown> | null = null;
-let markerSelection: d3.Selection<SVGMarkerElement, unknown, HTMLElement, unknown> | null = null;
 let svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, unknown> | null = null;
 let container: d3.Selection<SVGGElement, unknown, HTMLElement, unknown> | null = null;
 let weightGuideLayer: d3.Selection<SVGGElement, unknown, HTMLElement, unknown> | null = null;
@@ -44,6 +50,7 @@ let weightLineLayer: d3.Selection<SVGGElement, unknown, HTMLElement, unknown> | 
 let zoom: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
 let simulation: d3.Simulation<SkillNode, SkillLink> | null = null;
 let color: d3.ScaleOrdinal<string, string, never> | null = null;
+let currentZoomScale = 1;
 let weightGuideConfig: WeightGuideConfig = {
     visible: false,
     leftEdge: 0,
@@ -69,6 +76,7 @@ let styleOptions: StyleOptions = {
     satisfiedById: new Map(),
     totalById: new Map(),
     suppressedNodeIds: new Set(),
+    hiddenLinkKeys: new Set(),
 };
 
 // --- Private Helpers ---
@@ -103,9 +111,6 @@ function applyNodeVisualState(): void {
 
     nodeSelection
         .classed('progress-mode', styleOptions.progressMode)
-        .classed('tier-optional', (node) => node.priorityTier === 'Optional')
-        .classed('tier-needs-reframe', (node) => node.priorityTier === 'Needs reframe')
-        .classed('safety-critical', (node) => node.safetyFlag)
         .classed('grouped-skill', (node) => node.grouped)
         .classed('status-not-started', (node) => styleOptions.progressMode && getNodeProgressStatus(node.id) === PROGRESS_STATUS.NOT_STARTED)
         .classed('status-in-progress', (node) => styleOptions.progressMode && getNodeProgressStatus(node.id) === PROGRESS_STATUS.IN_PROGRESS)
@@ -128,10 +133,17 @@ function applySuppressedVisualState(): void {
     const suppressedNodeIds = styleOptions.suppressedNodeIds instanceof Set
         ? styleOptions.suppressedNodeIds
         : new Set<string>();
+    const hiddenLinkKeys = styleOptions.hiddenLinkKeys instanceof Set
+        ? styleOptions.hiddenLinkKeys
+        : new Set<string>();
     nodeSelection.classed('suppressed-node', (node) => suppressedNodeIds.has(node.id));
     linkSelection.classed('suppressed-link', (link) => {
         const resolved = link as unknown as ResolvedSkillLink;
         return suppressedNodeIds.has(resolved.source.id) || suppressedNodeIds.has(resolved.target.id);
+    })
+    .classed('student-hidden-link', (link) => {
+        const resolved = link as unknown as ResolvedSkillLink;
+        return hiddenLinkKeys.has(edgeKeyFromLink(resolved));
     });
 }
 
@@ -174,6 +186,27 @@ function buildTooltipHtml(node: SkillNode): string {
     ].join('');
 }
 
+function getResponsiveTextScale(): number {
+    if (currentZoomScale >= 1) return 1;
+    const safeScale = Math.max(0.1, currentZoomScale);
+
+    // Partially compensate when zooming out so guide text stays readable without becoming dominant.
+    return Math.min(2.1, Math.pow(1 / safeScale, 0.7));
+}
+
+function applyResponsiveTextSizing(): void {
+    const scale = getResponsiveTextScale();
+
+    weightBandLayer?.selectAll<SVGTextElement, GuideBand>('text.weight-band-label')
+        .style('font-size', `${GUIDE_FONT_SIZES.weightBand * scale}px`);
+    weightLineLayer?.selectAll<SVGTextElement, number>('text.weight-guide-label')
+        .style('font-size', `${GUIDE_FONT_SIZES.weightGuide * scale}px`);
+    laneGuideLayer?.selectAll<SVGTextElement, GuideLane>('text.lane-guide-label')
+        .style('font-size', `${GUIDE_FONT_SIZES.laneGuide * scale}px`);
+    container?.selectAll<SVGTextElement, unknown>('text.node-label')
+        .style('font-size', `${GUIDE_FONT_SIZES.nodeLabel * scale}px`);
+}
+
 function positionTooltip(
     tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown>,
     event: MouseEvent,
@@ -209,7 +242,8 @@ function createNodeDrag(
 ): d3.DragBehavior<SVGGElement, SkillNode, SkillNode | d3.SubjectPosition> {
     return d3.drag<SVGGElement, SkillNode>()
         .on("start", function(event: d3.D3DragEvent<SVGGElement, SkillNode, SkillNode>, d: SkillNode) {
-            if (!event.active) simulation!.alphaTarget(0.3).restart();
+            d.dragMoved = false;
+            d.dragStart = { x: d.x ?? 0, y: d.y ?? 0 };
             d.fx = d.x;
             d.fy = d.y;
 
@@ -223,6 +257,15 @@ function createNodeDrag(
             nodeSelection!.classed("selected", n => selectedNodes.has(n.id));
         })
         .on("drag", function(event: d3.D3DragEvent<SVGGElement, SkillNode, SkillNode>) {
+            const dragOrigin = event.subject.dragStart;
+            if (!event.subject.dragMoved && dragOrigin) {
+                const movedDistance = Math.hypot(event.x - dragOrigin.x, event.y - dragOrigin.y);
+                if (movedDistance > 1) {
+                    event.subject.dragMoved = true;
+                    simulation!.alphaTarget(0.3).restart();
+                }
+            }
+
             selectedNodes.forEach(nodeId => {
                 const nodeToMove = allNodeData.find(n => n.id === nodeId);
                 if (nodeToMove) {
@@ -240,8 +283,9 @@ function createNodeDrag(
             });
         })
         .on("end", function(event: d3.D3DragEvent<SVGGElement, SkillNode, SkillNode>) {
-            if (!event.active) simulation!.alphaTarget(0);
+            simulation!.alphaTarget(0);
 
+            const didMove = Boolean(event.subject.dragMoved);
             const shouldKeepPinned = (event.sourceEvent as MouseEvent).shiftKey;
             selectedNodes.forEach(nodeId => {
                 const node = allNodeData.find(n => n.id === nodeId);
@@ -251,9 +295,13 @@ function createNodeDrag(
                         node.fy = null;
                     }
                     delete node.dragStart;
+                    delete node.dragMoved;
                 }
             });
-            onDragEnd(allNodeData);
+
+            if (didMove) {
+                onDragEnd(allNodeData);
+            }
         });
 }
 
@@ -271,6 +319,9 @@ function handleNodeClick(event: MouseEvent, d: SkillNode): void {
     } else {
         clearAllHighlights();
         highlightNeighbors(d);
+        if (styleOptions.progressMode) {
+            styleOptions.onPrimarySelection?.(d.id);
+        }
     }
     nodeSelection!.classed("selected", n => selectedNodes.has(n.id));
 }
@@ -282,10 +333,16 @@ function clearAllHighlights(): void {
     container.select(".node-label").remove();
     nodeSelection.classed("primary-selection", false)
                  .classed("neighbor", false)
+                 .classed("prerequisite-neighbor", false)
+                 .classed("dependent-neighbor", false)
+                 .classed("bidirectional-neighbor", false)
                  .classed("selected", false)
                  .classed("greyed-out", false);
 
     linkSelection.classed("highlighted", false)
+                 .classed("highlighted-prerequisite", false)
+                 .classed("highlighted-dependent", false)
+                 .classed("highlighted-bidirectional", false)
                  .classed("selection-highlighted", false)
                  .classed("greyed-out", false);
     selectedNodes.clear();
@@ -297,8 +354,14 @@ function clearNeighborHighlights(): void {
 
     container.select(".node-label").remove();
     nodeSelection.classed("primary-selection", false)
-                 .classed("neighbor", false);
+                 .classed("neighbor", false)
+                 .classed("prerequisite-neighbor", false)
+                 .classed("dependent-neighbor", false)
+                 .classed("bidirectional-neighbor", false);
     linkSelection.classed("highlighted", false)
+                 .classed("highlighted-prerequisite", false)
+                 .classed("highlighted-dependent", false)
+                 .classed("highlighted-bidirectional", false)
                  .classed("selection-highlighted", false);
 }
 
@@ -307,24 +370,52 @@ function highlightNeighbors(primaryNode: SkillNode): void {
     clearAllHighlights();
     if (!primaryNode || !simulation) return;
 
-    const neighborIds = new Set<string>();
+    const prerequisiteIds = new Set<string>();
+    const dependentIds = new Set<string>();
+    const relatedNodeIds = new Set<string>([primaryNode.id]);
     const linkForce = simulation.force<d3.ForceLink<SkillNode, SkillLink>>("link");
     if (linkForce) {
         (linkForce.links() as unknown as ResolvedSkillLink[]).forEach(l => {
-            if (l.source.id === primaryNode.id) neighborIds.add(l.target.id);
-            if (l.target.id === primaryNode.id) neighborIds.add(l.source.id);
+            if (l.source.id === primaryNode.id) {
+                dependentIds.add(l.target.id);
+                relatedNodeIds.add(l.target.id);
+            }
+            if (l.target.id === primaryNode.id) {
+                prerequisiteIds.add(l.source.id);
+                relatedNodeIds.add(l.source.id);
+            }
         });
     }
 
     linkSelection!
-        .filter(l => {
-            const resolved = l as unknown as ResolvedSkillLink;
+        .classed("highlighted-prerequisite", (link) => {
+            const resolved = link as unknown as ResolvedSkillLink;
+            return resolved.target.id === primaryNode.id && resolved.source.id !== primaryNode.id;
+        })
+        .classed("highlighted-dependent", (link) => {
+            const resolved = link as unknown as ResolvedSkillLink;
+            return resolved.source.id === primaryNode.id && resolved.target.id !== primaryNode.id;
+        })
+        .classed("highlighted-bidirectional", (link) => {
+            const resolved = link as unknown as ResolvedSkillLink;
+            return resolved.source.id === primaryNode.id && resolved.target.id === primaryNode.id;
+        })
+        .classed("highlighted", (link) => {
+            const resolved = link as unknown as ResolvedSkillLink;
             return resolved.source.id === primaryNode.id || resolved.target.id === primaryNode.id;
         })
-        .classed("highlighted", true);
+        .classed("greyed-out", (link) => {
+            const resolved = link as unknown as ResolvedSkillLink;
+            return resolved.source.id !== primaryNode.id && resolved.target.id !== primaryNode.id;
+        });
 
-    nodeSelection!.filter(n => neighborIds.has(n.id)).classed("neighbor", true);
-    nodeSelection!.filter(n => n.id === primaryNode.id).classed("primary-selection", true);
+    nodeSelection!
+        .classed("greyed-out", (node) => !relatedNodeIds.has(node.id))
+        .classed("prerequisite-neighbor", (node) => prerequisiteIds.has(node.id) && !dependentIds.has(node.id))
+        .classed("dependent-neighbor", (node) => dependentIds.has(node.id) && !prerequisiteIds.has(node.id))
+        .classed("bidirectional-neighbor", (node) => prerequisiteIds.has(node.id) && dependentIds.has(node.id))
+        .classed("neighbor", (node) => prerequisiteIds.has(node.id) || dependentIds.has(node.id))
+        .classed("primary-selection", (node) => node.id === primaryNode.id);
 }
 
 /** Sets up global interactions like zoom and background click. */
@@ -332,7 +423,9 @@ function setupInteractions(): void {
     zoom = d3.zoom<SVGSVGElement, unknown>()
         .scaleExtent([0.1, 8])
         .on("zoom", (event: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
+            currentZoomScale = event.transform.k;
             container!.attr("transform", event.transform.toString());
+            applyResponsiveTextSizing();
         });
     svg!.call(zoom);
 
@@ -351,13 +444,6 @@ export function setupGraph(selector: string, forceSimulation: d3.Simulation<Skil
 
     // Add the selection box used for lasso selection
     container!.append("rect").attr("id", "selection-box").attr("display", "none");
-
-    // Define the arrowhead marker for links
-    const defs = container!.append<SVGDefsElement>("defs");
-    markerSelection = defs.append<SVGMarkerElement>('marker')
-        .attr('id', 'arrowhead').attr('viewBox', '-0 -5 10 10')
-        .attr('orient', 'auto');
-    markerSelection!.append('path').attr('d', 'M0,-5L10,0L0,5');
 
     // Background guide layer for weighted maturity lines
     weightGuideLayer = container!.append<SVGGElement>('g').attr('class', 'weight-guides');
@@ -394,6 +480,7 @@ export function redrawGraph(
     if (!(styleOptions.satisfiedById instanceof Map)) styleOptions.satisfiedById = new Map();
     if (!(styleOptions.totalById instanceof Map)) styleOptions.totalById = new Map();
     if (!(styleOptions.suppressedNodeIds instanceof Set)) styleOptions.suppressedNodeIds = new Set();
+    if (!(styleOptions.hiddenLinkKeys instanceof Set)) styleOptions.hiddenLinkKeys = new Set();
 
     // Initialize color scale on first render
     if (!color) {
@@ -411,8 +498,7 @@ export function redrawGraph(
         .data(links, (d) => `${getNodeId(d.source)}-${getNodeId(d.target)}`)
         .join(
             enter => enter.append("line")
-                .attr("class", getLinkClass)
-                .attr('marker-end', 'url(#arrowhead)'),
+                .attr("class", getLinkClass),
             update => update.attr("class", getLinkClass),
             exit => exit.remove(),
         );
@@ -424,7 +510,6 @@ export function redrawGraph(
         .join(
             enter => {
                 const g = enter.append("g").attr("class", "node");
-                g.append("circle").attr('class', 'node-accent-ring');
                 g.append("circle").attr('class', 'node-body');
                 g.call(createNodeDrag(onDragEnd));
                 return g;
@@ -494,16 +579,10 @@ export function renderPositions(): void {
 
 /** Updates visual styles like node size, line width, and arrow size. */
 export function updateGraphView(settings: Partial<Settings>): void {
-    if (!nodeSelection || !linkSelection || !markerSelection) return;
-    const { nodeSize = 8, lineWidth = 1.5, arrowSize = 6 } = settings;
-    const linkColor = getComputedStyle(document.documentElement).getPropertyValue('--link-color').trim() || '#999';
+    if (!nodeSelection || !linkSelection) return;
+    const { nodeSize = 8, lineWidth = 1.5 } = settings;
     nodeSelection.selectAll<SVGCircleElement, SkillNode>('.node-body').attr('r', nodeSize);
-    nodeSelection.selectAll<SVGCircleElement, SkillNode>('.node-accent-ring').attr('r', nodeSize + 4);
     linkSelection.style('stroke-width', `${lineWidth}px`);
-    markerSelection
-        .attr('markerWidth', arrowSize).attr('markerHeight', arrowSize)
-        .attr('refX', nodeSize + 8)
-        .select('path').attr('fill', linkColor);
 }
 
 /** Creates the color legend in the DOM. */
@@ -511,9 +590,33 @@ export function createLegend(selector: string): void {
     if (!color) return;
     const legendContainer = d3.select(selector);
     legendContainer.html('');
-    legendContainer.append("h3").style("margin", "0 0 10px 0").text("Functional Categories");
+    let isExpanded = true;
+    const updateLegendExpansion = (
+        toggleButton: d3.Selection<HTMLButtonElement, unknown, HTMLElement, unknown>,
+        legendBody: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown>,
+    ): void => {
+        legendContainer.classed('legend-collapsed', !isExpanded);
+        legendBody.property('hidden', !isExpanded);
+        toggleButton
+            .attr('aria-expanded', String(isExpanded))
+            .attr('title', isExpanded ? 'Collapse legend' : 'Expand legend')
+            .text(isExpanded ? 'v' : '>');
+    };
 
-    const legendGrid = legendContainer.append('div').attr('class', 'legend-grid');
+    const legendHeader = legendContainer.append('div').attr('class', 'legend-header');
+    legendHeader.append('h3').style('margin', '0').text('Functional Categories');
+    const toggleButton = legendHeader.append('button')
+        .attr('type', 'button')
+        .attr('class', 'legend-toggle')
+        .attr('aria-label', 'Toggle functional categories legend');
+    const legendBody = legendContainer.append('div').attr('class', 'legend-body');
+    toggleButton.on('click', () => {
+        isExpanded = !isExpanded;
+        updateLegendExpansion(toggleButton, legendBody);
+    });
+    updateLegendExpansion(toggleButton, legendBody);
+
+    const legendGrid = legendBody.append('div').attr('class', 'legend-grid');
     const legendItems = legendGrid.selectAll(".legend-item")
         .data(color.domain())
         .join("div")
@@ -521,26 +624,11 @@ export function createLegend(selector: string): void {
     legendItems.append("div").attr("class", "legend-color").style("background-color", d => color!(d));
     legendItems.append("span").text((d) => getCategoryLabel(d));
 
-    legendContainer.append('div')
+    legendBody.append('div')
         .attr('class', 'legend-note')
         .text('Continuum weights 1-9 run left to right. Functional lanes organize the graph vertically.');
 
-    const nodeLegend = legendContainer.append('div').attr('class', 'edge-legend');
-    nodeLegend.append('div').attr('class', 'edge-legend-title').text('Node Cues');
-
-    const optionalRow = nodeLegend.append('div').attr('class', 'edge-legend-row');
-    optionalRow.append('span').attr('class', 'legend-swatch legend-swatch-optional');
-    optionalRow.append('span').text('Optional skill');
-
-    const reframeRow = nodeLegend.append('div').attr('class', 'edge-legend-row');
-    reframeRow.append('span').attr('class', 'legend-swatch legend-swatch-reframe');
-    reframeRow.append('span').text('Needs reframe');
-
-    const safetyRow = nodeLegend.append('div').attr('class', 'edge-legend-row');
-    safetyRow.append('span').attr('class', 'legend-swatch legend-swatch-safety');
-    safetyRow.append('span').text('Safety-critical');
-
-    const edgeLegend = legendContainer.append('div').attr('class', 'edge-legend');
+    const edgeLegend = legendBody.append('div').attr('class', 'edge-legend');
     edgeLegend.append('div').attr('class', 'edge-legend-title').text('Links');
 
     const requiredRow = edgeLegend.append('div').attr('class', 'edge-legend-row');
@@ -556,6 +644,11 @@ export function createLegend(selector: string): void {
 export function applyHighlightFilter(activeNodeIds: string[]): void {
     if (!nodeSelection || !linkSelection) return;
     const activeSet = new Set(activeNodeIds);
+    if (activeSet.size === 0) {
+        nodeSelection.classed('greyed-out', false);
+        linkSelection.classed('greyed-out', false);
+        return;
+    }
     nodeSelection.classed('greyed-out', d => !activeSet.has(d.id));
     linkSelection.classed('greyed-out', l => {
         const resolved = l as unknown as ResolvedSkillLink;
@@ -736,4 +829,5 @@ export function updateWeightGuides(config: {
     });
 
     guides.exit().remove();
+    applyResponsiveTextSizing();
 }
