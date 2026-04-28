@@ -1,4 +1,5 @@
-export type AppCard = {
+export type StandaloneApp = {
+  kind: 'app'
   id: string
   name: string
   description: string
@@ -8,11 +9,60 @@ export type AppCard = {
   accent: string
 }
 
+export type FolderApp = {
+  id: string
+  name: string
+  description: string
+  href: string
+  accent: string
+  glyph: string
+}
+
+export type FolderEntry = {
+  kind: 'folder'
+  id: string
+  name: string
+  description: string
+  tags: string[]
+  accent: string
+  apps: FolderApp[]
+}
+
+export type HubEntry = StandaloneApp | FolderEntry
+
 const baseUrl = import.meta.env.BASE_URL
 const withBase = (path: string) => `${baseUrl}${path.replace(/^\/+/, '')}`
 
-export const appCards: AppCard[] = [
+export const hubEntries: HubEntry[] = [
   {
+    kind: 'folder',
+    id: 'math-tools',
+    name: 'Math Tools',
+    description:
+      'Open a folder of math practice apps, including coordinate games and the marble tax-brackets visual.',
+    tags: ['Math', 'Folder', 'Practice'],
+    accent: '#e88949',
+    apps: [
+      {
+        id: 'coordinates',
+        name: 'Coordinates',
+        description: 'Read plotted points or tap the location of an ordered pair on a -10 to 10 plane.',
+        href: withBase('coordinates/'),
+        accent: '#1b8d98',
+        glyph: 'XY',
+      },
+      {
+        id: 'tax-brackets-marble-visual',
+        name: 'Tax Brackets',
+        description: 'Watch marbles sort into deductions, tax, and take-home pay buckets.',
+        href: withBase('tax-brackets-marble-visual/'),
+        accent: '#0c7f7a',
+        glyph: '%',
+      },
+    ],
+  },
+  {
+    kind: 'app',
     id: 'launchpad-whack-a-mole',
     name: 'Launchpad Whack-a-Mole',
     description:
@@ -23,6 +73,7 @@ export const appCards: AppCard[] = [
     accent: '#e07d5a',
   },
   {
+    kind: 'app',
     id: 'read-along-highlighter',
     name: 'ReadAlong Highlighter',
     description:
@@ -33,6 +84,7 @@ export const appCards: AppCard[] = [
     accent: '#5a9fe0',
   },
   {
+    kind: 'app',
     id: 'class-clock',
     name: 'ClassClock',
     description: 'A simple, distraction-free clock and timer designed for classroom display.',
@@ -42,6 +94,7 @@ export const appCards: AppCard[] = [
     accent: '#7abd6e',
   },
   {
+    kind: 'app',
     id: 'class-schedule-widget',
     name: 'Class Schedule Widget',
     description:
@@ -52,6 +105,7 @@ export const appCards: AppCard[] = [
     accent: '#f19d5e',
   },
   {
+    kind: 'app',
     id: 'fish-visualizer',
     name: 'Fish Visualizer',
     description:
@@ -62,6 +116,7 @@ export const appCards: AppCard[] = [
     accent: '#4ea6b9',
   },
   {
+    kind: 'app',
     id: 'launchpad-controller',
     name: 'Launchpad Controller',
     description:
@@ -72,6 +127,7 @@ export const appCards: AppCard[] = [
     accent: '#9d65e0',
   },
   {
+    kind: 'app',
     id: 'oklch-visualizer',
     name: 'OKLCH Visualizer',
     description:
@@ -80,15 +136,5 @@ export const appCards: AppCard[] = [
     preview: withBase('images/OKLCHVisualizer-screenshot.png'),
     tags: ['Color', 'Music', 'Visualization'],
     accent: '#4cc6ff',
-  },
-  {
-    id: 'tax-brackets-marble-visual',
-    name: 'Tax Brackets - Marble Visual',
-    description:
-      'A progressive-tax animation with marbles, bracket buckets, and a second pass that drops only the taxed share into a shared trough.',
-    href: withBase('tax-brackets-marble-visual/'),
-    preview: withBase('images/TaxBracketsMarbleVisual-screenshot.png'),
-    tags: ['Math', 'Tax', 'Visualization'],
-    accent: '#0c7f7a',
   },
 ]

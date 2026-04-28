@@ -91,6 +91,7 @@ function buildTargets(rootBase) {
   const fishVisualizerBase = appendPath(rootBase, 'fish-visualizer')
   const launchpadControllerBase = appendPath(rootBase, 'launchpad-controller')
   const taxBracketsMarbleVisualBase = appendPath(rootBase, 'tax-brackets-marble-visual')
+  const coordinatesBase = appendPath(rootBase, 'coordinates')
   const oklchVisualizerBase = appendPath(rootBase, 'oklch-visualizer')
 
   return [
@@ -248,6 +249,23 @@ button {
   box-shadow: none !important;
   border: none !important;
   background: transparent !important;
+}
+`,
+    },
+    {
+      id: 'coordinates',
+      outputFile: 'Coordinates-screenshot.png',
+      distDir: 'apps/coordinates/dist',
+      basePath: coordinatesBase,
+      route: coordinatesBase,
+      waitFor: '.plane-card .plane',
+      delayMs: 300,
+      injectCss: `
+.legend-card {
+  display: none !important;
+}
+.workspace {
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.8fr) !important;
 }
 `,
     },

@@ -55,6 +55,11 @@ const appDistTargets = [
     targetSubdir: 'tax-brackets-marble-visual',
   },
   {
+    name: 'coordinates',
+    distPath: join(rootDir, 'apps/coordinates/dist'),
+    targetSubdir: 'coordinates',
+  },
+  {
     name: 'oklch-visualizer',
     distPath: join(rootDir, 'apps/oklch-visualizer/dist'),
     targetSubdir: 'oklch-visualizer',

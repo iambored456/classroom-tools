@@ -127,6 +127,7 @@ runBuild('launchpad-whack-a-mole', appendPath(rootBase, 'launchpad-whack-a-mole'
 runBuild('fish-visualizer', appendPath(rootBase, 'fish-visualizer'))
 runBuild('launchpad-controller', appendPath(rootBase, 'launchpad-controller'))
 runBuild('tax-brackets-marble-visual', appendPath(rootBase, 'tax-brackets-marble-visual'))
+runBuild('coordinates', appendPath(rootBase, 'coordinates'))
 runBuild('oklch-visualizer', appendPath(rootBase, 'oklch-visualizer'))
 runNodeScript(['scripts/capture-previews.ts'], {
   ...process.env,

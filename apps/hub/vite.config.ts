@@ -41,6 +41,10 @@ export default defineConfig({
         target: 'http://localhost:5179',
         changeOrigin: true,
       },
+      '/coordinates': {
+        target: 'http://localhost:5182',
+        changeOrigin: true,
+      },
       '/oklch-visualizer': {
         target: 'http://localhost:5180',
         changeOrigin: true,
