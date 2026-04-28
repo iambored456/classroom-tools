@@ -39,7 +39,7 @@
     ['7', '8', '9'],
     ['4', '5', '6'],
     ['1', '2', '3'],
-    ['0'],
+    ['0', '10'],
   ]
   const BURST_RAYS = [
     { x: 0, y: -30 },
@@ -306,6 +306,13 @@
     if (!isCoordinateDraft(nextValue)) return
 
     setCoordinateValue(axis, nextValue)
+  }
+
+  function selectCoordinateNumber(axis: Axis, digits: string): void {
+    const isNegative = getCoordinateValue(axis).startsWith('-')
+    const nextValue = isNegative && digits !== '0' ? `-${digits}` : digits
+    setCoordinateValue(axis, nextValue)
+    closeNumberPad()
   }
 
   function deleteCoordinateDigit(axis: Axis): void {
@@ -676,32 +683,18 @@
             {#if activeInput === 'x' && !isLocked}
               <div class="number-pad" role="dialog" aria-label="Number pad for x-coordinate">
                 <div class="number-pad-grid">
-                  {#each NUMBER_PAD_ROWS as row, rowIndex}
-                    {#each row as digit}
+                  {#each NUMBER_PAD_ROWS as row}
+                    {#each row as keyLabel}
                       <button
                         type="button"
                         class="number-pad-key"
-                        class:number-pad-zero={rowIndex === NUMBER_PAD_ROWS.length - 1}
-                        on:click={() => appendCoordinateDigit('x', digit)}
+                        class:number-pad-wide={keyLabel === '10'}
+                        on:click={() => selectCoordinateNumber('x', keyLabel)}
                       >
-                        {digit}
+                        {keyLabel}
                       </button>
                     {/each}
                   {/each}
-                  <button
-                    type="button"
-                    class="number-pad-key number-pad-utility"
-                    on:click={() => deleteCoordinateDigit('x')}
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    class="number-pad-key number-pad-utility"
-                    on:click={closeNumberPad}
-                  >
-                    Done
-                  </button>
                 </div>
               </div>
             {/if}
@@ -742,32 +735,18 @@
             {#if activeInput === 'y' && !isLocked}
               <div class="number-pad" role="dialog" aria-label="Number pad for y-coordinate">
                 <div class="number-pad-grid">
-                  {#each NUMBER_PAD_ROWS as row, rowIndex}
-                    {#each row as digit}
+                  {#each NUMBER_PAD_ROWS as row}
+                    {#each row as keyLabel}
                       <button
                         type="button"
                         class="number-pad-key"
-                        class:number-pad-zero={rowIndex === NUMBER_PAD_ROWS.length - 1}
-                        on:click={() => appendCoordinateDigit('y', digit)}
+                        class:number-pad-wide={keyLabel === '10'}
+                        on:click={() => selectCoordinateNumber('y', keyLabel)}
                       >
-                        {digit}
+                        {keyLabel}
                       </button>
                     {/each}
                   {/each}
-                  <button
-                    type="button"
-                    class="number-pad-key number-pad-utility"
-                    on:click={() => deleteCoordinateDigit('y')}
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    class="number-pad-key number-pad-utility"
-                    on:click={closeNumberPad}
-                  >
-                    Done
-                  </button>
                 </div>
               </div>
             {/if}

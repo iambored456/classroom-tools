@@ -607,12 +607,8 @@ input {
   font-weight: 700;
 }
 
-.number-pad-zero {
-  grid-column: span 1;
-}
-
-.number-pad-utility {
-  background: var(--button-surface-strong);
+.number-pad-wide {
+  grid-column: span 2;
 }
 
 .answer-grid span,
