@@ -39,7 +39,7 @@ export const hubEntries: HubEntry[] = [
     id: 'math-tools',
     name: 'Math Tools',
     description:
-      'Open a folder of math practice apps, including coordinate games and the marble tax-brackets visual.',
+      'Open a folder of math practice apps, including coordinates, interest models, and the marble tax-brackets visual.',
     tags: ['Math', 'Folder', 'Practice'],
     accent: '#e88949',
     apps: [
@@ -50,6 +50,14 @@ export const hubEntries: HubEntry[] = [
         href: withBase('coordinates/'),
         accent: '#1b8d98',
         glyph: 'XY',
+      },
+      {
+        id: 'simple-compound-interest',
+        name: 'Simple & Compound Interest',
+        description: 'Compare simple and compound interest with stacked bars for principal and interest over time.',
+        href: withBase('simple-compound-interest/'),
+        accent: '#b6793f',
+        glyph: 'r%',
       },
       {
         id: 'tax-brackets-marble-visual',

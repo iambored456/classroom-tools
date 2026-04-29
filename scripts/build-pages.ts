@@ -128,6 +128,7 @@ runBuild('fish-visualizer', appendPath(rootBase, 'fish-visualizer'))
 runBuild('launchpad-controller', appendPath(rootBase, 'launchpad-controller'))
 runBuild('tax-brackets-marble-visual', appendPath(rootBase, 'tax-brackets-marble-visual'))
 runBuild('coordinates', appendPath(rootBase, 'coordinates'))
+runBuild('simple-compound-interest', appendPath(rootBase, 'simple-compound-interest'))
 runBuild('oklch-visualizer', appendPath(rootBase, 'oklch-visualizer'))
 runNodeScript(['scripts/capture-previews.ts'], {
   ...process.env,

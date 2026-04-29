@@ -60,6 +60,11 @@ const appDistTargets = [
     targetSubdir: 'coordinates',
   },
   {
+    name: 'simple-compound-interest',
+    distPath: join(rootDir, 'apps/simple-compound-interest/dist'),
+    targetSubdir: 'simple-compound-interest',
+  },
+  {
     name: 'oklch-visualizer',
     distPath: join(rootDir, 'apps/oklch-visualizer/dist'),
     targetSubdir: 'oklch-visualizer',

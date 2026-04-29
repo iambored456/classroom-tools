@@ -45,6 +45,10 @@ export default defineConfig({
         target: 'http://localhost:5182',
         changeOrigin: true,
       },
+      '/simple-compound-interest': {
+        target: 'http://localhost:5183',
+        changeOrigin: true,
+      },
       '/oklch-visualizer': {
         target: 'http://localhost:5180',
         changeOrigin: true,

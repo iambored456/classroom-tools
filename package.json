@@ -5,7 +5,8 @@
   "description": "Quinn Fleming's App Hub",
   "type": "module",
   "scripts": {
-    "dev": "pnpm -r --parallel --filter hub --filter class-clock --filter class-schedule-widget --filter read-along-highlighter --filter launchpad-whack-a-mole --filter fish-visualizer --filter launchpad-controller --filter tax-brackets-marble-visual --filter coordinates --filter oklch-visualizer run dev",
+    "dev": "tsx scripts/dev-all.ts",
+    "dev:raw": "pnpm -r --parallel --filter hub --filter class-clock --filter class-schedule-widget --filter read-along-highlighter --filter launchpad-whack-a-mole --filter fish-visualizer --filter launchpad-controller --filter tax-brackets-marble-visual --filter coordinates --filter simple-compound-interest --filter oklch-visualizer run dev",
     "dev:hub": "pnpm --filter hub run dev",
     "dev:class-clock": "pnpm --filter class-clock run dev",
     "dev:class-schedule-widget": "pnpm --filter class-schedule-widget run dev",
@@ -15,6 +16,7 @@
     "dev:launchpad-controller": "pnpm --filter launchpad-controller run dev",
     "dev:tax-brackets-marble-visual": "pnpm --filter tax-brackets-marble-visual run dev",
     "dev:coordinates": "pnpm --filter coordinates run dev",
+    "dev:simple-compound-interest": "pnpm --filter simple-compound-interest run dev",
     "dev:oklch-visualizer": "pnpm --filter oklch-visualizer run dev",
     "build": "pnpm -r --if-present run build",
     "build:fish-reweighted-data": "tsx scripts/build-fish-reweighted-data.ts",
