@@ -24,6 +24,12 @@
     xLeft: number
     xCenter: number
   }
+  type HoverTooltip = {
+    text: string
+    width: number
+    x: number
+    y: number
+  }
 
   const SVG_WIDTH = 840
   const SVG_HEIGHT = 600
@@ -35,6 +41,7 @@
   const MIN_BAR_WIDTH = 10
   const BAR_RADIUS = 18
   const MIN_Y_AXIS_MAX = 1000
+  const TOOLTIP_HEIGHT = 34
   const PRINCIPAL_STEP = 50
   const RATE_STEP = 0.5
   const PRINCIPAL_MIN = 250
@@ -64,9 +71,13 @@
   let ratePercent = 8
   let years = 6
   let activeField: EditableField | null = null
+  let replaceDraftOnNextInput = false
   let principalDraft = ''
   let rateDraft = ''
   let timeDraft = ''
+  let chartStageElement: HTMLDivElement | null = null
+  let isChartFullscreen = false
+  let hoverTooltip: HoverTooltip | null = null
   let summaryGridElement: HTMLDivElement | null = null
 
   function clamp(value: number, min: number, max: number): number {
@@ -240,6 +251,7 @@
 
   async function openNumberPad(field: EditableField): Promise<void> {
     activeField = field
+    replaceDraftOnNextInput = true
     setDraft(field, getEditableRawValue(field))
     await tick()
     const input = document.getElementById(`summary-${field}`) as HTMLInputElement | null
@@ -297,10 +309,31 @@
     }
 
     activeField = null
+    replaceDraftOnNextInput = false
   }
 
   function appendDraftValue(field: EditableField, key: string): void {
     let current = getDraft(field)
+
+    if (replaceDraftOnNextInput && activeField === field) {
+      replaceDraftOnNextInput = false
+
+      if (key === 'back') {
+        setDraft(field, '')
+        return
+      }
+
+      if (field === 'rate' && key === '.') {
+        setDraft(field, '0.')
+        return
+      }
+
+      if (/^\d$/.test(key)) {
+        setDraft(field, key)
+      }
+
+      return
+    }
 
     if (key === 'back') {
       setDraft(field, current.slice(0, -1))
@@ -341,6 +374,7 @@
   }
 
   function clearDraft(field: EditableField): void {
+    replaceDraftOnNextInput = false
     setDraft(field, '')
   }
 
@@ -390,6 +424,40 @@
     if (!(event.target instanceof Node)) return
     if (summaryGridElement.contains(event.target)) return
     closeNumberPad(true)
+  }
+
+  function showBarTooltip(value: number, x: number, topY: number): void {
+    const text = formatMoney(value)
+    const width = Math.max(60, text.length * 9 + 20)
+
+    hoverTooltip = {
+      text,
+      width,
+      x: clamp(x, CHART_LEFT + width / 2, CHART_RIGHT - width / 2),
+      y: Math.max(CHART_TOP + TOOLTIP_HEIGHT / 2 + 6, topY - 18),
+    }
+  }
+
+  function clearBarTooltip(): void {
+    hoverTooltip = null
+  }
+
+  function syncChartFullscreen(): void {
+    isChartFullscreen = document.fullscreenElement === chartStageElement
+  }
+
+  async function toggleChartFullscreen(): Promise<void> {
+    if (!chartStageElement) return
+
+    try {
+      if (document.fullscreenElement === chartStageElement) {
+        await document.exitFullscreen()
+      } else {
+        await chartStageElement.requestFullscreen()
+      }
+    } catch (error) {
+      console.error('Unable to toggle chart fullscreen.', error)
+    }
   }
 
   function yForValue(value: number): number {
@@ -451,10 +519,12 @@
 
   onMount(() => {
     window.addEventListener('pointerdown', handleOutsidePointer)
+    document.addEventListener('fullscreenchange', syncChartFullscreen)
   })
 
   onDestroy(() => {
     window.removeEventListener('pointerdown', handleOutsidePointer)
+    document.removeEventListener('fullscreenchange', syncChartFullscreen)
   })
 </script>
 
@@ -468,172 +538,249 @@
       </svg>
     </a>
     <div class="topbar-title">
-      <p class="eyebrow">Math Tool</p>
-      <h1>Simple and Compound Interest</h1>
+      <h1>{mode === 'simple' ? 'Simple Interest' : 'Compound Interest'}</h1>
+      <div class="legend" aria-label="Chart legend">
+        <span class="legend-chip">
+          <span class="legend-swatch legend-swatch-principal"></span>
+          {mode === 'compound' ? 'Original Principal' : 'Principal'}
+        </span>
+        {#if mode === 'compound'}
+          <span class="legend-chip">
+            <span class="legend-swatch legend-swatch-grown"></span>
+            Grown Principal
+          </span>
+        {/if}
+        <span class="legend-chip">
+          <span class="legend-swatch legend-swatch-interest"></span>
+          {mode === 'compound' ? 'New Interest' : 'Interest'}
+        </span>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <div class="mode-switch" role="tablist" aria-label="Interest mode">
+        <button type="button" class:active={mode === 'simple'} on:click={() => (mode = 'simple')}>
+          Simple
+        </button>
+        <button type="button" class:active={mode === 'compound'} on:click={() => (mode = 'compound')}>
+          Compound
+        </button>
+      </div>
     </div>
   </header>
 
   <section class="workspace">
     <article class="chart-card">
-      <div class="chart-header">
-        <div>
-          <h2>{mode === 'simple' ? 'Simple Interest' : 'Compound Interest'}</h2>
-        </div>
-        <div class="legend" aria-label="Chart legend">
-          <span class="legend-chip">
-            <span class="legend-swatch legend-swatch-principal"></span>
-            {mode === 'compound' ? 'Original Principal' : 'Principal'}
-          </span>
-          {#if mode === 'compound'}
-            <span class="legend-chip">
-              <span class="legend-swatch legend-swatch-grown"></span>
-              Grown Principal
-            </span>
-          {/if}
-          <span class="legend-chip">
-            <span class="legend-swatch legend-swatch-interest"></span>
-            {mode === 'compound' ? 'New Interest' : 'Interest'}
-          </span>
-        </div>
-      </div>
+      <div class="chart-stage" bind:this={chartStageElement}>
+        <button
+          type="button"
+          class="fullscreen-button"
+          aria-label={isChartFullscreen ? 'Exit graph fullscreen' : 'Expand graph to fullscreen'}
+          title={isChartFullscreen ? 'Exit graph fullscreen' : 'Expand graph to fullscreen'}
+          on:click={toggleChartFullscreen}
+        >
+          <svg class="fullscreen-icon" viewBox="0 0 24 24" aria-hidden="true">
+            {#if isChartFullscreen}
+              <path d="M9.5 4.5H4.5v5" />
+              <path d="M14.5 4.5h5v5" />
+              <path d="M9.5 19.5H4.5v-5" />
+              <path d="M14.5 19.5h5v-5" />
+              <path d="M9.5 9.5 4.5 4.5" />
+              <path d="M14.5 9.5 19.5 4.5" />
+              <path d="M9.5 14.5 4.5 19.5" />
+              <path d="M14.5 14.5 19.5 19.5" />
+            {:else}
+              <path d="M9.5 4.5H4.5v5" />
+              <path d="M14.5 4.5h5v5" />
+              <path d="M9.5 19.5H4.5v-5" />
+              <path d="M14.5 19.5h5v-5" />
+              <path d="M9.5 4.5 4.5 9.5" />
+              <path d="M14.5 4.5 19.5 9.5" />
+              <path d="M9.5 19.5 4.5 14.5" />
+              <path d="M14.5 19.5 19.5 14.5" />
+            {/if}
+          </svg>
+        </button>
 
-      <div class="chart-frame">
-        <svg class="chart" viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} aria-label={summaryLabel}>
-          <rect
-            class="chart-surface"
-            x={CHART_LEFT}
-            y={CHART_TOP}
-            width={CHART_RIGHT - CHART_LEFT}
-            height={CHART_BOTTOM - CHART_TOP}
-            rx="26"
-          />
-
-          {#each yTicks as tick}
-            <line
-              class:axis-line={tick === 0}
-              class:grid-line={tick !== 0}
-              x1={CHART_LEFT}
-              y1={yForValue(tick)}
-              x2={CHART_RIGHT}
-              y2={yForValue(tick)}
+        <div class="chart-frame">
+          <svg class="chart" viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} aria-label={summaryLabel}>
+            <rect
+              class="chart-surface"
+              x={CHART_LEFT}
+              y={CHART_TOP}
+              width={CHART_RIGHT - CHART_LEFT}
+              height={CHART_BOTTOM - CHART_TOP}
+              rx="26"
             />
-            <text class="tick-label y-tick" x={CHART_LEFT - 16} y={yForValue(tick) + 5} text-anchor="end">
-              {formatAxisMoney(tick)}
+
+            {#each yTicks as tick}
+              <line
+                class:axis-line={tick === 0}
+                class:grid-line={tick !== 0}
+                x1={CHART_LEFT}
+                y1={yForValue(tick)}
+                x2={CHART_RIGHT}
+                y2={yForValue(tick)}
+              />
+              <text class="tick-label y-tick" x={CHART_LEFT - 16} y={yForValue(tick) + 5} text-anchor="end">
+                {formatAxisMoney(tick)}
+              </text>
+            {/each}
+
+            <line class="axis-stroke" x1={CHART_LEFT} y1={CHART_TOP} x2={CHART_LEFT} y2={CHART_BOTTOM} />
+            <line class="axis-stroke" x1={CHART_LEFT} y1={CHART_BOTTOM} x2={CHART_RIGHT} y2={CHART_BOTTOM} />
+
+            {#each positionedChartData as bar (bar.year)}
+              <g transform={`translate(${bar.xLeft} 0)`}>
+                {#if mode === 'compound'}
+                  <path
+                    class="bar-principal"
+                    role="presentation"
+                    aria-hidden="true"
+                    d={buildRoundedRectPath(0, yForValue(bar.principal), barWidth, barHeight(bar.principal), {
+                      topLeft: 0,
+                      topRight: 0,
+                      bottomRight: BAR_RADIUS,
+                      bottomLeft: BAR_RADIUS,
+                    })}
+                    on:pointerenter={() => showBarTooltip(bar.total, bar.xCenter, yForValue(bar.total))}
+                    on:pointerleave={clearBarTooltip}
+                  />
+                  {#if bar.grownPrincipal > 0}
+                    <path
+                      class="bar-grown-principal"
+                      role="presentation"
+                      aria-hidden="true"
+                      d={buildRoundedRectPath(
+                        0,
+                        yForValue(bar.principal + bar.grownPrincipal),
+                        barWidth,
+                        barHeight(bar.principal + bar.grownPrincipal, bar.principal),
+                        {
+                          topLeft: 0,
+                          topRight: 0,
+                          bottomRight: 0,
+                          bottomLeft: 0,
+                        },
+                      )}
+                      on:pointerenter={() => showBarTooltip(bar.total, bar.xCenter, yForValue(bar.total))}
+                      on:pointerleave={clearBarTooltip}
+                    />
+                  {/if}
+                  {#if bar.currentInterest > 0}
+                    <path
+                      class="bar-interest"
+                      role="presentation"
+                      aria-hidden="true"
+                      d={buildRoundedRectPath(
+                        0,
+                        yForValue(bar.total),
+                        barWidth,
+                        barHeight(bar.total, bar.principal + bar.grownPrincipal),
+                        {
+                          topLeft: BAR_RADIUS,
+                          topRight: BAR_RADIUS,
+                          bottomRight: 0,
+                          bottomLeft: 0,
+                        },
+                      )}
+                      on:pointerenter={() => showBarTooltip(bar.currentInterest, bar.xCenter, yForValue(bar.total))}
+                      on:pointerleave={clearBarTooltip}
+                    />
+                  {/if}
+                {:else}
+                  <path
+                    class="bar-principal"
+                    role="presentation"
+                    aria-hidden="true"
+                    d={buildRoundedRectPath(0, yForValue(bar.principal), barWidth, barHeight(bar.principal), {
+                      topLeft: 0,
+                      topRight: 0,
+                      bottomRight: BAR_RADIUS,
+                      bottomLeft: BAR_RADIUS,
+                    })}
+                    on:pointerenter={() => showBarTooltip(bar.total, bar.xCenter, yForValue(bar.total))}
+                    on:pointerleave={clearBarTooltip}
+                  />
+                  {#if bar.currentInterest > 0}
+                    <path
+                      class="bar-interest"
+                      role="presentation"
+                      aria-hidden="true"
+                      d={buildRoundedRectPath(
+                        0,
+                        yForValue(bar.total),
+                        barWidth,
+                        barHeight(bar.total, bar.principal + bar.grownPrincipal),
+                        {
+                          topLeft: BAR_RADIUS,
+                          topRight: BAR_RADIUS,
+                          bottomRight: 0,
+                          bottomLeft: 0,
+                        },
+                      )}
+                      on:pointerenter={() => showBarTooltip(bar.currentInterest, bar.xCenter, yForValue(bar.total))}
+                      on:pointerleave={clearBarTooltip}
+                    />
+                  {/if}
+                {/if}
+              </g>
+
+              <line class="x-axis-tick" x1={bar.xCenter} y1={CHART_BOTTOM} x2={bar.xCenter} y2={CHART_BOTTOM + 8} />
+              <text class="tick-label x-tick" class:is-dense={years > 12} x={bar.xCenter} y={CHART_BOTTOM + 28} text-anchor="middle">
+                {bar.year}
+              </text>
+            {/each}
+
+            <path
+              class="rate-bracket"
+              d={`M ${bracketX + 10} ${interestTop} H ${bracketX} V ${principalTop} H ${bracketX + 10}`}
+            />
+            <text
+              class="rate-label"
+              x={bracketX - 10}
+              y={(interestTop + principalTop) / 2}
+              dominant-baseline="middle"
+              text-anchor="end"
+            >
+              rate
             </text>
-          {/each}
 
-          <line class="axis-stroke" x1={CHART_LEFT} y1={CHART_TOP} x2={CHART_LEFT} y2={CHART_BOTTOM} />
-          <line class="axis-stroke" x1={CHART_LEFT} y1={CHART_BOTTOM} x2={CHART_RIGHT} y2={CHART_BOTTOM} />
-
-          {#each positionedChartData as bar (bar.year)}
-            <g transform={`translate(${bar.xLeft} 0)`}>
-              {#if mode === 'compound'}
-                <path
-                  class="bar-principal"
-                  d={buildRoundedRectPath(0, yForValue(bar.principal), barWidth, barHeight(bar.principal), {
-                    topLeft: 0,
-                    topRight: 0,
-                    bottomRight: BAR_RADIUS,
-                    bottomLeft: BAR_RADIUS,
-                  })}
+            {#if hoverTooltip}
+              <g class="chart-tooltip" aria-hidden="true">
+                <rect
+                  class="chart-tooltip-box"
+                  x={hoverTooltip.x - hoverTooltip.width / 2}
+                  y={hoverTooltip.y - TOOLTIP_HEIGHT / 2}
+                  width={hoverTooltip.width}
+                  height={TOOLTIP_HEIGHT}
+                  rx="12"
                 />
-                {#if bar.grownPrincipal > 0}
-                  <path
-                    class="bar-grown-principal"
-                    d={buildRoundedRectPath(
-                      0,
-                      yForValue(bar.principal + bar.grownPrincipal),
-                      barWidth,
-                      barHeight(bar.principal + bar.grownPrincipal, bar.principal),
-                      {
-                        topLeft: 0,
-                        topRight: 0,
-                        bottomRight: 0,
-                        bottomLeft: 0,
-                      },
-                    )}
-                  />
-                {/if}
-                {#if bar.currentInterest > 0}
-                  <path
-                    class="bar-interest"
-                    d={buildRoundedRectPath(
-                      0,
-                      yForValue(bar.total),
-                      barWidth,
-                      barHeight(bar.total, bar.principal + bar.grownPrincipal),
-                      {
-                        topLeft: BAR_RADIUS,
-                        topRight: BAR_RADIUS,
-                        bottomRight: 0,
-                        bottomLeft: 0,
-                      },
-                    )}
-                  />
-                {/if}
-              {:else}
-                <path
-                  class="bar-principal"
-                  d={buildRoundedRectPath(0, yForValue(bar.principal), barWidth, barHeight(bar.principal), {
-                    topLeft: 0,
-                    topRight: 0,
-                    bottomRight: BAR_RADIUS,
-                    bottomLeft: BAR_RADIUS,
-                  })}
-                />
-                {#if bar.currentInterest > 0}
-                  <path
-                    class="bar-interest"
-                    d={buildRoundedRectPath(
-                      0,
-                      yForValue(bar.total),
-                      barWidth,
-                      barHeight(bar.total, bar.principal + bar.grownPrincipal),
-                      {
-                        topLeft: BAR_RADIUS,
-                        topRight: BAR_RADIUS,
-                        bottomRight: 0,
-                        bottomLeft: 0,
-                      },
-                    )}
-                  />
-                {/if}
-              {/if}
-            </g>
+                <text
+                  class="chart-tooltip-text"
+                  x={hoverTooltip.x}
+                  y={hoverTooltip.y + 1}
+                  dominant-baseline="middle"
+                  text-anchor="middle"
+                >
+                  {hoverTooltip.text}
+                </text>
+              </g>
+            {/if}
 
-            <line class="x-axis-tick" x1={bar.xCenter} y1={CHART_BOTTOM} x2={bar.xCenter} y2={CHART_BOTTOM + 8} />
-            <text class="tick-label x-tick" class:is-dense={years > 12} x={bar.xCenter} y={CHART_BOTTOM + 28} text-anchor="middle">
-              {bar.year}
+            <text class="axis-title" x={(CHART_LEFT + CHART_RIGHT) / 2} y={SVG_HEIGHT - 20} text-anchor="middle">
+              Time
             </text>
-          {/each}
-
-          <path
-            class="rate-bracket"
-            d={`M ${bracketX + 10} ${interestTop} H ${bracketX} V ${principalTop} H ${bracketX + 10}`}
-          />
-          <text
-            class="rate-label"
-            x={bracketX - 10}
-            y={(interestTop + principalTop) / 2}
-            dominant-baseline="middle"
-            text-anchor="end"
-          >
-            rate
-          </text>
-
-          <text class="axis-title" x={(CHART_LEFT + CHART_RIGHT) / 2} y={SVG_HEIGHT - 20} text-anchor="middle">
-            Time (years)
-          </text>
-          <text
-            class="axis-title"
-            x="26"
-            y={(CHART_TOP + CHART_BOTTOM) / 2}
-            text-anchor="middle"
-            transform={`rotate(-90 26 ${(CHART_TOP + CHART_BOTTOM) / 2})`}
-          >
-            Dollars
-          </text>
-        </svg>
+            <text
+              class="axis-title"
+              x="26"
+              y={(CHART_TOP + CHART_BOTTOM) / 2}
+              text-anchor="middle"
+              transform={`rotate(-90 26 ${(CHART_TOP + CHART_BOTTOM) / 2})`}
+            >
+              Dollars
+            </text>
+          </svg>
+        </div>
       </div>
     </article>
 
@@ -702,7 +849,7 @@
 
         <div class="summary-box summary-box-rate" class:is-active={activeField === 'rate'}>
           <label class="summary-label" for="summary-rate">{getFieldLabel('rate')}</label>
-          <div class="answer-input-shell">
+          <div class="answer-input-shell answer-input-shell-suffix">
             {#if activeField === 'rate'}
               <input
                 id="summary-rate"
@@ -716,6 +863,7 @@
                 spellcheck="false"
                 on:keydown={(event) => handleFieldKeydown(event, 'rate')}
               />
+              <span class="summary-input-suffix" aria-hidden="true">%</span>
             {:else}
               <button
                 type="button"
@@ -726,6 +874,7 @@
               >
                 {rateDisplay}
               </button>
+              <span class="summary-input-suffix" aria-hidden="true">%</span>
             {/if}
           </div>
           {#if activeField === 'rate'}
@@ -823,17 +972,6 @@
         </div>
       </div>
 
-      <section class="panel-card">
-        <div class="mode-switch" role="tablist" aria-label="Interest mode">
-          <button type="button" class:active={mode === 'simple'} on:click={() => (mode = 'simple')}>
-            Simple
-          </button>
-          <button type="button" class:active={mode === 'compound'} on:click={() => (mode = 'compound')}>
-            Compound
-          </button>
-        </div>
-      </section>
-
       <section class="panel-card controls-panel">
         <div class="control-row">
           <div class="control-heading">
@@ -869,7 +1007,7 @@
 
         <div class="control-row">
           <div class="control-heading">
-            <label for="years-range">Years</label>
+            <label for="years-range">Time</label>
             <strong>{years}</strong>
           </div>
           <input
