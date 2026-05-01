@@ -438,6 +438,14 @@
     }
   }
 
+  function showPrincipalTooltip(bar: PositionedBarDatum): void {
+    const principalValue = mode === 'compound'
+      ? roundMoney(bar.principal + bar.grownPrincipal)
+      : bar.principal
+
+    showBarTooltip(principalValue, bar.xCenter, yForValue(principalValue))
+  }
+
   function clearBarTooltip(): void {
     hoverTooltip = null
   }
@@ -642,7 +650,7 @@
                       bottomRight: BAR_RADIUS,
                       bottomLeft: BAR_RADIUS,
                     })}
-                    on:pointerenter={() => showBarTooltip(bar.total, bar.xCenter, yForValue(bar.total))}
+                    on:pointerenter={() => showPrincipalTooltip(bar)}
                     on:pointerleave={clearBarTooltip}
                   />
                   {#if bar.grownPrincipal > 0}
@@ -662,7 +670,7 @@
                           bottomLeft: 0,
                         },
                       )}
-                      on:pointerenter={() => showBarTooltip(bar.total, bar.xCenter, yForValue(bar.total))}
+                      on:pointerenter={() => showPrincipalTooltip(bar)}
                       on:pointerleave={clearBarTooltip}
                     />
                   {/if}
@@ -698,7 +706,7 @@
                       bottomRight: BAR_RADIUS,
                       bottomLeft: BAR_RADIUS,
                     })}
-                    on:pointerenter={() => showBarTooltip(bar.total, bar.xCenter, yForValue(bar.total))}
+                    on:pointerenter={() => showPrincipalTooltip(bar)}
                     on:pointerleave={clearBarTooltip}
                   />
                   {#if bar.currentInterest > 0}

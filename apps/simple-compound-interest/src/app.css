@@ -714,7 +714,35 @@ input[type='range'] {
   }
 
   .summary-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .summary-box {
+    padding: 0.85rem;
+  }
+
+  .summary-input,
+  .summary-display-button,
+  .summary-readout {
+    min-height: 3.3rem;
+    padding: 0.8rem 0.75rem;
+    font-size: 1rem;
+  }
+
+  .answer-input-shell-suffix .summary-input,
+  .answer-input-shell-suffix .summary-display-button {
+    padding-right: 2.15rem;
+  }
+
+  .summary-input-suffix {
+    right: 0.8rem;
+    font-size: 1rem;
+  }
+
+  .summary-box.is-active,
+  .summary-box-readonly:last-child {
+    grid-column: 1 / -1;
   }
 
   .chart {
