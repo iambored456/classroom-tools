@@ -11,10 +11,8 @@ import { Layout } from './layout.ts';
 import { Clock } from './clock.ts';
 import { State } from './state.ts';
 import { Visuals } from './visuals.ts';
-import { WakeLock } from './wakeLock.ts';
-import { WakeLockToggle } from './wakeLockToggle.ts';
 
-const MENU_OPEN_ICON = '\u25B2';
+const MENU_OPEN_ICON = '\u00D7';
 const MENU_CLOSED_ICON = '\u25BC';
 const FULLSCREEN_EVENTS = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
 
@@ -27,7 +25,6 @@ export const App = {
         updateDOMCache();
 
         Settings.load();
-        WakeLock.init();
 
         Layout.update();
 
@@ -47,7 +44,6 @@ export const App = {
                 ColorSchemes.renderTabs();
                 Schedule.renderTable();
                 TimeSync.updateOffsetDisplay();
-                WakeLockToggle.init();
 
                 Appearance.attachListeners();
                 ColorSchemes.attachListeners();
@@ -116,7 +112,12 @@ export const App = {
 
     updateMenuToggleState: function(isOpen = DOM.settingsMenu?.classList.contains("open")) {
         if (!DOM.menuToggle) return;
-        DOM.menuToggle.textContent = isOpen ? MENU_OPEN_ICON : MENU_CLOSED_ICON;
+        const menuIsOpen = Boolean(isOpen);
+        DOM.menuToggle.textContent = menuIsOpen ? MENU_OPEN_ICON : MENU_CLOSED_ICON;
+        DOM.menuToggle.classList.toggle('is-open', menuIsOpen);
+        DOM.menuToggle.setAttribute('aria-expanded', String(menuIsOpen));
+        DOM.menuToggle.setAttribute('aria-label', menuIsOpen ? 'Close settings' : 'Open settings');
+        DOM.menuToggle.title = menuIsOpen ? 'Close settings' : 'Settings';
     },
 
     goToHub: function() {

@@ -169,6 +169,12 @@ export const Visuals = {
         return measureFillLayout(DOM.stageVisualizationContainerEl, DOM.stageVisualizationOutlineEls, State.SAND_COLORS.length);
     },
 
+    getStageCanvasBleedTop: function(layout) {
+        if (Settings.getVisualizationMode() !== 'candle') return 0;
+        const referenceHeight = Math.max(1, Number(layout?.height) || 0);
+        return Math.round(Math.max(220, Math.min(560, referenceHeight * 2.7)));
+    },
+
     getTimelineProgressState: function(now = getCurrentOffsetTime(), periodInfo = undefined) {
         const activePeriod = periodInfo === undefined ? Clock.getCurrentPeriodInfo(now) : periodInfo;
         if (!activePeriod) return getEmptyTimelineState();
@@ -470,6 +476,7 @@ export const Visuals = {
                 colors: State.SAND_COLORS,
                 capacityPerBar: metrics.capacityPerBar,
                 particleRadius: metrics.particleRadius,
+                borderColor: Settings.getActiveColourScheme().text || '#FFFFFF',
                 measureLayout: Visuals.getWaterFillLayout
             });
             WaterBars.setCapacity(metrics.capacityPerBar);
@@ -526,7 +533,8 @@ export const Visuals = {
             StageVisualization.init(DOM.stageVisualizationCanvas, layout.width, layout.height, {
                 mode,
                 measureLayout: Visuals.getStageFillLayout,
-                getState: Visuals.getStageProgressState
+                getState: Visuals.getStageProgressState,
+                bleedTop: Visuals.getStageCanvasBleedTop(layout)
             });
             StageVisualization.setMode(mode);
             StageVisualization.start();
@@ -745,6 +753,7 @@ export const Visuals = {
             const layout = Visuals.getStageFillLayout();
             if (layout.width > 0 && layout.height > 0) {
                 StageVisualization.setMode(mode);
+                StageVisualization.setBleedTop(Visuals.getStageCanvasBleedTop(layout));
                 StageVisualization.resize(layout.width, layout.height);
                 StageVisualization.renderOnce();
             }
@@ -805,6 +814,7 @@ export const Visuals = {
          document.querySelectorAll<HTMLElement>('.sand-bar-outline-segment, .water-fill-outline-segment, .stage-visualization-outline-segment').forEach(outline => {
              outline.style.borderColor = newColor;
          });
+         getWaterBars()?.setBorderColor(newColor);
 
          if (Visuals.hasRenderableScheduleCircles()) {
               Visuals.renderScheduleCircles();

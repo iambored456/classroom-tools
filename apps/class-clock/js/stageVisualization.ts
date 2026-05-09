@@ -1,6 +1,8 @@
 import { createFallbackFillLayout } from './fillLayout.ts';
+import { State } from './state.ts';
 
 const BAR_COUNT = 5;
+const CANDLE_TINT_COLORS = State.SAND_COLORS;
 const MODE_ACCENTS = {
     candle: '#ffbd73',
     ice: '#84dbff',
@@ -51,6 +53,15 @@ function lighten(rgb, amount) {
 
 function darken(rgb, amount) {
     return lighten(rgb, -amount);
+}
+
+function mixRgb(a, b, amount) {
+    const ratio = clamp(Number(amount) || 0, 0, 1);
+    return {
+        r: Math.round(lerp(a.r, b.r, ratio)),
+        g: Math.round(lerp(a.g, b.g, ratio)),
+        b: Math.round(lerp(a.b, b.b, ratio))
+    };
 }
 
 function addRoundedRectPath(ctx, x, y, width, height, radius) {
@@ -224,9 +235,59 @@ function drawColumnOverlay(ctx, innerBar, accentRgb, status) {
     ctx.restore();
 }
 
+function drawCandleSmokePuffs(ctx, wickX, wickY, candleWidth, timestamp, bar) {
+    const smokeRgb = { r: 222, g: 221, b: 214 };
+    const puffCount = 8;
+    const smokeHeight = Math.max(30, candleWidth * 0.92);
+    const driftWidth = Math.max(6, candleWidth * 0.18);
+    const baseRadius = Math.max(1.8, candleWidth * 0.045);
+    const time = (timestamp * 0.00016) + (bar.dripOffset * 0.11);
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-over';
+
+    for (let puffIndex = 0; puffIndex < puffCount; puffIndex++) {
+        const seed = (puffIndex * 0.137) + (bar.index * 0.071);
+        const age = (time + seed) % 1;
+        const liftEase = 1 - Math.pow(1 - age, 1.45);
+        const fade = Math.pow(1 - age, 1.85);
+        const birthFade = clamp(age / 0.16, 0, 1);
+        const alpha = 0.14 * fade * birthFade;
+        if (alpha <= 0.004) continue;
+
+        const wobble = Math.sin((timestamp * 0.0009) + bar.dripOffset + (puffIndex * 1.8));
+        const x = wickX + (wobble * driftWidth * age) + (Math.sin(seed * Math.PI * 2) * driftWidth * 0.16);
+        const y = wickY - 4 - (liftEase * smokeHeight);
+        const radius = baseRadius * lerp(0.65, 2.7, age);
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius * 2.2);
+        gradient.addColorStop(0, rgba(lighten(smokeRgb, 24), alpha));
+        gradient.addColorStop(0.54, rgba(smokeRgb, alpha * 0.42));
+        gradient.addColorStop(1, 'rgba(222, 221, 214, 0)');
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.ellipse(
+            x,
+            y,
+            radius * lerp(0.9, 1.45, age),
+            radius * lerp(0.72, 1.2, age),
+            wobble * 0.42,
+            0,
+            Math.PI * 2
+        );
+        ctx.fill();
+    }
+
+    ctx.restore();
+}
+
 function drawCandleBar(ctx, bar, state, timestamp) {
     const innerBar = insetBar(bar, Math.max(5, bar.width * 0.13), 6);
     const waxRgb = hexToRgb('#efe2bb');
+    const tintRgb = hexToRgb(CANDLE_TINT_COLORS[state.index] || CANDLE_TINT_COLORS[0] || '#efe2bb');
+    const tintedWaxRgb = mixRgb(waxRgb, tintRgb, 0.18);
+    const tintedHighlightRgb = mixRgb(lighten(waxRgb, 28), lighten(tintRgb, 54), 0.14);
+    const tintedShadowRgb = mixRgb(darken(waxRgb, 28), darken(tintRgb, 26), 0.18);
     const shadowRgb = hexToRgb('#8c6b3f');
     const flameRgb = hexToRgb('#ffb347');
     const meltedRatio = getStageProgress(state);
@@ -241,9 +302,10 @@ function drawCandleBar(ctx, bar, state, timestamp) {
     const waxPoolHeight = Math.max(4, innerBar.height * 0.05);
 
     const bodyGradient = ctx.createLinearGradient(candleX, candleY, candleX + candleWidth, candleY);
-    bodyGradient.addColorStop(0, rgba(darken(waxRgb, 25), 0.92));
-    bodyGradient.addColorStop(0.35, rgba(lighten(waxRgb, 18), 0.98));
-    bodyGradient.addColorStop(1, rgba(darken(waxRgb, 12), 0.95));
+    bodyGradient.addColorStop(0, rgba(tintedShadowRgb, 0.94));
+    bodyGradient.addColorStop(0.32, rgba(tintedHighlightRgb, 0.99));
+    bodyGradient.addColorStop(0.62, rgba(tintedWaxRgb, 0.97));
+    bodyGradient.addColorStop(1, rgba(mixRgb(darken(waxRgb, 12), tintRgb, 0.16), 0.95));
 
     ctx.save();
     ctx.globalAlpha = state.status === 'future' ? 0.96 : state.status === 'completed' ? 0.94 : 1;
@@ -252,7 +314,12 @@ function drawCandleBar(ctx, bar, state, timestamp) {
     ctx.ellipse(innerBar.x + (innerBar.width / 2), candleBaseY + 4, waxPoolWidth * 0.66, waxPoolHeight * 0.34, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = rgba(lighten(waxRgb, 8), 0.85);
+    ctx.fillStyle = rgba(tintRgb, state.status === 'completed' ? 0.2 : 0.11);
+    ctx.beginPath();
+    ctx.ellipse(innerBar.x + (innerBar.width / 2), candleBaseY + 1, waxPoolWidth * 0.58, waxPoolHeight * 0.52, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = rgba(mixRgb(lighten(waxRgb, 8), tintRgb, 0.22), 0.88);
     ctx.beginPath();
     ctx.ellipse(innerBar.x + (innerBar.width / 2), candleBaseY - 1, waxPoolWidth * 0.5, waxPoolHeight * 0.45, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -293,12 +360,16 @@ function drawCandleBar(ctx, bar, state, timestamp) {
         const flicker = 0.85 + (Math.sin(timestamp * 0.017 + bar.dripOffset) * 0.08);
         const flameHeight = candleWidth * 0.68 * flicker;
         const flameWidth = candleWidth * 0.34 * flicker;
-        const glow = ctx.createRadialGradient(wickX, wickY - flameHeight * 0.2, 0, wickX, wickY, candleWidth);
+        const glowRadius = Math.max(candleWidth * 4.6, innerBar.height * 2.35);
+        const glow = ctx.createRadialGradient(wickX, wickY - flameHeight * 0.55, 0, wickX, wickY - flameHeight * 0.18, glowRadius);
         glow.addColorStop(0, rgba(flameRgb, 0.42));
+        glow.addColorStop(0.24, rgba(flameRgb, 0.24));
+        glow.addColorStop(0.58, rgba(flameRgb, 0.13));
+        glow.addColorStop(0.82, rgba(flameRgb, 0.055));
         glow.addColorStop(1, 'rgba(255, 179, 71, 0)');
         ctx.fillStyle = glow;
         ctx.beginPath();
-        ctx.arc(wickX, wickY, candleWidth * 0.8, 0, Math.PI * 2);
+        ctx.arc(wickX, wickY - flameHeight * 0.2, glowRadius, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.beginPath();
@@ -312,14 +383,8 @@ function drawCandleBar(ctx, bar, state, timestamp) {
         ctx.ellipse(wickX, wickY - flameHeight * 0.45, flameWidth * 0.42, flameHeight * 0.32, 0, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255, 244, 214, 0.82)';
         ctx.fill();
-    } else if (state.status === 'completed') {
-        const smokeAlpha = 0.16 + ((state.index === BAR_COUNT - 1) ? 0.14 : 0.05);
-        ctx.strokeStyle = `rgba(210, 210, 210, ${smokeAlpha})`;
-        ctx.lineWidth = Math.max(1, candleWidth * 0.05);
-        ctx.beginPath();
-        ctx.moveTo(wickX, wickY);
-        ctx.bezierCurveTo(wickX + 6, wickY - 8, wickX - 4, wickY - 18, wickX + 3, wickY - 26);
-        ctx.stroke();
+    } else if (state.status === 'completed' && state.isPreviousToCurrent) {
+        drawCandleSmokePuffs(ctx, wickX, wickY, candleWidth, timestamp, bar);
     }
 
     ctx.restore();
@@ -665,6 +730,33 @@ function drawPlantingGround(ctx, innerBar) {
     ctx.fill();
 }
 
+function drawCandleWallLine(ctx, bars) {
+    if (!Array.isArray(bars) || bars.length === 0) return;
+
+    const firstBar = bars[0];
+    const lastBar = bars[bars.length - 1];
+    const minX = firstBar.x;
+    const maxX = lastBar.x + lastBar.width;
+    const averageBottom = bars.reduce((sum, bar) => sum + bar.yBottom, 0) / bars.length;
+    const averageHeight = bars.reduce((sum, bar) => sum + bar.height, 0) / bars.length;
+    const wallLineY = averageBottom - (averageHeight * 0.12);
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 226, 176, 0.14)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(minX, wallLineY);
+    ctx.lineTo(maxX, wallLineY);
+    ctx.stroke();
+
+    const floorGlow = ctx.createLinearGradient(0, wallLineY, 0, averageBottom + 8);
+    floorGlow.addColorStop(0, 'rgba(255, 188, 94, 0.055)');
+    floorGlow.addColorStop(1, 'rgba(255, 188, 94, 0)');
+    ctx.fillStyle = floorGlow;
+    ctx.fillRect(minX, wallLineY, maxX - minX, Math.max(1, averageBottom + 8 - wallLineY));
+    ctx.restore();
+}
+
 function drawMode(ctx, bar, state, mode, timestamp) {
     const innerBar = insetBar(bar, Math.max(4, bar.width * 0.06), 4);
 
@@ -697,6 +789,8 @@ export const StageVisualization = {
     ctx: null,
     width: 0,
     height: 0,
+    contentHeight: 0,
+    bleedTop: 0,
     dpr: 1,
     layoutProvider: null,
     stateProvider: null,
@@ -733,13 +827,16 @@ export const StageVisualization = {
         if (typeof options.mode === 'string') {
             StageVisualization.mode = options.mode;
         }
+        if (typeof options.bleedTop === 'number') {
+            StageVisualization.bleedTop = Math.max(0, Math.floor(options.bleedTop));
+        }
 
         StageVisualization.resize(width, height);
         StageVisualization.isInitialized = true;
         StageVisualization.renderOnce(performance.now());
     },
 
-    getLayout: function(width = StageVisualization.width, height = StageVisualization.height) {
+    getLayout: function(width = StageVisualization.width, height = StageVisualization.contentHeight || StageVisualization.height) {
         if (typeof StageVisualization.layoutProvider === 'function') {
             const measuredLayout = StageVisualization.layoutProvider();
             if (measuredLayout?.bars?.length === BAR_COUNT) {
@@ -754,21 +851,41 @@ export const StageVisualization = {
         if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return;
 
         StageVisualization.width = Math.max(1, Math.floor(width));
-        StageVisualization.height = Math.max(1, Math.floor(height));
+        StageVisualization.contentHeight = Math.max(1, Math.floor(height));
+        const activeBleedTop = StageVisualization.mode === 'candle'
+            ? Math.max(0, Math.floor(StageVisualization.bleedTop || 0))
+            : 0;
+        StageVisualization.height = StageVisualization.contentHeight + activeBleedTop;
         StageVisualization.dpr = Math.min(window.devicePixelRatio || 1, 2);
 
         StageVisualization.canvas.width = Math.floor(StageVisualization.width * StageVisualization.dpr);
         StageVisualization.canvas.height = Math.floor(StageVisualization.height * StageVisualization.dpr);
-        StageVisualization.canvas.style.width = '';
-        StageVisualization.canvas.style.height = '';
+        if (activeBleedTop > 0) {
+            StageVisualization.canvas.style.width = `${StageVisualization.width}px`;
+            StageVisualization.canvas.style.height = `${StageVisualization.height}px`;
+            StageVisualization.canvas.style.top = `-${activeBleedTop}px`;
+        } else {
+            StageVisualization.canvas.style.width = '';
+            StageVisualization.canvas.style.height = '';
+            StageVisualization.canvas.style.top = '';
+        }
         StageVisualization.ctx.setTransform(StageVisualization.dpr, 0, 0, StageVisualization.dpr, 0, 0);
 
-        const layout = StageVisualization.getLayout(StageVisualization.width, StageVisualization.height);
-        StageVisualization.bars = layout.bars.map((bar, index) => createBarModel(bar, index));
+        const layout = StageVisualization.getLayout(StageVisualization.width, StageVisualization.contentHeight);
+        StageVisualization.bars = layout.bars.map((bar, index) => createBarModel({
+            ...bar,
+            yTop: bar.yTop + activeBleedTop,
+            yBottom: bar.yBottom + activeBleedTop
+        }, index));
     },
 
     setMode: function(mode) {
         StageVisualization.mode = mode;
+    },
+
+    setBleedTop: function(value) {
+        const parsed = Number(value);
+        StageVisualization.bleedTop = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
     },
 
     start: function() {
@@ -803,8 +920,16 @@ export const StageVisualization = {
             ? (StageVisualization.stateProvider() || createDefaultState())
             : createDefaultState();
         const accentRgb = getModeAccent(StageVisualization.mode);
+        const currentBarIndex = Array.isArray(state.bars)
+            ? state.bars.findIndex(barState => barState?.status === 'current')
+            : -1;
+        const previousSmokingIndex = currentBarIndex > 0 ? currentBarIndex - 1 : -1;
 
         ctx.clearRect(0, 0, StageVisualization.width, StageVisualization.height);
+
+        if (StageVisualization.mode === 'candle') {
+            drawCandleWallLine(ctx, StageVisualization.bars);
+        }
 
         StageVisualization.bars.forEach((bar, index) => {
             const barState = state.bars[index] || { index, status: 'future', progress: 0 };
@@ -812,7 +937,7 @@ export const StageVisualization = {
             if (StageVisualization.mode !== 'candle') {
                 drawProgressiveBackground(ctx, innerBar, accentRgb, barState.status);
             }
-            drawMode(ctx, bar, { ...barState, index }, StageVisualization.mode, frameTimeMs);
+            drawMode(ctx, bar, { ...barState, index, isPreviousToCurrent: index === previousSmokingIndex }, StageVisualization.mode, frameTimeMs);
         });
     },
 
@@ -822,6 +947,8 @@ export const StageVisualization = {
         StageVisualization.ctx = null;
         StageVisualization.width = 0;
         StageVisualization.height = 0;
+        StageVisualization.contentHeight = 0;
+        StageVisualization.bleedTop = 0;
         StageVisualization.layoutProvider = null;
         StageVisualization.stateProvider = null;
         StageVisualization.bars = [];

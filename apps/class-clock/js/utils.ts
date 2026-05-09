@@ -95,7 +95,7 @@ export const Utils = {
 import { Settings } from './settings.ts'; // Assuming settings.js exports Settings
 
 export function getCurrentOffsetTime() {
-    const offset = (Settings.preferences && Settings.preferences.timeOffsetMs) ? Number(Settings.preferences.timeOffsetMs) : 0;
+    const offset = Settings.preferences ? Settings.getActiveTimeOffsetMs() : 0;
     const systemNow = new Date();
     return new Date(systemNow.getTime() + offset);
 }

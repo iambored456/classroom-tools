@@ -94,6 +94,43 @@ function addRoundedRectPath(ctx, x, y, width, height, radius) {
     ctx.closePath();
 }
 
+function getPaintBounds(bar) {
+    const borderLeft = Number(bar.borderLeft) || 0;
+    const borderRight = Number(bar.borderRight) || 0;
+    const borderTop = Number(bar.borderTop) || 0;
+    const borderBottom = Number(bar.borderBottom) || 0;
+    return {
+        x: Number.isFinite(bar.outerX) ? bar.outerX : bar.x - borderLeft,
+        yTop: Number.isFinite(bar.outerYTop) ? bar.outerYTop : bar.yTop - borderTop,
+        width: Number.isFinite(bar.outerWidth) ? bar.outerWidth : bar.width + borderLeft + borderRight,
+        height: Number.isFinite(bar.outerHeight) ? bar.outerHeight : bar.height + borderTop + borderBottom,
+        yBottom: Number.isFinite(bar.outerYBottom) ? bar.outerYBottom : bar.yBottom + borderBottom,
+        radius: Number.isFinite(bar.outerCornerRadius) ? bar.outerCornerRadius : bar.cornerRadius + Math.max(borderLeft, borderRight, borderTop, borderBottom),
+        borderWidth: Math.max(1, borderLeft, borderRight, borderTop, borderBottom)
+    };
+}
+
+function drawContainerBorder(ctx, bar, color) {
+    const bounds = getPaintBounds(bar);
+    const lineWidth = bounds.borderWidth;
+    const inset = lineWidth / 2;
+
+    ctx.save();
+    ctx.beginPath();
+    addRoundedRectPath(
+        ctx,
+        bounds.x + inset,
+        bounds.yTop + inset,
+        Math.max(1, bounds.width - lineWidth),
+        Math.max(1, bounds.height - lineWidth),
+        Math.max(0, bounds.radius - inset)
+    );
+    ctx.strokeStyle = color || '#FFFFFF';
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+    ctx.restore();
+}
+
 function drawLiquidDroplet(ctx, drop, baseColor) {
     const speed = Math.sqrt((drop.vx * drop.vx) + (drop.vy * drop.vy));
     const stretch = clamp(speed / 420, 0, 1);
@@ -172,6 +209,7 @@ export const WaterBars = {
     dropletRadius: 3,
     maxDroplets: MAX_DROPLETS_DEFAULT,
     colors: [...State.SAND_COLORS],
+    borderColor: '#FFFFFF',
     frameClockMs: 0,
     layoutProvider: null,
 
@@ -205,6 +243,9 @@ export const WaterBars = {
         }
         if (options.particleRadius !== undefined) {
             WaterBars.setParticleRadius(options.particleRadius);
+        }
+        if (typeof options.borderColor === 'string') {
+            WaterBars.setBorderColor(options.borderColor);
         }
 
         WaterBars.resize(width, height);
@@ -261,6 +302,16 @@ export const WaterBars = {
                 yBottom: layoutBar.yBottom,
                 height: layoutBar.height,
                 cornerRadius: layoutBar.cornerRadius,
+                outerX: layoutBar.outerX,
+                outerYTop: layoutBar.outerYTop,
+                outerWidth: layoutBar.outerWidth,
+                outerHeight: layoutBar.outerHeight,
+                outerYBottom: layoutBar.outerYBottom,
+                outerCornerRadius: layoutBar.outerCornerRadius,
+                borderLeft: layoutBar.borderLeft,
+                borderRight: layoutBar.borderRight,
+                borderTop: layoutBar.borderTop,
+                borderBottom: layoutBar.borderBottom,
                 colorHex: WaterBars.colors[i] || State.SAND_COLORS[i] || '#4aa8ff',
                 fillUnits,
                 surfacePoints: createSurfacePoints(layoutBar.width)
@@ -309,6 +360,12 @@ export const WaterBars = {
         WaterBars.bars.forEach((bar, index) => {
             bar.colorHex = WaterBars.colors[index] || bar.colorHex;
         });
+    },
+
+    setBorderColor: function(color) {
+        if (typeof color !== 'string' || color.trim() === '') return;
+        WaterBars.borderColor = color;
+        WaterBars.renderOnce();
     },
 
     getTotalCapacity: function() {
@@ -561,9 +618,10 @@ export const WaterBars = {
         });
 
         WaterBars.bars.forEach(bar => {
+            const paintBounds = getPaintBounds(bar);
             ctx.save();
             ctx.beginPath();
-            addRoundedRectPath(ctx, bar.x, bar.yTop, bar.width, bar.height, bar.cornerRadius);
+            addRoundedRectPath(ctx, paintBounds.x, paintBounds.yTop, paintBounds.width, paintBounds.height, paintBounds.radius);
             ctx.clip();
 
             const fillRatio = getFillRatio(bar, WaterBars.barCapacity);
@@ -581,15 +639,18 @@ export const WaterBars = {
                 gradient.addColorStop(1, rgba(bottomColor, 0.93));
 
                 ctx.beginPath();
-                ctx.moveTo(bar.x, bar.yBottom);
-                ctx.lineTo(bar.x, baseSurfaceY + bar.surfacePoints[0].offset);
+                const firstSurfaceY = baseSurfaceY + bar.surfacePoints[0].offset;
+                const lastSurfaceY = baseSurfaceY + bar.surfacePoints[bar.surfacePoints.length - 1].offset;
+                ctx.moveTo(paintBounds.x, paintBounds.yBottom);
+                ctx.lineTo(paintBounds.x, firstSurfaceY);
 
                 for (let i = 1; i < bar.surfacePoints.length; i++) {
                     const px = bar.x + ((i / (bar.surfacePoints.length - 1)) * bar.width);
                     const py = baseSurfaceY + bar.surfacePoints[i].offset;
                     ctx.lineTo(px, py);
                 }
-                ctx.lineTo(bar.x + bar.width, bar.yBottom);
+                ctx.lineTo(paintBounds.x + paintBounds.width, lastSurfaceY);
+                ctx.lineTo(paintBounds.x + paintBounds.width, paintBounds.yBottom);
                 ctx.closePath();
                 ctx.fillStyle = gradient;
                 ctx.fill();
@@ -620,6 +681,7 @@ export const WaterBars = {
             });
 
             ctx.restore();
+            drawContainerBorder(ctx, bar, WaterBars.borderColor);
         });
     },
 

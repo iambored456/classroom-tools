@@ -37,6 +37,59 @@ function timelineHeightPercentToPx(value: number, timelineHeightPercent: number)
     return roundDetailSizeValue((value / 100) * timelineHeightPx);
 }
 
+const DEFAULT_SYNC_TARGET_TIMES = ["08:50", "10:05", "10:15", "11:30", "12:20", "13:35", "13:45", "15:00"];
+const DEFAULT_SYNC_TARGETS = [
+    { id: 'school-1', label: 'School 1' },
+    { id: 'school-2', label: 'School 2' }
+];
+
+function normalizeTimeOffset(value: any) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.round(parsed) : 0;
+}
+
+function normalizeSyncTargets(value: any, legacyOffsetMs = 0) {
+    const fallbackOffsetMs = normalizeTimeOffset(legacyOffsetMs);
+    const sourceTargets = Array.isArray(value) && value.length > 0
+        ? value
+        : DEFAULT_SYNC_TARGETS.map(target => ({ ...target, times: DEFAULT_SYNC_TARGET_TIMES, offsetMs: fallbackOffsetMs }));
+    const targets = sourceTargets.slice(0, 2);
+    while (targets.length < 2) {
+        const nextIndex = targets.length;
+        targets.push({
+            id: DEFAULT_SYNC_TARGETS[nextIndex].id,
+            label: DEFAULT_SYNC_TARGETS[nextIndex].label,
+            times: DEFAULT_SYNC_TARGET_TIMES,
+            offsetMs: fallbackOffsetMs
+        });
+    }
+
+    return targets.map((target, index) => {
+        const fallbackId = DEFAULT_SYNC_TARGETS[index].id;
+        const fallbackLabel = DEFAULT_SYNC_TARGETS[index].label;
+        const times = Array.isArray(target?.times)
+            ? target.times.filter(time => typeof time === 'string' && /^\d{2}:\d{2}$/.test(time))
+            : [];
+        const label = typeof target?.label === 'string' && target.label.trim()
+            ? target.label.trim()
+            : fallbackLabel;
+
+        return {
+            id: typeof target?.id === 'string' && target.id ? target.id : fallbackId,
+            label: label === 'School A' ? 'School 1' : label === 'School B' ? 'School 2' : label,
+            times: times.length > 0 ? Array.from(new Set(times)) : [...DEFAULT_SYNC_TARGET_TIMES],
+            offsetMs: Object.prototype.hasOwnProperty.call(target || {}, 'offsetMs')
+                ? normalizeTimeOffset(target.offsetMs)
+                : fallbackOffsetMs
+        };
+    });
+}
+
+function normalizeActiveSyncTargetId(value: any, targets: any[]) {
+    const fallbackId = targets?.[0]?.id || DEFAULT_SYNC_TARGETS[0].id;
+    return targets.some(target => target?.id === value) ? value : fallbackId;
+}
+
 export const Settings = {
     schedule: [ // Default schedule
         { label: "Before", start: "00:00", end: "08:50", colourSchemeId: 1, showCircles: false },
@@ -67,6 +120,8 @@ export const Settings = {
         showScheduleCircles: false,
         showSandBars: false,
         showWaterFill: false,
+        activeSyncTargetId: DEFAULT_SYNC_TARGETS[0].id,
+        syncTargets: normalizeSyncTargets(null),
         // --- Physics Fill Preferences ---
         sandWidth: 80, // percentage of the clock display width
         sandHeight: 14, // percentage of viewport height
@@ -171,6 +226,41 @@ export const Settings = {
         return Math.max(1, Math.min(20, detailSizePx));
     },
 
+    getSyncTargets: function(preferences = Settings.preferences) {
+        if (!preferences) return normalizeSyncTargets(null);
+        preferences.syncTargets = normalizeSyncTargets(preferences.syncTargets, preferences.timeOffsetMs);
+        preferences.activeSyncTargetId = normalizeActiveSyncTargetId(preferences.activeSyncTargetId, preferences.syncTargets);
+        return preferences.syncTargets;
+    },
+
+    getActiveSyncTarget: function(preferences = Settings.preferences) {
+        const targets = Settings.getSyncTargets(preferences);
+        const activeId = normalizeActiveSyncTargetId(preferences?.activeSyncTargetId, targets);
+        if (preferences) preferences.activeSyncTargetId = activeId;
+        return targets.find(target => target.id === activeId) || targets[0] || null;
+    },
+
+    getActiveTimeOffsetMs: function(preferences = Settings.preferences) {
+        return normalizeTimeOffset(Settings.getActiveSyncTarget(preferences)?.offsetMs);
+    },
+
+    setActiveSyncTargetId: function(targetId: string) {
+        const targets = Settings.getSyncTargets();
+        Settings.preferences.activeSyncTargetId = normalizeActiveSyncTargetId(targetId, targets);
+        Settings.preferences.timeOffsetMs = Settings.getActiveTimeOffsetMs();
+    },
+
+    setSyncTargetOffsetMs: function(targetId: string, offsetMs: number) {
+        const targets = Settings.getSyncTargets();
+        const target = targets.find(syncTarget => syncTarget.id === targetId) || Settings.getActiveSyncTarget();
+        if (!target) return null;
+        target.offsetMs = normalizeTimeOffset(offsetMs);
+        if (target.id === Settings.preferences.activeSyncTargetId) {
+            Settings.preferences.timeOffsetMs = target.offsetMs;
+        }
+        return target;
+    },
+
     load: function() {
         Settings.preferences = JSON.parse(JSON.stringify(Settings.defaultPreferences));
         const defaultScheduleCopy = JSON.parse(JSON.stringify(Settings.schedule));
@@ -252,7 +342,10 @@ export const Settings = {
                     if (typeof tempPrefs.visualizationMode !== 'string') {
                         tempPrefs.visualizationMode = Settings.defaultPreferences.visualizationMode;
                     }
-                    tempPrefs.timeOffsetMs = Number(tempPrefs.timeOffsetMs) || 0;
+                    tempPrefs.timeOffsetMs = normalizeTimeOffset(tempPrefs.timeOffsetMs);
+                    tempPrefs.syncTargets = normalizeSyncTargets(tempPrefs.syncTargets, tempPrefs.timeOffsetMs);
+                    tempPrefs.activeSyncTargetId = normalizeActiveSyncTargetId(tempPrefs.activeSyncTargetId, tempPrefs.syncTargets);
+                    tempPrefs.timeOffsetMs = Settings.getActiveTimeOffsetMs(tempPrefs);
 
                     tempPrefs.fontFamily = Settings.defaultPreferences.fontFamily;
 
@@ -295,6 +388,9 @@ export const Settings = {
         try {
              Settings.normalizeScheduleContinuity();
              Settings.applyVisualizationModePreferences(Settings.preferences);
+             Settings.preferences.syncTargets = normalizeSyncTargets(Settings.preferences.syncTargets, Settings.preferences.timeOffsetMs);
+             Settings.preferences.activeSyncTargetId = normalizeActiveSyncTargetId(Settings.preferences.activeSyncTargetId, Settings.preferences.syncTargets);
+             Settings.preferences.timeOffsetMs = Settings.getActiveTimeOffsetMs();
              Settings.preferences.scaleUnitVersion = SCALE_UNIT_VERSION;
              // Make sure to remove the sandDropInterval if it somehow exists before saving
              if (Settings.preferences.hasOwnProperty('sandDropInterval')) {

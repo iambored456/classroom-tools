@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Classroom Digital Clock – Editable Schedule & Preferences</title>
-  <script type="module" crossorigin src="/classroom-tools/class-clock/assets/index-Dya0IdAY.js"></script>
-  <link rel="stylesheet" crossorigin href="/classroom-tools/class-clock/assets/index-vP0ltqr_.css">
+  <script type="module" crossorigin src="/classroom-tools/class-clock/assets/index-DG2w5ILs.js"></script>
+  <link rel="stylesheet" crossorigin href="/classroom-tools/class-clock/assets/index-ByJSwb7M.css">
 </head>
 <body>
   <!-- Main Clock Display Container -->
@@ -120,25 +120,6 @@
         </div>
 
         <div class="settings-section">
-            <h4>Display Power</h4>
-            <div class="wake-lock-control">
-                <label class="wake-lock-toggle" for="wake-lock-toggle">
-                    <input type="checkbox" id="wake-lock-toggle">
-                    <span class="wake-lock-switch" aria-hidden="true"></span>
-                    <span class="wake-lock-copy">
-                        <span class="wake-lock-title">Keep Screen Awake</span>
-                        <span class="wake-lock-note">Keeps the display from dimming while classClock stays visible.</span>
-                    </span>
-                </label>
-                <div class="wake-lock-status-row">
-                    <span class="wake-lock-status-label">Status</span>
-                    <span id="wake-lock-status" class="wake-lock-status-pill" role="status" aria-live="polite">inactive</span>
-                </div>
-                <p id="wake-lock-message" class="wake-lock-message" aria-live="polite">Wake lock is off.</p>
-            </div>
-        </div>
-
-        <div class="settings-section">
             <h4>Timeline Visualization</h4>
             <div class="visualization-mode-grid">
                 <label class="visualization-mode-card">
@@ -161,44 +142,38 @@
                     <span class="visualization-mode-title">Candles</span>
                     <span class="visualization-mode-note">Wax burns down with a flickering flame.</span>
                 </label>
-                <label class="visualization-mode-card">
-                    <input type="radio" name="visualization-mode" value="none">
-                    <span class="visualization-mode-title">Label Only</span>
-                    <span class="visualization-mode-note">Hide the timeline visual and keep the text stack.</span>
-                </label>
             </div>
         </div>
 
         <div id="visualization-settings" class="settings-section display-element element-hidden">
              <h4>Timeline Layout</h4>
-             <div class="preferences-container compact">
-                 <div class="pref-row two-col">
-                      <div class="pref-item">
-                          <label for="pref-sand-width">Visualization Width (% of viewport width):</label>
-                          <div class="number-input-wrapper">
-                              <button class="num-btn minus" aria-label="Decrease Visualization Width">-</button>
-                              <input type="number" id="pref-sand-width" data-pref="sandWidth" min="20" max="100" step="1" value="80">
-                              <button class="num-btn plus" aria-label="Increase Visualization Width">+</button>
-                          </div>
-                      </div>
-                      <div class="pref-item">
-                          <label for="pref-sand-height">Visualization Height (% of viewport height):</label>
-                          <div class="number-input-wrapper">
-                              <button class="num-btn minus" aria-label="Decrease Visualization Height">-</button>
-                              <input type="number" id="pref-sand-height" data-pref="sandHeight" min="8" max="42" step="1" value="14">
-                              <button class="num-btn plus" aria-label="Increase Visualization Height">+</button>
-                          </div>
-                      </div>
+             <div class="preferences-container compact slider-pref-list">
+                 <div class="slider-pref-row">
+                     <label for="pref-sand-width-slider">Visualization Width</label>
+                     <input class="pref-slider" type="range" id="pref-sand-width-slider" data-pref="sandWidth" min="20" max="100" step="1" value="80">
+                     <div class="number-input-wrapper compact-stepper">
+                         <button class="num-btn minus" aria-label="Decrease Visualization Width">-</button>
+                         <input type="number" id="pref-sand-width" data-pref="sandWidth" min="20" max="100" step="1" value="80" aria-label="Visualization Width">
+                         <button class="num-btn plus" aria-label="Increase Visualization Width">+</button>
+                     </div>
                  </div>
-                 <div class="pref-row">
-                      <div class="pref-item">
-                          <label for="pref-sand-particle-size">Animation Detail Size (radius px):</label>
-                          <div class="number-input-wrapper">
-                             <button class="num-btn minus" aria-label="Decrease Animation Detail Size">-</button>
-                              <input type="number" id="pref-sand-particle-size" data-pref="sandParticleSize" min="1" max="20" step="0.5" value="5">
-                              <button class="num-btn plus" aria-label="Increase Animation Detail Size">+</button>
-                          </div>
-                      </div>
+                 <div class="slider-pref-row">
+                     <label for="pref-sand-height-slider">Visualization Height</label>
+                     <input class="pref-slider" type="range" id="pref-sand-height-slider" data-pref="sandHeight" min="8" max="42" step="1" value="14">
+                     <div class="number-input-wrapper compact-stepper">
+                         <button class="num-btn minus" aria-label="Decrease Visualization Height">-</button>
+                         <input type="number" id="pref-sand-height" data-pref="sandHeight" min="8" max="42" step="1" value="14" aria-label="Visualization Height">
+                         <button class="num-btn plus" aria-label="Increase Visualization Height">+</button>
+                     </div>
+                 </div>
+                 <div class="slider-pref-row">
+                     <label for="pref-sand-particle-size-slider">Animation Detail</label>
+                     <input class="pref-slider" type="range" id="pref-sand-particle-size-slider" data-pref="sandParticleSize" min="1" max="20" step="0.5" value="5">
+                     <div class="number-input-wrapper compact-stepper">
+                         <button class="num-btn minus" aria-label="Decrease Animation Detail Size">-</button>
+                         <input type="number" id="pref-sand-particle-size" data-pref="sandParticleSize" min="1" max="20" step="0.5" value="5" aria-label="Animation Detail Size">
+                         <button class="num-btn plus" aria-label="Increase Animation Detail Size">+</button>
+                     </div>
                  </div>
              </div>
              <button id="reset-sandbar-defaults">Reset Timeline Layout Defaults</button>
@@ -206,33 +181,32 @@
 
         <div class="settings-section">
             <h4>Typography & Scale</h4>
-            <div class="preferences-container">
-              <div class="pref-row two-col">
-                <div class="pref-item">
-                  <label for="pref-date-font">Date Height (% of viewport height):</label>
-                  <div class="number-input-wrapper">
-                     <button class="num-btn minus" aria-label="Decrease Date Height">-</button>
-                     <input type="number" id="pref-date-font" data-pref="dateFontSize" value="6" min="1" max="14" step="1">
-                     <button class="num-btn plus" aria-label="Increase Date Height">+</button>
-                   </div>
-                </div>
-                <div class="pref-item">
-                  <label for="pref-time-font">Time Height (% of viewport height):</label>
-                   <div class="number-input-wrapper">
-                     <button class="num-btn minus" aria-label="Decrease Time Height">-</button>
-                     <input type="number" id="pref-time-font" data-pref="timeFontSize" value="19" min="5" max="36" step="1">
-                     <button class="num-btn plus" aria-label="Increase Time Height">+</button>
-                   </div>
+            <div class="preferences-container slider-pref-list">
+              <div class="slider-pref-row">
+                <label for="pref-date-font-slider">Date Height</label>
+                <input class="pref-slider" type="range" id="pref-date-font-slider" data-pref="dateFontSize" value="6" min="1" max="14" step="1">
+                <div class="number-input-wrapper compact-stepper">
+                  <button class="num-btn minus" aria-label="Decrease Date Height">-</button>
+                  <input type="number" id="pref-date-font" data-pref="dateFontSize" value="6" min="1" max="14" step="1" aria-label="Date Height">
+                  <button class="num-btn plus" aria-label="Increase Date Height">+</button>
                 </div>
               </div>
-              <div class="pref-row two-col">
-                <div class="pref-item">
-                  <label for="pref-schedule-label-font">Label Height (% of viewport height):</label>
-                  <div class="number-input-wrapper">
-                     <button class="num-btn minus" aria-label="Decrease Label Height">-</button>
-                     <input type="number" id="pref-schedule-label-font" data-pref="scheduleLabelFontSize" value="4" min="1" max="10" step="1">
-                     <button class="num-btn plus" aria-label="Increase Label Height">+</button>
-                   </div>
+              <div class="slider-pref-row">
+                <label for="pref-time-font-slider">Time Height</label>
+                <input class="pref-slider" type="range" id="pref-time-font-slider" data-pref="timeFontSize" value="19" min="5" max="36" step="1">
+                <div class="number-input-wrapper compact-stepper">
+                  <button class="num-btn minus" aria-label="Decrease Time Height">-</button>
+                  <input type="number" id="pref-time-font" data-pref="timeFontSize" value="19" min="5" max="36" step="1" aria-label="Time Height">
+                  <button class="num-btn plus" aria-label="Increase Time Height">+</button>
+                </div>
+              </div>
+              <div class="slider-pref-row">
+                <label for="pref-schedule-label-font-slider">Label Height</label>
+                <input class="pref-slider" type="range" id="pref-schedule-label-font-slider" data-pref="scheduleLabelFontSize" value="4" min="1" max="10" step="1">
+                <div class="number-input-wrapper compact-stepper">
+                  <button class="num-btn minus" aria-label="Decrease Label Height">-</button>
+                  <input type="number" id="pref-schedule-label-font" data-pref="scheduleLabelFontSize" value="4" min="1" max="10" step="1" aria-label="Label Height">
+                  <button class="num-btn plus" aria-label="Increase Label Height">+</button>
                 </div>
               </div>
             </div>
@@ -268,18 +242,12 @@
          </div>
         <div id="time-sync-section" class="settings-section">
           <h4>Time Synchronization</h4>
-          <button id="sync-to-bell">Sync to Nearest Bell Time</button>
-          <div class="manual-sync-controls">
-            <label>Manual Offset:</label>
-            <div class="offset-buttons">
-                <button id="offset-min-down" title="Decrease Minute Offset">-</button><span>Min</span><button id="offset-min-up" title="Increase Minute Offset">+</button>
-            </div>
-            <div class="offset-buttons">
-                <button id="offset-sec-down" title="Decrease Second Offset">-</button><span>Sec</span><button id="offset-sec-up" title="Increase Second Offset">+</button>
-            </div>
-            <button id="reset-offset" title="Reset offset to zero">Reset Offset</button>
+          <div class="active-sync-row">
+            <label for="active-sync-target">Clock Uses</label>
+            <select id="active-sync-target" aria-label="Selected school clock sync"></select>
+            <div class="offset-display">Active Offset: <span id="current-offset">0s</span></div>
           </div>
-          <div class="offset-display">Current Offset: <span id="current-offset">0s</span></div>
+          <div id="sync-targets" class="sync-targets"></div>
         </div>
       </div> <!-- End #schedule-alerts-tab -->
     </div> <!-- End #tab-contents -->
