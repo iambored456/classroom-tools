@@ -130,6 +130,7 @@ runBuild('tax-brackets-marble-visual', appendPath(rootBase, 'tax-brackets-marble
 runBuild('coordinates', appendPath(rootBase, 'coordinates'))
 runBuild('simple-compound-interest', appendPath(rootBase, 'simple-compound-interest'))
 runBuild('oklch-visualizer', appendPath(rootBase, 'oklch-visualizer'))
+runBuild('rugby-play-visualizer', appendPath(rootBase, 'rugby-play-visualizer'))
 runNodeScript(['scripts/capture-previews.ts'], {
   ...process.env,
   CAPTURE_ROOT_BASE: rootBase,

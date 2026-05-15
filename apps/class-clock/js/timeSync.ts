@@ -3,8 +3,8 @@ import { DOM } from './dom.ts';
 import { Settings } from './settings.ts';
 import { Clock } from './clock.ts';
 import { Utils } from './utils.ts';
-
-const TIME_PATTERN = /^\d{2}:\d{2}$/;
+import { Schedule } from './schedule.ts';
+import { State } from './state.ts';
 
 function escapeHtml(value) {
     return String(value ?? '')
@@ -13,61 +13,6 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
-}
-
-function parseTimeList(value) {
-    const matches = String(value || '').match(/\b(?:[01]\d|2[0-3]):[0-5]\d\b/g) || [];
-    return Array.from(new Set(matches));
-}
-
-function formatTimeList(times) {
-    return (Array.isArray(times) ? times : []).join(', ');
-}
-
-function collectScheduleBellTimes(schedule) {
-    const times = [];
-    const addTime = (time) => {
-        if (typeof time === 'string' && TIME_PATTERN.test(time) && !times.includes(time)) {
-            times.push(time);
-        }
-    };
-
-    (schedule || []).forEach(period => {
-        if (!period) return;
-        addTime(period.start);
-        const nextPeriodStartsAtEnd = (schedule || []).some(nextPeriod => nextPeriod?.start === period.end);
-        if (!nextPeriodStartsAtEnd) {
-            addTime(period.end);
-        }
-    });
-
-    return times;
-}
-
-function findNearestTime(times, systemNow = new Date()) {
-    const systemNowMs = systemNow.getTime();
-    let minDiff = Infinity;
-    let nearestEventTime = null;
-
-    (times || []).forEach(time => {
-        if (!TIME_PATTERN.test(time)) return;
-        try {
-            const eventTime = Utils.getTodayTime(time);
-            const diff = Math.abs(eventTime.getTime() - systemNowMs);
-            if (diff < minDiff) {
-                minDiff = diff;
-                nearestEventTime = eventTime;
-            }
-        } catch (e) {
-            console.error("Sync error parsing target time:", time, e);
-        }
-    });
-
-    return nearestEventTime;
-}
-
-function formatEventTime(date) {
-    return date ? Utils.formatTime(date).replace(' ', '\u00A0') : '';
 }
 
 function formatOffset(offsetMs) {
@@ -80,15 +25,53 @@ function formatOffset(offsetMs) {
     return `${sign}${minutes}m ${paddedSeconds}s`;
 }
 
+function getValidScheduleTimes(schedule) {
+    const times = [];
+    const addTime = (time) => {
+        if (typeof time === 'string' && /^\d{2}:\d{2}$/.test(time) && !times.includes(time)) {
+            times.push(time);
+        }
+    };
+
+    (Array.isArray(schedule) ? schedule : []).forEach(row => {
+        addTime(row?.start);
+        addTime(row?.end);
+    });
+
+    return times;
+}
+
+function getNearestScheduleTime(schedule, systemNow = new Date()) {
+    const times = getValidScheduleTimes(schedule);
+    let nearest = null;
+    let nearestDiff = Infinity;
+
+    times.forEach(time => {
+        const baseTime = Utils.getTodayTime(time);
+        [-1, 0, 1].forEach(dayOffset => {
+            const candidate = new Date(baseTime.getTime());
+            candidate.setDate(candidate.getDate() + dayOffset);
+            const diff = Math.abs(candidate.getTime() - systemNow.getTime());
+            if (diff < nearestDiff) {
+                nearestDiff = diff;
+                nearest = { time, date: candidate };
+            }
+        });
+    });
+
+    return nearest;
+}
+
 export const TimeSync = {
+     editingTargetId: null,
+
      attachListeners: function() {
          TimeSync.renderSyncTargets();
-         TimeSync.renderActiveTargetSelect();
-         DOM.syncToBellBtn?.addEventListener("click", TimeSync.syncToNearestBell);
-         DOM.activeSyncTargetSelect?.addEventListener("change", TimeSync.handleActiveSyncTargetChange);
          DOM.syncTargetsContainer?.addEventListener("click", TimeSync.handleSyncTargetClick);
          DOM.syncTargetsContainer?.addEventListener("input", TimeSync.handleSyncTargetInput);
          DOM.syncTargetsContainer?.addEventListener("change", TimeSync.handleSyncTargetChange);
+         DOM.syncTargetsContainer?.addEventListener("keydown", TimeSync.handleSyncTargetKeyDown);
+         DOM.syncTargetsContainer?.addEventListener("focusout", TimeSync.handleSyncTargetFocusOut);
      },
 
      adjustOffset: function(changeMs, targetId = Settings.preferences.activeSyncTargetId) {
@@ -100,7 +83,7 @@ export const TimeSync = {
          Settings.save(); // Persist the new offset
      },
 
-     resetOffset: function(targetId = Settings.preferences.activeSyncTargetId, button = DOM.resetOffsetBtn) {
+     resetOffset: function(targetId = Settings.preferences.activeSyncTargetId, button = null) {
           const target = TimeSync.getSyncTarget(targetId);
           if (!target) return;
           if (Number(target.offsetMs) !== 0) {
@@ -112,34 +95,6 @@ export const TimeSync = {
           } else {
               Utils.showButtonFeedback(button, "Already Zero!", 1000);
           }
-     },
-
-     syncToNearestBell: function() {
-          // Sync clock to the nearest schedule start/end time
-          if (!Settings.schedule || Settings.schedule.length === 0) {
-              Utils.showButtonFeedback(DOM.syncToBellBtn, "Add Schedule First!", 2000);
-              return;
-          }
-
-          const activeTarget = TimeSync.getActiveSyncTarget();
-          const nearestEventTime = findNearestTime(activeTarget?.times || collectScheduleBellTimes(Settings.schedule));
-
-          // If a nearest time was found, calculate and apply the offset
-          if (nearestEventTime !== null) {
-              TimeSync.applySyncToTime(nearestEventTime, DOM.syncToBellBtn, `Synced ${formatEventTime(nearestEventTime)}`, activeTarget?.id);
-          } else {
-              // No suitable sync points found
-              Utils.showButtonFeedback(DOM.syncToBellBtn, "No Valid Times!", 2000);
-          }
-     },
-
-     applySyncToTime: function(eventTime, button, message = "Synced!", targetId = Settings.preferences.activeSyncTargetId) {
-         const systemNow = new Date();
-         Settings.setSyncTargetOffsetMs(targetId, eventTime.getTime() - systemNow.getTime());
-         TimeSync.updateOffsetDisplay();
-         Clock.update(); // Update display immediately
-         Settings.save();
-         Utils.showButtonFeedback(button, message);
      },
 
      ensureSyncTargets: function() {
@@ -154,117 +109,80 @@ export const TimeSync = {
          return Settings.getActiveSyncTarget();
      },
 
-     renderActiveTargetSelect: function() {
-         if (!DOM.activeSyncTargetSelect) return;
-         const targets = TimeSync.ensureSyncTargets();
-         DOM.activeSyncTargetSelect.innerHTML = targets.map(target => {
-             const safeId = escapeHtml(target.id);
-             const safeLabel = escapeHtml(target.label);
-             return `<option value="${safeId}">${safeLabel}</option>`;
-         }).join('');
-         DOM.activeSyncTargetSelect.value = Settings.preferences.activeSyncTargetId;
-     },
-
      renderSyncTargets: function() {
          if (!DOM.syncTargetsContainer) return;
+         Schedule.updateTitle();
          const targets = TimeSync.ensureSyncTargets();
          DOM.syncTargetsContainer.innerHTML = targets.map(target => {
              const safeId = escapeHtml(target.id);
              const safeLabel = escapeHtml(target.label);
-             const times = formatTimeList(target.times);
              const offsetString = formatOffset(target.offsetMs);
              const isActive = target.id === Settings.preferences.activeSyncTargetId;
+             const isEditing = TimeSync.editingTargetId === target.id;
              return `
-                 <div class="sync-target-card${isActive ? ' active' : ''}" data-sync-target-id="${safeId}">
-                     <div class="sync-target-header">
-                         <label class="sync-target-name-label">
-                             <span>School Name</span>
-                             <input class="sync-target-name" type="text" value="${safeLabel}" data-sync-target-field="label" aria-label="School sync name">
-                         </label>
-                         <button class="sync-target-action" type="button">Sync to ${safeLabel}</button>
+                 <div class="school-sync-row${isActive ? ' active' : ''}" data-sync-target-id="${safeId}">
+                     <div class="school-sync-main">
+                         <button class="school-sync-edit" type="button" aria-label="Edit ${safeLabel} name" title="Edit school name">&#9999;&#65039;</button>
+                         ${isEditing
+                             ? `<input class="school-sync-name-input" type="text" value="${safeLabel}" data-sync-target-field="label" aria-label="School name">`
+                             : `<button class="school-sync-button" type="button" aria-pressed="${isActive ? 'true' : 'false'}">${safeLabel}</button>`
+                         }
                      </div>
-                     <label class="sync-target-times-label">
-                         <span>Bell Times</span>
-                         <textarea class="sync-target-times" rows="2" data-sync-target-field="times" aria-label="Bell times for ${safeLabel}">${escapeHtml(times)}</textarea>
-                     </label>
-                     <div class="sync-target-offset-panel">
-                         <div class="sync-target-offset-heading">
-                             <span>Manual Offset</span>
-                             <span class="sync-target-offset">${offsetString}</span>
-                         </div>
-                         <div class="manual-sync-controls sync-target-manual-controls">
-                             <div class="offset-buttons">
-                                 <button type="button" data-offset-change="-60000" title="Decrease ${safeLabel} minute offset">-</button><span>Min</span><button type="button" data-offset-change="60000" title="Increase ${safeLabel} minute offset">+</button>
-                             </div>
-                             <div class="offset-buttons">
-                                 <button type="button" data-offset-change="-1000" title="Decrease ${safeLabel} second offset">-</button><span>Sec</span><button type="button" data-offset-change="1000" title="Increase ${safeLabel} second offset">+</button>
-                             </div>
-                             <button class="sync-target-reset-offset" type="button" title="Reset ${safeLabel} offset to zero">Reset Offset</button>
+                     <div class="school-sync-offset-panel" aria-label="${safeLabel} clock offset">
+                         <span class="school-sync-offset-label">Bell Offset</span>
+                         <span class="school-sync-offset-value">${offsetString}</span>
+                         <div class="school-sync-offset-controls">
+                             <button type="button" data-offset-change="-60000" title="Decrease ${safeLabel} minute offset">-</button>
+                             <span>Min</span>
+                             <button type="button" data-offset-change="60000" title="Increase ${safeLabel} minute offset">+</button>
+                             <button type="button" data-offset-change="-1000" title="Decrease ${safeLabel} second offset">-</button>
+                             <span>Sec</span>
+                             <button type="button" data-offset-change="1000" title="Increase ${safeLabel} second offset">+</button>
+                             <button class="school-sync-reset-offset" type="button" title="Reset ${safeLabel} offset to zero">Reset</button>
+                             <button class="school-sync-to-bell" type="button" title="Sync ${safeLabel} to the nearest class schedule bell">Sync to Bell</button>
                          </div>
                      </div>
-                     <button class="sync-target-use-current" type="button">Use Current Schedule</button>
                  </div>`;
          }).join('');
-         TimeSync.renderActiveTargetSelect();
-         TimeSync.updateOffsetDisplay();
+         if (TimeSync.editingTargetId) {
+             requestAnimationFrame(() => {
+                 const input = DOM.syncTargetsContainer?.querySelector(`[data-sync-target-id="${TimeSync.editingTargetId}"] .school-sync-name-input`) as HTMLInputElement | null;
+                 input?.focus();
+                 input?.select();
+             });
+         }
      },
 
      handleSyncTargetInput: function(e) {
          const targetElement = e.target as HTMLInputElement | HTMLTextAreaElement;
-         const card = targetElement.closest?.('.sync-target-card') as HTMLElement | null;
-         const target = card ? TimeSync.getSyncTarget(card.dataset.syncTargetId) : null;
+         const row = targetElement.closest?.('.school-sync-row') as HTMLElement | null;
+         const target = row ? TimeSync.getSyncTarget(row.dataset.syncTargetId) : null;
          if (!target || targetElement.dataset.syncTargetField !== 'label') return;
 
          target.label = targetElement.value.trim() || 'School';
-         const actionButton = card.querySelector('.sync-target-action') as HTMLButtonElement | null;
-         if (actionButton) {
-             actionButton.textContent = `Sync to ${target.label}`;
-         }
-         const option = DOM.activeSyncTargetSelect?.querySelector(`option[value="${target.id}"]`);
-         if (option) {
-             option.textContent = target.label;
-         }
      },
 
      handleSyncTargetChange: function(e) {
          const targetElement = e.target as HTMLInputElement | HTMLTextAreaElement;
-         const card = targetElement.closest?.('.sync-target-card') as HTMLElement | null;
-         const target = card ? TimeSync.getSyncTarget(card.dataset.syncTargetId) : null;
+         const row = targetElement.closest?.('.school-sync-row') as HTMLElement | null;
+         const target = row ? TimeSync.getSyncTarget(row.dataset.syncTargetId) : null;
          if (!target || !targetElement.dataset.syncTargetField) return;
 
          if (targetElement.dataset.syncTargetField === 'label') {
              target.label = targetElement.value.trim() || 'School';
              targetElement.value = target.label;
-             TimeSync.renderActiveTargetSelect();
+             TimeSync.editingTargetId = null;
+             TimeSync.renderSyncTargets();
+             Schedule.updateTitle();
          }
 
-         if (targetElement.dataset.syncTargetField === 'times') {
-             const parsedTimes = parseTimeList(targetElement.value);
-             if (parsedTimes.length === 0) {
-                 Utils.showButtonFeedback(card.querySelector('.sync-target-action'), "Add Times!", 1800);
-                 targetElement.value = formatTimeList(target.times);
-                 return;
-             }
-             target.times = parsedTimes;
-             targetElement.value = formatTimeList(parsedTimes);
-         }
-
-         Settings.save();
-     },
-
-     handleActiveSyncTargetChange: function(e) {
-         const select = e.target as HTMLSelectElement;
-         Settings.setActiveSyncTargetId(select.value);
-         TimeSync.renderSyncTargets();
-         TimeSync.updateOffsetDisplay();
-         Clock.update();
          Settings.save();
      },
 
      handleSyncTargetClick: function(e) {
          const button = (e.target as HTMLElement).closest?.('button') as HTMLButtonElement | null;
-         const card = button?.closest?.('.sync-target-card') as HTMLElement | null;
-         const target = card ? TimeSync.getSyncTarget(card.dataset.syncTargetId) : null;
+         const row = button?.closest?.('.school-sync-row') as HTMLElement | null;
+         const target = row ? TimeSync.getSyncTarget(row.dataset.syncTargetId) : null;
          if (!button || !target) return;
 
          if (button.dataset.offsetChange) {
@@ -272,41 +190,87 @@ export const TimeSync = {
              return;
          }
 
-         if (button.classList.contains('sync-target-reset-offset')) {
+         if (button.classList.contains('school-sync-reset-offset')) {
              TimeSync.resetOffset(target.id, button);
              return;
          }
 
-         if (button.classList.contains('sync-target-use-current')) {
-             target.times = collectScheduleBellTimes(Settings.schedule);
-             Settings.save();
+         if (button.classList.contains('school-sync-to-bell')) {
+             TimeSync.syncToNearestScheduleBell(target.id, button);
+             return;
+         }
+
+         if (button.classList.contains('school-sync-edit')) {
+             TimeSync.editingTargetId = target.id;
              TimeSync.renderSyncTargets();
-             const nextButton = DOM.syncTargetsContainer?.querySelector(`[data-sync-target-id="${target.id}"] .sync-target-use-current`);
-             Utils.showButtonFeedback(nextButton, "Updated!", 1200);
              return;
          }
 
-         if (!button.classList.contains('sync-target-action')) return;
-
-         const nearestEventTime = findNearestTime(target.times);
-         if (!nearestEventTime) {
-             Utils.showButtonFeedback(button, "No Valid Times!", 2000);
+         if (!button.classList.contains('school-sync-button')) return;
+         if (target.id === Settings.preferences.activeSyncTargetId) {
              return;
          }
 
-         TimeSync.applySyncToTime(nearestEventTime, button, `Synced ${formatEventTime(nearestEventTime)}`, target.id);
+         Settings.setActiveSyncTargetId(target.id);
+         State.selectedScheduleRowIndex = null;
+         State.currentPeriodIndex = null;
+         State.currentPeriodLabel = null;
+         Schedule.renderTable();
+         TimeSync.renderSyncTargets();
+         Clock.update();
+         Settings.save();
+     },
+
+     syncToNearestScheduleBell: function(targetId, button) {
+         const target = TimeSync.getSyncTarget(targetId);
+         if (!target) return;
+
+         const isActiveTarget = target.id === Settings.preferences.activeSyncTargetId;
+         const schedule = isActiveTarget ? Settings.schedule : target.schedule;
+         const systemNow = new Date();
+         const nearest = getNearestScheduleTime(schedule, systemNow);
+
+         if (!nearest) {
+             Utils.showButtonFeedback(button, "No Bells!", 1500);
+             return;
+         }
+
+         Settings.setSyncTargetOffsetMs(target.id, nearest.date.getTime() - systemNow.getTime());
+         TimeSync.updateOffsetDisplay();
+         Clock.update();
+         Settings.save();
+         Utils.showButtonFeedback(button, `Synced ${nearest.time}`, 1600);
+     },
+
+     handleSyncTargetKeyDown: function(e) {
+         const input = e.target as HTMLInputElement;
+         if (!input?.classList?.contains('school-sync-name-input')) return;
+         if (e.key === 'Enter') {
+             e.preventDefault();
+             input.dispatchEvent(new Event('change', { bubbles: true }));
+         }
+         if (e.key === 'Escape') {
+             e.preventDefault();
+             TimeSync.editingTargetId = null;
+             TimeSync.renderSyncTargets();
+         }
+     },
+
+     handleSyncTargetFocusOut: function(e) {
+         const input = e.target as HTMLInputElement;
+         if (!input?.classList?.contains('school-sync-name-input')) return;
+         input.dispatchEvent(new Event('change', { bubbles: true }));
      },
 
      updateOffsetDisplay: function() {
-         const activeTarget = TimeSync.getActiveSyncTarget();
-         const offsetString = formatOffset(activeTarget?.offsetMs);
-         if (DOM.currentOffsetDisplay) { // Check if element exists
-             DOM.currentOffsetDisplay.textContent = offsetString;
-         }
-         DOM.syncTargetsContainer?.querySelectorAll('.sync-target-card').forEach((card: HTMLElement) => {
-             const target = TimeSync.getSyncTarget(card.dataset.syncTargetId);
-             card.classList.toggle('active', target?.id === Settings.preferences.activeSyncTargetId);
-             const offsetEl = card.querySelector('.sync-target-offset');
+         DOM.syncTargetsContainer?.querySelectorAll('.school-sync-row').forEach((row: HTMLElement) => {
+             const target = TimeSync.getSyncTarget(row.dataset.syncTargetId);
+             row.classList.toggle('active', target?.id === Settings.preferences.activeSyncTargetId);
+             const schoolButton = row.querySelector('.school-sync-button') as HTMLButtonElement | null;
+             if (schoolButton && target) {
+                 schoolButton.setAttribute('aria-pressed', target.id === Settings.preferences.activeSyncTargetId ? 'true' : 'false');
+             }
+             const offsetEl = row.querySelector('.school-sync-offset-value');
              if (offsetEl && target) offsetEl.textContent = formatOffset(target.offsetMs);
          });
      }

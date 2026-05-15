@@ -93,6 +93,7 @@ function buildTargets(rootBase) {
   const taxBracketsMarbleVisualBase = appendPath(rootBase, 'tax-brackets-marble-visual')
   const coordinatesBase = appendPath(rootBase, 'coordinates')
   const oklchVisualizerBase = appendPath(rootBase, 'oklch-visualizer')
+  const rugbyPlayVisualizerBase = appendPath(rootBase, 'rugby-play-visualizer')
 
   return [
     {
@@ -313,6 +314,26 @@ header {
 }
 `,
       theme: 'dark',
+    },
+    {
+      id: 'rugby-play-visualizer',
+      outputFile: 'RugbyPlayVisualizer-screenshot.png',
+      distDir: 'apps/rugby-play-visualizer/dist',
+      basePath: rugbyPlayVisualizerBase,
+      route: rugbyPlayVisualizerBase,
+      waitFor: '.rugby-field .player-jersey',
+      delayMs: 300,
+      injectCss: `
+.controls-panel {
+  display: none !important;
+}
+.workspace {
+  grid-template-columns: 1fr !important;
+}
+.app-shell {
+  max-width: 960px !important;
+}
+`,
     },
   ]
 }

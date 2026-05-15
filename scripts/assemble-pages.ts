@@ -69,6 +69,11 @@ const appDistTargets = [
     distPath: join(rootDir, 'apps/oklch-visualizer/dist'),
     targetSubdir: 'oklch-visualizer',
   },
+  {
+    name: 'rugby-play-visualizer',
+    distPath: join(rootDir, 'apps/rugby-play-visualizer/dist'),
+    targetSubdir: 'rugby-play-visualizer',
+  },
 ]
 
 console.log(`Assembling Pages output into ${outputDirName}/`)

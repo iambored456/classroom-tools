@@ -7,6 +7,31 @@ import { Alerts } from './alerts.ts';
 import { Visuals } from './visuals.ts';
 import { Utils } from './utils.ts';
 
+function parseTimeToMinutes(time: string) {
+    if (typeof time !== 'string' || !/^\d{2}:\d{2}$/.test(time)) return null;
+    const [hours, minutes] = time.split(':').map(Number);
+    if (!Number.isInteger(hours) || !Number.isInteger(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+        return null;
+    }
+    return hours * 60 + minutes;
+}
+
+function formatMinutesAsTime(totalMinutes: number) {
+    const normalized = ((Math.round(totalMinutes) % 1440) + 1440) % 1440;
+    const hours = Math.floor(normalized / 60);
+    const minutes = normalized % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+function getDurationMinutes(start: string, end: string) {
+    const startMinutes = parseTimeToMinutes(start);
+    const endMinutes = parseTimeToMinutes(end);
+    if (startMinutes === null || endMinutes === null) return 0;
+    let duration = endMinutes - startMinutes;
+    if (duration <= 0) duration += 1440;
+    return duration;
+}
+
 export const Schedule = {
     attachListeners: function() {
          DOM.addScheduleRowBtn?.addEventListener("click", Schedule.addRow);
@@ -15,6 +40,7 @@ export const Schedule = {
     },
 
     renderTable: function() {
+        Schedule.updateTitle();
         const tableBody = DOM.scheduleTableBody;
         if (!tableBody) { console.error("Schedule table body not found"); return; }
         tableBody.innerHTML = ""; // Clear previous rows
@@ -35,6 +61,7 @@ export const Schedule = {
             tr.appendChild(Schedule.createLabelCell(item, index));
             tr.appendChild(Schedule.createTimeCell(item, index, 'start'));
             tr.appendChild(Schedule.createTimeCell(item, index, 'end'));
+            tr.appendChild(Schedule.createDurationCell(item, index));
             tr.appendChild(Schedule.createSchemeCell(item, index));
             tr.appendChild(Schedule.createAlertCell(item, index));
             tr.appendChild(Schedule.createCirclesCell(item, index));
@@ -53,6 +80,15 @@ export const Schedule = {
         // Add listener to table body for better drag leave detection
         tableBody.removeEventListener('dragleave', Schedule.handleTableDragLeave); // Prevent duplicates
         tableBody.addEventListener('dragleave', Schedule.handleTableDragLeave);
+    },
+
+    updateTitle: function() {
+        if (!DOM.classScheduleTitleEl) return;
+        const activeTarget = Settings.getActiveSyncTarget?.();
+        const schoolLabel = typeof activeTarget?.label === 'string' && activeTarget.label.trim()
+            ? activeTarget.label.trim()
+            : '';
+        DOM.classScheduleTitleEl.textContent = schoolLabel ? `${schoolLabel} Class Schedule` : 'Class Schedule';
     },
 
     // --- Cell Creation Helper Functions ---
@@ -130,6 +166,53 @@ export const Schedule = {
         }
         return item?.end || "23:59";
     },
+    createDurationCell: function(item, index) {
+         const td = document.createElement("td");
+         td.className = "schedule-duration-cell";
+         const input = document.createElement("input");
+         input.type = "number";
+         input.min = "1";
+         input.max = "1440";
+         input.step = "1";
+         input.inputMode = "numeric";
+         input.value = String(Schedule.getDurationValue(index, item));
+         input.title = "Duration in minutes";
+         input.setAttribute("aria-label", `Duration for ${item?.label || 'schedule row'} in minutes`);
+         input.addEventListener("change", function() {
+             Schedule.applyDurationChange(index, this.value);
+         });
+         td.appendChild(input);
+         return td;
+    },
+
+    getDurationValue: function(index, item) {
+        const start = item?.start || "00:00";
+        const end = Schedule.getEffectiveEndValue(index, item);
+        return getDurationMinutes(start, end);
+    },
+
+    applyDurationChange: function(index, value) {
+        if (!Settings.schedule || !Settings.schedule[index]) return;
+        const durationMinutes = Math.max(1, Math.min(1440, Math.round(Number(value))));
+        const startMinutes = parseTimeToMinutes(Settings.schedule[index].start);
+        if (!Number.isFinite(durationMinutes) || startMinutes === null) {
+            Schedule.renderTable();
+            return;
+        }
+
+        const nextTime = formatMinutesAsTime(startMinutes + durationMinutes);
+        if (Schedule.isEndLocked(index) && Settings.schedule[index + 1]) {
+            Settings.schedule[index + 1].start = nextTime;
+        } else {
+            Settings.schedule[index].end = nextTime;
+        }
+
+        Settings.normalizeScheduleContinuity();
+        Settings.save();
+        Schedule.renderTable();
+        Clock.update();
+    },
+
     createSchemeCell: function(item, index) {
          const td = document.createElement("td");
          td.className = "schedule-scheme-cell";

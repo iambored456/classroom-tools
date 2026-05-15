@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "playFamilies": [
+    {
+      "id": "london",
+      "name": "London",
+      "description": "A classroom prototype for the London attacking shape and its first branch choices.",
+      "branches": [
+        {
+          "id": "london-1",
+          "name": "London 1 - 12 hits 13 flat",
+          "description": "12 takes the front-line option and hits 13 flat.",
+          "enabledFromT": 2
+        },
+        {
+          "id": "london-2",
+          "name": "London 2 - 12 hits 10 out the back",
+          "description": "12 shapes flat and passes behind to 10.",
+          "enabledFromT": 2
+        },
+        {
+          "id": "london-4a",
+          "name": "London 4A - 10 hits 11 tight",
+          "description": "10 receives out the back and hits 11 on the tight support line.",
+          "enabledFromT": 3
+        },
+        {
+          "id": "london-4b",
+          "name": "London 4B - 10 hits 15 wide",
+          "description": "10 receives out the back and passes wider and deeper to 15.",
+          "enabledFromT": 3
+        }
+      ],
+      "variations": [
+        {
+          "id": "london-1",
+          "name": "London 1",
+          "description": "12 hits 13 flat after 9 to 10 and 10 to 12.",
+          "duration": 4.5,
+          "branchId": "london-1",
+          "initialBallCarrierId": "p9",
+          "players": [
+            { "id": "p9", "number": 9, "start": { "x": 34, "y": 69 } },
+            { "id": "p10", "number": 10, "start": { "x": 45, "y": 73 } },
+            { "id": "p12", "number": 12, "start": { "x": 55, "y": 77 } },
+            { "id": "p13", "number": 13, "start": { "x": 72, "y": 86 } },
+            { "id": "p11", "number": 11, "start": { "x": 14, "y": 89 } },
+            { "id": "p14", "number": 14, "start": { "x": 86, "y": 89 } },
+            { "id": "p15", "number": 15, "start": { "x": 50, "y": 97 } }
+          ],
+          "playerPaths": [
+            { "playerId": "p9", "startT": 0, "pace": 1.8, "interpolation": "linear", "waypoints": [{ "x": 34, "y": 69 }, { "x": 33, "y": 66 }, { "x": 32, "y": 62 }] },
+            { "playerId": "p10", "startT": 0, "pace": 4.2, "interpolation": "linear", "waypoints": [{ "x": 45, "y": 73 }, { "x": 43, "y": 68 }, { "x": 41, "y": 62 }, { "x": 38, "y": 55 }] },
+            { "playerId": "p12", "startT": 0, "pace": 5.0, "interpolation": "linear", "waypoints": [{ "x": 55, "y": 77 }, { "x": 56, "y": 70 }, { "x": 58, "y": 62 }, { "x": 60, "y": 55 }] },
+            { "playerId": "p13", "startT": 0, "pace": 9.0, "interpolation": "linear", "waypoints": [{ "x": 72, "y": 86 }, { "x": 70, "y": 77 }, { "x": 68, "y": 64 }, { "x": 66, "y": 46 }] },
+            { "playerId": "p11", "startT": 0, "pace": 7.2, "interpolation": "linear", "waypoints": [{ "x": 14, "y": 89 }, { "x": 16, "y": 81 }, { "x": 20, "y": 70 }, { "x": 24, "y": 58 }] },
+            { "playerId": "p14", "startT": 0, "pace": 6.2, "interpolation": "linear", "waypoints": [{ "x": 86, "y": 89 }, { "x": 88, "y": 82 }, { "x": 90, "y": 72 }, { "x": 92, "y": 62 }] },
+            { "playerId": "p15", "startT": 0, "pace": 6.6, "interpolation": "linear", "waypoints": [{ "x": 50, "y": 97 }, { "x": 52, "y": 91 }, { "x": 56, "y": 80 }, { "x": 60, "y": 68 }] }
+          ],
+          "passes": [
+            { "id": "london-1-9-10", "from": "p9", "to": "p10", "startT": 0.5, "endT": 0.9, "label": "9 to 10", "labelOffset": { "dx": -1, "dy": -3 }, "ballPath": { "interpolation": "linear", "waypoints": [] } },
+            { "id": "london-1-10-12", "from": "p10", "to": "p12", "startT": 1.2, "endT": 1.6, "label": "10 to 12", "labelOffset": { "dx": -6, "dy": -12 }, "ballPath": { "interpolation": "linear", "waypoints": [] } },
+            { "id": "london-1-12-13", "from": "p12", "to": "p13", "startT": 2, "endT": 2.4, "label": "12 to 13 flat", "branchId": "london-1", "labelOffset": { "dx": 1, "dy": -4 }, "ballPath": { "interpolation": "linear", "waypoints": [{ "x": 63, "y": 61 }] } }
+          ],
+          "branchLabels": [{ "id": "london-1-flat-label", "text": "13 flat", "at": { "x": 64, "y": 61 }, "t": 2, "branchId": "london-1" }]
+        },
+        {
+          "id": "london-2",
+          "name": "London 2",
+          "description": "12 shapes to the front line and hits 10 out the back.",
+          "duration": 4.5,
+          "branchId": "london-2",
+          "initialBallCarrierId": "p9",
+          "players": [
+            { "id": "p9", "number": 9, "start": { "x": 34, "y": 69 } },
+            { "id": "p10", "number": 10, "start": { "x": 45, "y": 73 } },
+            { "id": "p12", "number": 12, "start": { "x": 55, "y": 77 } },
+            { "id": "p13", "number": 13, "start": { "x": 72, "y": 86 } },
+            { "id": "p11", "number": 11, "start": { "x": 14, "y": 89 } },
+            { "id": "p14", "number": 14, "start": { "x": 86, "y": 89 } },
+            { "id": "p15", "number": 15, "start": { "x": 50, "y": 97 } }
+          ],
+          "playerPaths": [
+            { "playerId": "p9", "startT": 0, "pace": 1.8, "interpolation": "linear", "waypoints": [{ "x": 34, "y": 69 }, { "x": 33, "y": 66 }, { "x": 32, "y": 62 }] },
+            { "playerId": "p10", "startT": 0, "pace": 4.3, "interpolation": "linear", "waypoints": [{ "x": 45, "y": 73 }, { "x": 44, "y": 69 }, { "x": 47, "y": 67 }, { "x": 48, "y": 70 }, { "x": 54, "y": 60 }] },
+            { "playerId": "p12", "startT": 0, "pace": 4.4, "interpolation": "linear", "waypoints": [{ "x": 55, "y": 77 }, { "x": 56, "y": 70 }, { "x": 57, "y": 64 }, { "x": 58, "y": 58 }] },
+            { "playerId": "p13", "startT": 0, "pace": 7.3, "interpolation": "linear", "waypoints": [{ "x": 72, "y": 86 }, { "x": 69, "y": 76 }, { "x": 66, "y": 63 }, { "x": 64, "y": 54 }] },
+            { "playerId": "p11", "startT": 0, "pace": 7.5, "interpolation": "linear", "waypoints": [{ "x": 14, "y": 89 }, { "x": 18, "y": 82 }, { "x": 26, "y": 70 }, { "x": 32, "y": 60 }] },
+            { "playerId": "p14", "startT": 0, "pace": 6.2, "interpolation": "linear", "waypoints": [{ "x": 86, "y": 89 }, { "x": 88, "y": 82 }, { "x": 90, "y": 72 }, { "x": 92, "y": 62 }] },
+            { "playerId": "p15", "startT": 0, "pace": 7.6, "interpolation": "linear", "waypoints": [{ "x": 50, "y": 97 }, { "x": 55, "y": 91 }, { "x": 62, "y": 80 }, { "x": 68, "y": 68 }] }
+          ],
+          "passes": [
+            { "id": "london-2-9-10", "from": "p9", "to": "p10", "startT": 0.5, "endT": 0.9, "label": "9 to 10", "labelOffset": { "dx": -1, "dy": -3 }, "ballPath": { "interpolation": "linear", "waypoints": [] } },
+            { "id": "london-2-10-12", "from": "p10", "to": "p12", "startT": 1.2, "endT": 1.6, "label": "10 to 12", "labelOffset": { "dx": -6, "dy": -12 }, "ballPath": { "interpolation": "linear", "waypoints": [] } },
+            { "id": "london-2-12-10", "from": "p12", "to": "p10", "startT": 2, "endT": 2.4, "label": "12 to 10 out back", "branchId": "london-2", "labelOffset": { "dx": 0, "dy": 10 }, "ballPath": { "interpolation": "linear", "waypoints": [{ "x": 50, "y": 76 }] } }
+          ],
+          "branchLabels": [{ "id": "london-2-back-label", "text": "10 out back", "at": { "x": 48, "y": 82 }, "t": 2, "branchId": "london-2" }]
+        },
+        {
+          "id": "london-4a",
+          "name": "London 4A",
+          "description": "10 receives out the back and hits 11 on the tight line.",
+          "duration": 4.5,
+          "branchId": "london-4a",
+          "initialBallCarrierId": "p9",
+          "players": [
+            { "id": "p9", "number": 9, "start": { "x": 34, "y": 69 } },
+            { "id": "p10", "number": 10, "start": { "x": 45, "y": 73 } },
+            { "id": "p12", "number": 12, "start": { "x": 55, "y": 77 } },
+            { "id": "p13", "number": 13, "start": { "x": 72, "y": 86 } },
+            { "id": "p11", "number": 11, "start": { "x": 14, "y": 89 } },
+            { "id": "p14", "number": 14, "start": { "x": 86, "y": 89 } },
+            { "id": "p15", "number": 15, "start": { "x": 50, "y": 97 } }
+          ],
+          "playerPaths": [
+            { "playerId": "p9", "startT": 0, "pace": 1.8, "interpolation": "linear", "waypoints": [{ "x": 34, "y": 69 }, { "x": 33, "y": 66 }, { "x": 32, "y": 62 }] },
+            { "playerId": "p10", "startT": 0, "pace": 5.2, "interpolation": "linear", "waypoints": [{ "x": 45, "y": 73 }, { "x": 44, "y": 69 }, { "x": 47, "y": 67 }, { "x": 48, "y": 70 }, { "x": 54, "y": 60 }, { "x": 56, "y": 52 }] },
+            { "playerId": "p12", "startT": 0, "pace": 4.4, "interpolation": "linear", "waypoints": [{ "x": 55, "y": 77 }, { "x": 56, "y": 70 }, { "x": 57, "y": 64 }, { "x": 58, "y": 58 }] },
+            { "playerId": "p13", "startT": 0, "pace": 7.3, "interpolation": "linear", "waypoints": [{ "x": 72, "y": 86 }, { "x": 69, "y": 76 }, { "x": 66, "y": 63 }, { "x": 64, "y": 54 }] },
+            { "playerId": "p11", "startT": 0, "pace": 9.1, "interpolation": "linear", "waypoints": [{ "x": 14, "y": 89 }, { "x": 20, "y": 82 }, { "x": 32, "y": 70 }, { "x": 42, "y": 58 }, { "x": 45, "y": 48 }] },
+            { "playerId": "p14", "startT": 0, "pace": 6.2, "interpolation": "linear", "waypoints": [{ "x": 86, "y": 89 }, { "x": 88, "y": 82 }, { "x": 90, "y": 72 }, { "x": 92, "y": 62 }] },
+            { "playerId": "p15", "startT": 0, "pace": 8.7, "interpolation": "linear", "waypoints": [{ "x": 50, "y": 97 }, { "x": 56, "y": 89 }, { "x": 65, "y": 73 }, { "x": 72, "y": 62 }] }
+          ],
+          "passes": [
+            { "id": "london-4a-9-10", "from": "p9", "to": "p10", "startT": 0.5, "endT": 0.9, "label": "9 to 10", "labelOffset": { "dx": -1, "dy": -3 }, "ballPath": { "interpolation": "linear", "waypoints": [] } },
+            { "id": "london-4a-10-12", "from": "p10", "to": "p12", "startT": 1.2, "endT": 1.6, "label": "10 to 12", "labelOffset": { "dx": -6, "dy": -12 }, "ballPath": { "interpolation": "linear", "waypoints": [] } },
+            { "id": "london-4a-12-10", "from": "p12", "to": "p10", "startT": 2, "endT": 2.4, "label": "12 to 10 out back", "branchId": "london-2", "labelOffset": { "dx": 0, "dy": 10 }, "ballPath": { "interpolation": "linear", "waypoints": [{ "x": 50, "y": 76 }] } },
+            { "id": "london-4a-10-11", "from": "p10", "to": "p11", "startT": 3, "endT": 3.4, "label": "10 to 11 tight", "branchId": "london-4a", "labelOffset": { "dx": -2, "dy": -4 }, "ballPath": { "interpolation": "linear", "waypoints": [{ "x": 46, "y": 56 }] } }
+          ],
+          "branchLabels": [
+            { "id": "london-4a-back-label", "text": "10 out back", "at": { "x": 48, "y": 82 }, "t": 2, "branchId": "london-2" },
+            { "id": "london-4a-tight-label", "text": "11 tight", "at": { "x": 41, "y": 54 }, "t": 3, "branchId": "london-4a" }
+          ]
+        },
+        {
+          "id": "london-4b",
+          "name": "London 4B",
+          "description": "10 receives out the back and passes wide to 15.",
+          "duration": 4.5,
+          "branchId": "london-4b",
+          "initialBallCarrierId": "p9",
+          "players": [
+            { "id": "p9", "number": 9, "start": { "x": 34, "y": 69 } },
+            { "id": "p10", "number": 10, "start": { "x": 45, "y": 73 } },
+            { "id": "p12", "number": 12, "start": { "x": 55, "y": 77 } },
+            { "id": "p13", "number": 13, "start": { "x": 72, "y": 86 } },
+            { "id": "p11", "number": 11, "start": { "x": 14, "y": 89 } },
+            { "id": "p14", "number": 14, "start": { "x": 86, "y": 89 } },
+            { "id": "p15", "number": 15, "start": { "x": 50, "y": 97 } }
+          ],
+          "playerPaths": [
+            { "playerId": "p9", "startT": 0, "pace": 1.8, "interpolation": "linear", "waypoints": [{ "x": 34, "y": 69 }, { "x": 33, "y": 66 }, { "x": 32, "y": 62 }] },
+            { "playerId": "p10", "startT": 0, "pace": 5.1, "interpolation": "linear", "waypoints": [{ "x": 45, "y": 73 }, { "x": 44, "y": 69 }, { "x": 47, "y": 67 }, { "x": 48, "y": 70 }, { "x": 54, "y": 60 }, { "x": 57, "y": 53 }] },
+            { "playerId": "p12", "startT": 0, "pace": 4.4, "interpolation": "linear", "waypoints": [{ "x": 55, "y": 77 }, { "x": 56, "y": 70 }, { "x": 57, "y": 64 }, { "x": 58, "y": 58 }] },
+            { "playerId": "p13", "startT": 0, "pace": 7.3, "interpolation": "linear", "waypoints": [{ "x": 72, "y": 86 }, { "x": 69, "y": 76 }, { "x": 66, "y": 63 }, { "x": 64, "y": 54 }] },
+            { "playerId": "p11", "startT": 0, "pace": 8.5, "interpolation": "linear", "waypoints": [{ "x": 14, "y": 89 }, { "x": 20, "y": 82 }, { "x": 31, "y": 70 }, { "x": 41, "y": 58 }, { "x": 45, "y": 50 }] },
+            { "playerId": "p14", "startT": 0, "pace": 6.2, "interpolation": "linear", "waypoints": [{ "x": 86, "y": 89 }, { "x": 88, "y": 82 }, { "x": 90, "y": 72 }, { "x": 92, "y": 62 }] },
+            { "playerId": "p15", "startT": 0, "pace": 9.1, "interpolation": "linear", "waypoints": [{ "x": 50, "y": 97 }, { "x": 58, "y": 91 }, { "x": 66, "y": 82 }, { "x": 72, "y": 70 }, { "x": 79, "y": 58 }] }
+          ],
+          "passes": [
+            { "id": "london-4b-9-10", "from": "p9", "to": "p10", "startT": 0.5, "endT": 0.9, "label": "9 to 10", "labelOffset": { "dx": -1, "dy": -3 }, "ballPath": { "interpolation": "linear", "waypoints": [] } },
+            { "id": "london-4b-10-12", "from": "p10", "to": "p12", "startT": 1.2, "endT": 1.6, "label": "10 to 12", "labelOffset": { "dx": -6, "dy": -12 }, "ballPath": { "interpolation": "linear", "waypoints": [] } },
+            { "id": "london-4b-12-10", "from": "p12", "to": "p10", "startT": 2, "endT": 2.4, "label": "12 to 10 out back", "branchId": "london-2", "labelOffset": { "dx": 0, "dy": 10 }, "ballPath": { "interpolation": "linear", "waypoints": [{ "x": 50, "y": 76 }] } },
+            { "id": "london-4b-10-15", "from": "p10", "to": "p15", "startT": 3, "endT": 3.4, "label": "10 to 15 wide", "branchId": "london-4b", "labelOffset": { "dx": 0, "dy": 6 }, "ballPath": { "interpolation": "linear", "waypoints": [{ "x": 68, "y": 76 }] } }
+          ],
+          "branchLabels": [
+            { "id": "london-4b-back-label", "text": "10 out back", "at": { "x": 48, "y": 82 }, "t": 2, "branchId": "london-2" },
+            { "id": "london-4b-wide-label", "text": "15 wide", "at": { "x": 75, "y": 68 }, "t": 3, "branchId": "london-4b" }
+          ]
+        }
+      ]
+    }
+  ]
+}

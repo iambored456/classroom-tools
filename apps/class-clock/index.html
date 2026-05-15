@@ -102,10 +102,7 @@
 
       <!-- Appearance Tab Content -->
       <div id="appearance-tab" class="tab-content active">
-        <h3>Appearance & Layout</h3>
-
         <div class="settings-section">
-            <h4>Visible Elements</h4>
             <div id="display-elements-checklist" class="preferences-container compact">
                  <div class="pref-row two-col">
                     <div class="pref-item checkbox-item"><label><input type="checkbox" id="pref-show-date" data-pref="showDate"> Show Date</label></div>
@@ -124,92 +121,71 @@
                 <label class="visualization-mode-card">
                     <input type="radio" name="visualization-mode" value="progress">
                     <span class="visualization-mode-title">Progress Bar</span>
-                    <span class="visualization-mode-note">Simple and direct with a moving time marker.</span>
                 </label>
                 <label class="visualization-mode-card">
                     <input type="radio" name="visualization-mode" value="sand">
                     <span class="visualization-mode-title">Sand Bars</span>
-                    <span class="visualization-mode-note">Physics grains rising through five bins.</span>
                 </label>
                 <label class="visualization-mode-card">
                     <input type="radio" name="visualization-mode" value="water">
                     <span class="visualization-mode-title">Water Bars</span>
-                    <span class="visualization-mode-note">Calm fluid columns with droplet impacts.</span>
                 </label>
                 <label class="visualization-mode-card">
                     <input type="radio" name="visualization-mode" value="candle">
                     <span class="visualization-mode-title">Candles</span>
-                    <span class="visualization-mode-note">Wax burns down with a flickering flame.</span>
                 </label>
             </div>
-        </div>
-
-        <div id="visualization-settings" class="settings-section display-element element-hidden">
-             <h4>Timeline Layout</h4>
              <div class="preferences-container compact slider-pref-list">
                  <div class="slider-pref-row">
                      <label for="pref-sand-width-slider">Visualization Width</label>
-                     <input class="pref-slider" type="range" id="pref-sand-width-slider" data-pref="sandWidth" min="20" max="100" step="1" value="80">
-                     <div class="number-input-wrapper compact-stepper">
+                     <div class="slider-stepper">
                          <button class="num-btn minus" aria-label="Decrease Visualization Width">-</button>
-                         <input type="number" id="pref-sand-width" data-pref="sandWidth" min="20" max="100" step="1" value="80" aria-label="Visualization Width">
+                         <div class="slider-track-shell">
+                             <span class="slider-value" data-pref-value="sandWidth">80</span>
+                             <input class="pref-slider" type="range" id="pref-sand-width-slider" data-pref="sandWidth" min="20" max="100" step="1" value="80" aria-label="Visualization Width">
+                         </div>
                          <button class="num-btn plus" aria-label="Increase Visualization Width">+</button>
                      </div>
                  </div>
                  <div class="slider-pref-row">
-                     <label for="pref-sand-height-slider">Visualization Height</label>
-                     <input class="pref-slider" type="range" id="pref-sand-height-slider" data-pref="sandHeight" min="8" max="42" step="1" value="14">
-                     <div class="number-input-wrapper compact-stepper">
-                         <button class="num-btn minus" aria-label="Decrease Visualization Height">-</button>
-                         <input type="number" id="pref-sand-height" data-pref="sandHeight" min="8" max="42" step="1" value="14" aria-label="Visualization Height">
-                         <button class="num-btn plus" aria-label="Increase Visualization Height">+</button>
+                     <label>Viewport Heights</label>
+                     <div class="multi-slider-panel" data-multi-slider>
+                         <div class="multi-slider-track-shell">
+                             <div class="multi-slider-track"></div>
+                             <button class="multi-slider-thumb multi-slider-thumb-visualization" type="button" data-multi-pref="sandHeight" data-stack-index="0" data-step="1" aria-label="Visualization Height" aria-valuemin="8" aria-valuemax="42">
+                                 <span data-pref-value="sandHeight">14</span>
+                             </button>
+                             <button class="multi-slider-thumb multi-slider-thumb-label" type="button" data-multi-pref="scheduleLabelFontSize" data-stack-index="1" data-step="1" aria-label="Label Height" aria-valuemin="1" aria-valuemax="10">
+                                 <span data-pref-value="scheduleLabelFontSize">4</span>
+                             </button>
+                             <button class="multi-slider-thumb multi-slider-thumb-time" type="button" data-multi-pref="timeFontSize" data-stack-index="2" data-step="1" aria-label="Time Height" aria-valuemin="5" aria-valuemax="36">
+                                 <span data-pref-value="timeFontSize">19</span>
+                             </button>
+                             <button class="multi-slider-thumb multi-slider-thumb-date" type="button" data-multi-pref="dateFontSize" data-stack-index="3" data-step="1" aria-label="Date Height" aria-valuemin="1" aria-valuemax="14">
+                                 <span data-pref-value="dateFontSize">6</span>
+                             </button>
+                         </div>
+                         <div class="multi-slider-legend" aria-hidden="true">
+                             <span class="multi-slider-legend-item multi-slider-legend-visualization"><span class="multi-slider-dot"></span>Visualization</span>
+                             <span class="multi-slider-legend-item multi-slider-legend-label"><span class="multi-slider-dot"></span>Label</span>
+                             <span class="multi-slider-legend-item multi-slider-legend-time"><span class="multi-slider-dot"></span>Time</span>
+                             <span class="multi-slider-legend-item multi-slider-legend-date"><span class="multi-slider-dot"></span>Date</span>
+                         </div>
                      </div>
                  </div>
                  <div class="slider-pref-row">
                      <label for="pref-sand-particle-size-slider">Animation Detail</label>
-                     <input class="pref-slider" type="range" id="pref-sand-particle-size-slider" data-pref="sandParticleSize" min="1" max="20" step="0.5" value="5">
-                     <div class="number-input-wrapper compact-stepper">
+                     <div class="slider-stepper">
                          <button class="num-btn minus" aria-label="Decrease Animation Detail Size">-</button>
-                         <input type="number" id="pref-sand-particle-size" data-pref="sandParticleSize" min="1" max="20" step="0.5" value="5" aria-label="Animation Detail Size">
+                         <div class="slider-track-shell">
+                             <span class="slider-value" data-pref-value="sandParticleSize">5</span>
+                             <input class="pref-slider" type="range" id="pref-sand-particle-size-slider" data-pref="sandParticleSize" min="1" max="20" step="0.5" value="5" aria-label="Animation Detail Size">
+                         </div>
                          <button class="num-btn plus" aria-label="Increase Animation Detail Size">+</button>
                      </div>
                  </div>
-             </div>
-             <button id="reset-sandbar-defaults">Reset Timeline Layout Defaults</button>
-        </div>
-
-        <div class="settings-section">
-            <h4>Typography & Scale</h4>
-            <div class="preferences-container slider-pref-list">
-              <div class="slider-pref-row">
-                <label for="pref-date-font-slider">Date Height</label>
-                <input class="pref-slider" type="range" id="pref-date-font-slider" data-pref="dateFontSize" value="6" min="1" max="14" step="1">
-                <div class="number-input-wrapper compact-stepper">
-                  <button class="num-btn minus" aria-label="Decrease Date Height">-</button>
-                  <input type="number" id="pref-date-font" data-pref="dateFontSize" value="6" min="1" max="14" step="1" aria-label="Date Height">
-                  <button class="num-btn plus" aria-label="Increase Date Height">+</button>
-                </div>
-              </div>
-              <div class="slider-pref-row">
-                <label for="pref-time-font-slider">Time Height</label>
-                <input class="pref-slider" type="range" id="pref-time-font-slider" data-pref="timeFontSize" value="19" min="5" max="36" step="1">
-                <div class="number-input-wrapper compact-stepper">
-                  <button class="num-btn minus" aria-label="Decrease Time Height">-</button>
-                  <input type="number" id="pref-time-font" data-pref="timeFontSize" value="19" min="5" max="36" step="1" aria-label="Time Height">
-                  <button class="num-btn plus" aria-label="Increase Time Height">+</button>
-                </div>
-              </div>
-              <div class="slider-pref-row">
-                <label for="pref-schedule-label-font-slider">Label Height</label>
-                <input class="pref-slider" type="range" id="pref-schedule-label-font-slider" data-pref="scheduleLabelFontSize" value="4" min="1" max="10" step="1">
-                <div class="number-input-wrapper compact-stepper">
-                  <button class="num-btn minus" aria-label="Decrease Label Height">-</button>
-                  <input type="number" id="pref-schedule-label-font" data-pref="scheduleLabelFontSize" value="4" min="1" max="10" step="1" aria-label="Label Height">
-                  <button class="num-btn plus" aria-label="Increase Label Height">+</button>
-                </div>
-              </div>
             </div>
-            <button id="reset-appearance-defaults">Reset Typography Defaults</button>
+            <button id="reset-timeline-visualization-defaults">Reset to Defaults</button>
         </div>
 
         <!-- Colour Schemes Section -->
@@ -223,14 +199,17 @@
 
       <!-- Schedule & Alerts Tab Content -->
       <div id="schedule-alerts-tab" class="tab-content">
-        <h3>Schedule & Alerts Configuration</h3>
+        <div id="time-sync-section" class="settings-section">
+          <h4>Time Synchronization</h4>
+          <div id="sync-targets" class="school-sync-list"></div>
+        </div>
         <div class="settings-section">
-            <h4>Class Schedule</h4>
+            <h4 id="class-schedule-title">Class Schedule</h4>
             <div class="schedule-table-wrap">
               <table id="schedule-table">
                 <thead>
                   <tr>
-                    <th>Drag</th><th>Label</th><th>Start</th><th>End (Auto)</th><th>Scheme</th><th>Alert On?</th><th>Schedule Circles?</th>
+                    <th>Drag</th><th>Label</th><th>Start</th><th>End</th><th>Duration</th><th>Scheme</th><th>Alert On?</th><th>Schedule Circles?</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -239,15 +218,6 @@
             <button id="delete-schedule-row">Delete Selected Row</button>
             <button id="add-schedule-row">Add Row Below Selected</button>
          </div>
-        <div id="time-sync-section" class="settings-section">
-          <h4>Time Synchronization</h4>
-          <div class="active-sync-row">
-            <label for="active-sync-target">Clock Uses</label>
-            <select id="active-sync-target" aria-label="Selected school clock sync"></select>
-            <div class="offset-display">Active Offset: <span id="current-offset">0s</span></div>
-          </div>
-          <div id="sync-targets" class="sync-targets"></div>
-        </div>
       </div> <!-- End #schedule-alerts-tab -->
     </div> <!-- End #tab-contents -->
   </div> <!-- End #settings-menu -->

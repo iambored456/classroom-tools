@@ -53,6 +53,10 @@ export default defineConfig({
         target: 'http://localhost:5180',
         changeOrigin: true,
       },
+      '/rugby-play-visualizer': {
+        target: 'http://localhost:5184',
+        changeOrigin: true,
+      },
     },
   },
 })

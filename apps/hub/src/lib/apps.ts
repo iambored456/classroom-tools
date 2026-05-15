@@ -145,4 +145,15 @@ export const hubEntries: HubEntry[] = [
     tags: ['Color', 'Music', 'Visualization'],
     accent: '#4cc6ff',
   },
+  {
+    kind: 'app',
+    id: 'rugby-play-visualizer',
+    name: 'Rugby Play Visualizer',
+    description:
+      'Animate attacking rugby patterns with numbered jerseys, pass paths, branch choices, and mirrored field symmetry.',
+    href: withBase('rugby-play-visualizer/'),
+    preview: withBase('images/RugbyPlayVisualizer-screenshot.png'),
+    tags: ['Rugby', 'Visualization', 'Classroom'],
+    accent: '#4c9855',
+  },
 ]

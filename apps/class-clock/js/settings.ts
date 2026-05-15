@@ -42,17 +42,59 @@ const DEFAULT_SYNC_TARGETS = [
     { id: 'school-1', label: 'School 1' },
     { id: 'school-2', label: 'School 2' }
 ];
+const DEFAULT_SCHEDULE = [
+    { label: "Before", start: "00:00", end: "08:50", colourSchemeId: 1, showCircles: false },
+    { label: "Period 1", start: "08:50", end: "10:05", colourSchemeId: 1, showCircles: true },
+    { label: "Break", start: "10:05", end: "10:15", colourSchemeId: 2, showCircles: false },
+    { label: "Period 2", start: "10:15", end: "11:30", colourSchemeId: 1, showCircles: true },
+    { label: "Lunch", start: "11:30", end: "12:20", colourSchemeId: 2, showCircles: false },
+    { label: "Period 3", start: "12:20", end: "13:35", colourSchemeId: 1, showCircles: true },
+    { label: "Break", start: "13:35", end: "13:45", colourSchemeId: 2, showCircles: false },
+    { label: "Period 4", start: "13:45", end: "15:00", colourSchemeId: 1, showCircles: true },
+    { label: "After", start: "15:00", end: "23:59", colourSchemeId: 1, showCircles: false }
+];
 
 function normalizeTimeOffset(value: any) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? Math.round(parsed) : 0;
 }
 
-function normalizeSyncTargets(value: any, legacyOffsetMs = 0) {
+function cloneSchedule(schedule = DEFAULT_SCHEDULE) {
+    return normalizeSchedule(schedule);
+}
+
+function normalizeSchedule(value: any, fallback = DEFAULT_SCHEDULE) {
+    const source = Array.isArray(value) && value.length > 0 ? value : fallback;
+    return source.map(item => ({
+        label: item?.label || "Unnamed",
+        start: item?.start || "00:00",
+        end: item?.end || "00:00",
+        colourSchemeId: item?.colourSchemeId || 1,
+        showCircles: typeof item?.showCircles === 'boolean' ? item.showCircles : false
+    }));
+}
+
+function cloneAlerts(alerts = {}) {
+    try {
+        return JSON.parse(JSON.stringify(alerts || {}));
+    } catch {
+        return {};
+    }
+}
+
+function normalizeSyncTargets(value: any, legacyOffsetMs = 0, fallbackSchedule = DEFAULT_SCHEDULE, fallbackAlerts = {}) {
     const fallbackOffsetMs = normalizeTimeOffset(legacyOffsetMs);
+    const normalizedFallbackSchedule = cloneSchedule(fallbackSchedule);
+    const normalizedFallbackAlerts = cloneAlerts(fallbackAlerts);
     const sourceTargets = Array.isArray(value) && value.length > 0
         ? value
-        : DEFAULT_SYNC_TARGETS.map(target => ({ ...target, times: DEFAULT_SYNC_TARGET_TIMES, offsetMs: fallbackOffsetMs }));
+        : DEFAULT_SYNC_TARGETS.map(target => ({
+            ...target,
+            times: DEFAULT_SYNC_TARGET_TIMES,
+            offsetMs: fallbackOffsetMs,
+            schedule: normalizedFallbackSchedule,
+            alerts: normalizedFallbackAlerts
+        }));
     const targets = sourceTargets.slice(0, 2);
     while (targets.length < 2) {
         const nextIndex = targets.length;
@@ -60,7 +102,9 @@ function normalizeSyncTargets(value: any, legacyOffsetMs = 0) {
             id: DEFAULT_SYNC_TARGETS[nextIndex].id,
             label: DEFAULT_SYNC_TARGETS[nextIndex].label,
             times: DEFAULT_SYNC_TARGET_TIMES,
-            offsetMs: fallbackOffsetMs
+            offsetMs: fallbackOffsetMs,
+            schedule: normalizedFallbackSchedule,
+            alerts: normalizedFallbackAlerts
         });
     }
 
@@ -80,7 +124,9 @@ function normalizeSyncTargets(value: any, legacyOffsetMs = 0) {
             times: times.length > 0 ? Array.from(new Set(times)) : [...DEFAULT_SYNC_TARGET_TIMES],
             offsetMs: Object.prototype.hasOwnProperty.call(target || {}, 'offsetMs')
                 ? normalizeTimeOffset(target.offsetMs)
-                : fallbackOffsetMs
+                : fallbackOffsetMs,
+            schedule: normalizeSchedule(target?.schedule, normalizedFallbackSchedule),
+            alerts: cloneAlerts(target?.alerts || normalizedFallbackAlerts)
         };
     });
 }
@@ -91,17 +137,7 @@ function normalizeActiveSyncTargetId(value: any, targets: any[]) {
 }
 
 export const Settings = {
-    schedule: [ // Default schedule
-        { label: "Before", start: "00:00", end: "08:50", colourSchemeId: 1, showCircles: false },
-        { label: "Period 1", start: "08:50", end: "10:05", colourSchemeId: 1, showCircles: true },
-        { label: "Break", start: "10:05", end: "10:15", colourSchemeId: 2, showCircles: false },
-        { label: "Period 2", start: "10:15", end: "11:30", colourSchemeId: 1, showCircles: true },
-        { label: "Lunch", start: "11:30", end: "12:20", colourSchemeId: 2, showCircles: false },
-        { label: "Period 3", start: "12:20", end: "13:35", colourSchemeId: 1, showCircles: true },
-        { label: "Break", start: "13:35", end: "13:45", colourSchemeId: 2, showCircles: false },
-        { label: "Period 4", start: "13:45", end: "15:00", colourSchemeId: 1, showCircles: true },
-        { label: "After", start: "15:00", end: "23:59", colourSchemeId: 1, showCircles: false }
-    ],
+    schedule: cloneSchedule(DEFAULT_SCHEDULE),
     preferences: {}, // Populated by load()
     alerts: {},      // Populated by load()
 
@@ -227,8 +263,8 @@ export const Settings = {
     },
 
     getSyncTargets: function(preferences = Settings.preferences) {
-        if (!preferences) return normalizeSyncTargets(null);
-        preferences.syncTargets = normalizeSyncTargets(preferences.syncTargets, preferences.timeOffsetMs);
+        if (!preferences) return normalizeSyncTargets(null, 0, Settings.schedule, Settings.alerts);
+        preferences.syncTargets = normalizeSyncTargets(preferences.syncTargets, preferences.timeOffsetMs, Settings.schedule, Settings.alerts);
         preferences.activeSyncTargetId = normalizeActiveSyncTargetId(preferences.activeSyncTargetId, preferences.syncTargets);
         return preferences.syncTargets;
     },
@@ -245,9 +281,11 @@ export const Settings = {
     },
 
     setActiveSyncTargetId: function(targetId: string) {
+        Settings.persistActiveScheduleToTarget();
         const targets = Settings.getSyncTargets();
         Settings.preferences.activeSyncTargetId = normalizeActiveSyncTargetId(targetId, targets);
         Settings.preferences.timeOffsetMs = Settings.getActiveTimeOffsetMs();
+        Settings.loadActiveSyncTargetSchedule();
     },
 
     setSyncTargetOffsetMs: function(targetId: string, offsetMs: number) {
@@ -261,10 +299,31 @@ export const Settings = {
         return target;
     },
 
+    persistActiveScheduleToTarget: function(preferences = Settings.preferences) {
+        if (!preferences) return;
+        const targets = Settings.getSyncTargets(preferences);
+        const activeId = normalizeActiveSyncTargetId(preferences.activeSyncTargetId, targets);
+        const target = targets.find(syncTarget => syncTarget.id === activeId);
+        if (!target) return;
+        target.schedule = cloneSchedule(Settings.schedule);
+        target.alerts = cloneAlerts(Settings.alerts);
+    },
+
+    loadActiveSyncTargetSchedule: function(preferences = Settings.preferences) {
+        if (!preferences) return;
+        const activeTarget = Settings.getActiveSyncTarget(preferences);
+        if (!activeTarget) return;
+        Settings.schedule = cloneSchedule(activeTarget.schedule);
+        Settings.alerts = cloneAlerts(activeTarget.alerts);
+        Settings.normalizeScheduleContinuity();
+        preferences.timeOffsetMs = normalizeTimeOffset(activeTarget.offsetMs);
+    },
+
     load: function() {
         Settings.preferences = JSON.parse(JSON.stringify(Settings.defaultPreferences));
         const defaultScheduleCopy = JSON.parse(JSON.stringify(Settings.schedule));
         Settings.alerts = {};
+        let savedSyncTargetsLoaded = false;
 
         // --- Load Schedule ---
         const savedSchedule = localStorage.getItem("clockSchedule");
@@ -291,6 +350,7 @@ export const Settings = {
             try {
                 const loadedPreferences = JSON.parse(savedPrefs);
                 if (typeof loadedPreferences === 'object' && loadedPreferences !== null) {
+                    savedSyncTargetsLoaded = Array.isArray(loadedPreferences.syncTargets) && loadedPreferences.syncTargets.length > 0;
                     const legacyTimelineHeightPx = Number(loadedPreferences.sandHeight)
                         || Number(loadedPreferences.progressBarHeight)
                         || LEGACY_DEFAULT_TIMELINE_HEIGHT;
@@ -343,7 +403,12 @@ export const Settings = {
                         tempPrefs.visualizationMode = Settings.defaultPreferences.visualizationMode;
                     }
                     tempPrefs.timeOffsetMs = normalizeTimeOffset(tempPrefs.timeOffsetMs);
-                    tempPrefs.syncTargets = normalizeSyncTargets(tempPrefs.syncTargets, tempPrefs.timeOffsetMs);
+                    tempPrefs.syncTargets = normalizeSyncTargets(
+                        savedSyncTargetsLoaded ? tempPrefs.syncTargets : null,
+                        tempPrefs.timeOffsetMs,
+                        Settings.schedule,
+                        Settings.alerts
+                    );
                     tempPrefs.activeSyncTargetId = normalizeActiveSyncTargetId(tempPrefs.activeSyncTargetId, tempPrefs.syncTargets);
                     tempPrefs.timeOffsetMs = Settings.getActiveTimeOffsetMs(tempPrefs);
 
@@ -382,13 +447,23 @@ export const Settings = {
                 }
             } catch (e) { console.error("Error parsing saved alerts settings.", e); }
         }
+
+        Settings.preferences.syncTargets = normalizeSyncTargets(
+            savedSyncTargetsLoaded ? Settings.preferences.syncTargets : null,
+            Settings.preferences.timeOffsetMs,
+            Settings.schedule,
+            Settings.alerts
+        );
+        Settings.preferences.activeSyncTargetId = normalizeActiveSyncTargetId(Settings.preferences.activeSyncTargetId, Settings.preferences.syncTargets);
+        Settings.loadActiveSyncTargetSchedule();
     },
 
     save: function() {
         try {
              Settings.normalizeScheduleContinuity();
+             Settings.persistActiveScheduleToTarget();
              Settings.applyVisualizationModePreferences(Settings.preferences);
-             Settings.preferences.syncTargets = normalizeSyncTargets(Settings.preferences.syncTargets, Settings.preferences.timeOffsetMs);
+             Settings.preferences.syncTargets = normalizeSyncTargets(Settings.preferences.syncTargets, Settings.preferences.timeOffsetMs, Settings.schedule, Settings.alerts);
              Settings.preferences.activeSyncTargetId = normalizeActiveSyncTargetId(Settings.preferences.activeSyncTargetId, Settings.preferences.syncTargets);
              Settings.preferences.timeOffsetMs = Settings.getActiveTimeOffsetMs();
              Settings.preferences.scaleUnitVersion = SCALE_UNIT_VERSION;
