@@ -72,6 +72,7 @@ export const TimeSync = {
          DOM.syncTargetsContainer?.addEventListener("change", TimeSync.handleSyncTargetChange);
          DOM.syncTargetsContainer?.addEventListener("keydown", TimeSync.handleSyncTargetKeyDown);
          DOM.syncTargetsContainer?.addEventListener("focusout", TimeSync.handleSyncTargetFocusOut);
+         window.addEventListener('class-clock-period-change', TimeSync.updateOffsetDisplay);
      },
 
      adjustOffset: function(changeMs, targetId = Settings.preferences.activeSyncTargetId) {
@@ -113,11 +114,12 @@ export const TimeSync = {
          if (!DOM.syncTargetsContainer) return;
          Schedule.updateTitle();
          const targets = TimeSync.ensureSyncTargets();
+         const currentClockSyncTargetId = Settings.getCurrentClockSyncTargetId();
          DOM.syncTargetsContainer.innerHTML = targets.map(target => {
              const safeId = escapeHtml(target.id);
              const safeLabel = escapeHtml(target.label);
              const offsetString = formatOffset(target.offsetMs);
-             const isActive = target.id === Settings.preferences.activeSyncTargetId;
+             const isActive = target.id === currentClockSyncTargetId;
              const isEditing = TimeSync.editingTargetId === target.id;
              return `
                  <div class="school-sync-row${isActive ? ' active' : ''}" data-sync-target-id="${safeId}">
@@ -173,6 +175,7 @@ export const TimeSync = {
              targetElement.value = target.label;
              TimeSync.editingTargetId = null;
              TimeSync.renderSyncTargets();
+             Schedule.renderTable();
              Schedule.updateTitle();
          }
 
@@ -263,12 +266,13 @@ export const TimeSync = {
      },
 
      updateOffsetDisplay: function() {
+         const currentClockSyncTargetId = Settings.getCurrentClockSyncTargetId();
          DOM.syncTargetsContainer?.querySelectorAll('.school-sync-row').forEach((row: HTMLElement) => {
              const target = TimeSync.getSyncTarget(row.dataset.syncTargetId);
-             row.classList.toggle('active', target?.id === Settings.preferences.activeSyncTargetId);
+             row.classList.toggle('active', target?.id === currentClockSyncTargetId);
              const schoolButton = row.querySelector('.school-sync-button') as HTMLButtonElement | null;
              if (schoolButton && target) {
-                 schoolButton.setAttribute('aria-pressed', target.id === Settings.preferences.activeSyncTargetId ? 'true' : 'false');
+                 schoolButton.setAttribute('aria-pressed', target.id === currentClockSyncTargetId ? 'true' : 'false');
              }
              const offsetEl = row.querySelector('.school-sync-offset-value');
              if (offsetEl && target) offsetEl.textContent = formatOffset(target.offsetMs);

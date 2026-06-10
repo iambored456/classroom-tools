@@ -63,8 +63,7 @@ export const Schedule = {
             tr.appendChild(Schedule.createTimeCell(item, index, 'end'));
             tr.appendChild(Schedule.createDurationCell(item, index));
             tr.appendChild(Schedule.createSchemeCell(item, index));
-            tr.appendChild(Schedule.createAlertCell(item, index));
-            tr.appendChild(Schedule.createCirclesCell(item, index));
+            tr.appendChild(Schedule.createOffsetCell(item, index));
 
             // --- Attach Row-Level Listeners ---
             tr.addEventListener("click", Schedule.handleRowClick);
@@ -95,6 +94,7 @@ export const Schedule = {
     createDragCell: function() {
         const td = document.createElement("td");
         td.innerHTML = "☰"; // Drag handle symbol
+        td.textContent = "\u2630";
         td.className = "drag-handle schedule-drag-cell";
         td.title = "Drag to reorder";
         return td;
@@ -231,6 +231,34 @@ export const Schedule = {
          td.appendChild(swatch);
          return td;
     },
+    createOffsetCell: function(item, index) {
+         const td = document.createElement("td");
+         td.className = "schedule-offset-cell";
+         const select = document.createElement("select");
+         const targets = Settings.getSyncTargets();
+         const currentTargetId = Settings.getScheduleItemSyncTargetId(item);
+
+         targets.forEach(target => {
+             const option = document.createElement("option");
+             option.value = target.id;
+             option.textContent = target.label || target.id;
+             option.selected = target.id === currentTargetId;
+             select.appendChild(option);
+         });
+
+         select.title = "Clock offset to use during this schedule row";
+         select.setAttribute("aria-label", `Clock offset for ${item?.label || 'schedule row'}`);
+         select.addEventListener("change", function(e) {
+             e.stopPropagation();
+             if (Settings.schedule && Settings.schedule[index]) {
+                 Settings.schedule[index].syncTargetId = this.value;
+                 Settings.save();
+                 Clock.update();
+             }
+         });
+         td.appendChild(select);
+         return td;
+    },
     createAlertCell: function(item, index) {
          const td = document.createElement("td");
          td.className = "schedule-alert-cell";
@@ -272,7 +300,7 @@ export const Schedule = {
     handleRowClick: function(e) { // 'this' refers to the clicked TR element
          const clickedIndex = parseInt(this.dataset.index, 10);
          // Ignore clicks on interactive elements (let their own handlers work)
-         if (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON" || e.target.classList.contains('scheme-swatch') || e.target.classList.contains('drag-handle')) {
+         if (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON" || e.target.tagName === "SELECT" || e.target.classList.contains('scheme-swatch') || e.target.classList.contains('drag-handle')) {
              // If clicking inside the *already selected* row's controls, keep selection
              if (this.classList.contains('selected')) {
                  State.selectedScheduleRowIndex = clickedIndex; // Ensure index is correct
@@ -316,7 +344,8 @@ export const Schedule = {
         const prevRow = Settings.schedule[insertIndex - 1];
         const seedStart = nextRow?.start || prevRow?.start || "00:00";
         const seedEnd = nextRow?.start || prevRow?.end || "23:59";
-        const newRow = { label: "New Period", start: seedStart, end: seedEnd, colourSchemeId: 1, showCircles: false };
+        const seedSyncTargetId = prevRow?.syncTargetId || nextRow?.syncTargetId || Settings.getCurrentClockSyncTargetId();
+        const newRow = { label: "New Period", start: seedStart, end: seedEnd, colourSchemeId: 1, syncTargetId: seedSyncTargetId };
 
         Settings.schedule.splice(insertIndex, 0, newRow); // Insert into schedule array
 

@@ -94,10 +94,10 @@ export const Utils = {
 // Helper specifically for getting current time with offset, importing Settings here
 import { Settings } from './settings.ts'; // Assuming settings.js exports Settings
 
-export function getCurrentOffsetTime() {
-    const offset = Settings.preferences ? Settings.getActiveTimeOffsetMs() : 0;
-    const systemNow = new Date();
-    return new Date(systemNow.getTime() + offset);
+export function getCurrentOffsetTime(systemNow = new Date()) {
+    return Settings.preferences
+        ? Settings.getCurrentClockTimeForSystemTime(systemNow)
+        : systemNow;
 }
 
 // Add the function to the Utils object if preferred, but standalone export is fine too

@@ -5,7 +5,6 @@ import { Settings } from './settings.ts';
 import { Appearance } from './appearance.ts';
 import { ColorSchemes } from './colorSchemes.ts';
 import { Schedule } from './schedule.ts';
-import { Alerts } from './alerts.ts';
 import { TimeSync } from './timeSync.ts';
 import { Layout } from './layout.ts';
 import { Clock } from './clock.ts';
@@ -48,7 +47,6 @@ export const App = {
                 Appearance.attachListeners();
                 ColorSchemes.attachListeners();
                 Schedule.attachListeners();
-                Alerts.attachListeners();
                 TimeSync.attachListeners();
                 App.attachGlobalListeners();
                 App.constrainSettingsMenuWidth();

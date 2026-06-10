@@ -10,7 +10,6 @@
   <!-- Main Clock Display Container -->
   <div id="clock-display-area">
       <div id="date" class="display-element"></div>
-      <div id="schedule-circles-display" class="display-element"></div>
       <div id="time" class="display-element"></div>
       <div id="period-container" class="display-element">
         <div id="period-label"></div>
@@ -59,9 +58,6 @@
     <div id="menu-resizer"></div>
     <nav id="settings-nav">
       <div class="nav-container">
-        <div class="brand">
-          <h1>Quinn Fleming's Learning Tools</h1>
-        </div>
         <div class="nav-actions">
           <button
             id="nav-home-button"
@@ -110,7 +106,6 @@
                  </div>
                  <div class="pref-row two-col">
                     <div class="pref-item checkbox-item"><label><input type="checkbox" id="pref-show-schedule-label" data-pref="showScheduleLabel"> Show Schedule Label</label></div>
-                    <div class="pref-item checkbox-item"><label><input type="checkbox" id="pref-show-schedule-circles" data-pref="showScheduleCircles"> Show Schedule Circles</label></div>
                  </div>
             </div>
         </div>
@@ -137,43 +132,6 @@
             </div>
              <div class="preferences-container compact slider-pref-list">
                  <div class="slider-pref-row">
-                     <label for="pref-sand-width-slider">Visualization Width</label>
-                     <div class="slider-stepper">
-                         <button class="num-btn minus" aria-label="Decrease Visualization Width">-</button>
-                         <div class="slider-track-shell">
-                             <span class="slider-value" data-pref-value="sandWidth">80</span>
-                             <input class="pref-slider" type="range" id="pref-sand-width-slider" data-pref="sandWidth" min="20" max="100" step="1" value="80" aria-label="Visualization Width">
-                         </div>
-                         <button class="num-btn plus" aria-label="Increase Visualization Width">+</button>
-                     </div>
-                 </div>
-                 <div class="slider-pref-row">
-                     <label>Viewport Heights</label>
-                     <div class="multi-slider-panel" data-multi-slider>
-                         <div class="multi-slider-track-shell">
-                             <div class="multi-slider-track"></div>
-                             <button class="multi-slider-thumb multi-slider-thumb-visualization" type="button" data-multi-pref="sandHeight" data-stack-index="0" data-step="1" aria-label="Visualization Height" aria-valuemin="8" aria-valuemax="42">
-                                 <span data-pref-value="sandHeight">14</span>
-                             </button>
-                             <button class="multi-slider-thumb multi-slider-thumb-label" type="button" data-multi-pref="scheduleLabelFontSize" data-stack-index="1" data-step="1" aria-label="Label Height" aria-valuemin="1" aria-valuemax="10">
-                                 <span data-pref-value="scheduleLabelFontSize">4</span>
-                             </button>
-                             <button class="multi-slider-thumb multi-slider-thumb-time" type="button" data-multi-pref="timeFontSize" data-stack-index="2" data-step="1" aria-label="Time Height" aria-valuemin="5" aria-valuemax="36">
-                                 <span data-pref-value="timeFontSize">19</span>
-                             </button>
-                             <button class="multi-slider-thumb multi-slider-thumb-date" type="button" data-multi-pref="dateFontSize" data-stack-index="3" data-step="1" aria-label="Date Height" aria-valuemin="1" aria-valuemax="14">
-                                 <span data-pref-value="dateFontSize">6</span>
-                             </button>
-                         </div>
-                         <div class="multi-slider-legend" aria-hidden="true">
-                             <span class="multi-slider-legend-item multi-slider-legend-visualization"><span class="multi-slider-dot"></span>Visualization</span>
-                             <span class="multi-slider-legend-item multi-slider-legend-label"><span class="multi-slider-dot"></span>Label</span>
-                             <span class="multi-slider-legend-item multi-slider-legend-time"><span class="multi-slider-dot"></span>Time</span>
-                             <span class="multi-slider-legend-item multi-slider-legend-date"><span class="multi-slider-dot"></span>Date</span>
-                         </div>
-                     </div>
-                 </div>
-                 <div class="slider-pref-row">
                      <label for="pref-sand-particle-size-slider">Animation Detail</label>
                      <div class="slider-stepper">
                          <button class="num-btn minus" aria-label="Decrease Animation Detail Size">-</button>
@@ -182,6 +140,61 @@
                              <input class="pref-slider" type="range" id="pref-sand-particle-size-slider" data-pref="sandParticleSize" min="1" max="20" step="0.5" value="5" aria-label="Animation Detail Size">
                          </div>
                          <button class="num-btn plus" aria-label="Increase Animation Detail Size">+</button>
+                     </div>
+                 </div>
+                 <div class="slider-pref-row">
+                     <label for="pref-date-font-size-slider">Date Height</label>
+                     <div class="slider-stepper">
+                         <button class="num-btn minus" aria-label="Decrease Date Height">-</button>
+                         <div class="slider-track-shell">
+                             <span class="slider-value" data-pref-value="dateFontSize">6</span>
+                             <input class="pref-slider" type="range" id="pref-date-font-size-slider" data-pref="dateFontSize" min="1" max="14" step="1" value="6" aria-label="Date Height">
+                         </div>
+                         <button class="num-btn plus" aria-label="Increase Date Height">+</button>
+                     </div>
+                 </div>
+                 <div class="slider-pref-row">
+                     <label for="pref-time-font-size-slider">Time Height</label>
+                     <div class="slider-stepper">
+                         <button class="num-btn minus" aria-label="Decrease Time Height">-</button>
+                         <div class="slider-track-shell">
+                             <span class="slider-value" data-pref-value="timeFontSize">19</span>
+                             <input class="pref-slider" type="range" id="pref-time-font-size-slider" data-pref="timeFontSize" min="5" max="36" step="1" value="19" aria-label="Time Height">
+                         </div>
+                         <button class="num-btn plus" aria-label="Increase Time Height">+</button>
+                     </div>
+                 </div>
+                 <div class="slider-pref-row">
+                     <label for="pref-schedule-label-font-size-slider">Label Height</label>
+                     <div class="slider-stepper">
+                         <button class="num-btn minus" aria-label="Decrease Label Height">-</button>
+                         <div class="slider-track-shell">
+                             <span class="slider-value" data-pref-value="scheduleLabelFontSize">4</span>
+                             <input class="pref-slider" type="range" id="pref-schedule-label-font-size-slider" data-pref="scheduleLabelFontSize" min="1" max="10" step="1" value="4" aria-label="Label Height">
+                         </div>
+                         <button class="num-btn plus" aria-label="Increase Label Height">+</button>
+                     </div>
+                 </div>
+                 <div class="slider-pref-row">
+                     <label for="pref-sand-height-slider">Visualization Height</label>
+                     <div class="slider-stepper">
+                         <button class="num-btn minus" aria-label="Decrease Visualization Height">-</button>
+                         <div class="slider-track-shell">
+                             <span class="slider-value" data-pref-value="sandHeight">14</span>
+                             <input class="pref-slider" type="range" id="pref-sand-height-slider" data-pref="sandHeight" min="8" max="42" step="1" value="14" aria-label="Visualization Height">
+                         </div>
+                         <button class="num-btn plus" aria-label="Increase Visualization Height">+</button>
+                     </div>
+                 </div>
+                 <div class="slider-pref-row">
+                     <label for="pref-sand-width-slider">Visualization Width</label>
+                     <div class="slider-stepper">
+                         <button class="num-btn minus" aria-label="Decrease Visualization Width">-</button>
+                         <div class="slider-track-shell">
+                             <span class="slider-value" data-pref-value="sandWidth">80</span>
+                             <input class="pref-slider" type="range" id="pref-sand-width-slider" data-pref="sandWidth" min="20" max="100" step="1" value="80" aria-label="Visualization Width">
+                         </div>
+                         <button class="num-btn plus" aria-label="Increase Visualization Width">+</button>
                      </div>
                  </div>
             </div>
@@ -209,7 +222,7 @@
               <table id="schedule-table">
                 <thead>
                   <tr>
-                    <th>Drag</th><th>Label</th><th>Start</th><th>End</th><th>Duration</th><th>Scheme</th><th>Alert On?</th><th>Schedule Circles?</th>
+                    <th aria-label="Drag"></th><th>Label</th><th>Start</th><th>End</th><th>Duration</th><th>Scheme</th><th>Offset</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -221,15 +234,6 @@
       </div> <!-- End #schedule-alerts-tab -->
     </div> <!-- End #tab-contents -->
   </div> <!-- End #settings-menu -->
-
-  <!-- Alert Settings Modal -->
-  <div id="alert-modal" class="modal">
-      <div class="modal-content">
-          <span class="close-modal-btn">×</span>
-          <h3 id="modal-title">Visual Alert Settings for Period</h3>
-          <div id="modal-body"></div>
-      </div>
-  </div>
 
   <!-- Load main script as module - Vite injects dependencies -->
   <script type="module" src="./js/main.ts"></script>

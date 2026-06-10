@@ -10,9 +10,25 @@ const SURFACE_TENSION = 34;
 const SURFACE_DAMPING = 6.5;
 const SURFACE_SPREAD = 18;
 const MAX_SURFACE_DISPLACEMENT_RATIO = 0.18;
+const DRAIN_TIMING_MULTIPLIER = 8;
+const DRAIN_HOLD_MS = 0;
+const DRAIN_DURATION_MS = 560 * DRAIN_TIMING_MULTIPLIER;
+const DRAIN_STAGGER_MS = 35 * DRAIN_TIMING_MULTIPLIER;
+const DRAIN_FULL_THRESHOLD = 0.96;
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+}
+
+function easeOutCubic(value) {
+    const progress = clamp(value, 0, 1);
+    return 1 - Math.pow(1 - progress, 3);
+}
+
+function prefersReducedMotion() {
+    return typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 function hexToRgb(hex, fallback = { r: 74, g: 168, b: 255 }) {
@@ -71,6 +87,30 @@ function getSurfaceYAt(bar, capacity, localX) {
     const leftY = points[leftIndex].offset;
     const rightY = points[rightIndex].offset;
     return base + (leftY + (rightY - leftY) * t);
+}
+
+function getDrainProgressForBar(barIndex) {
+    const state = WaterBars.drainState;
+    if (!state) return 0;
+
+    const reverseIndex = Math.max(0, (BAR_COUNT - 1) - barIndex);
+    const elapsed = WaterBars.frameClockMs - state.startTimeMs - state.holdMs - (reverseIndex * state.staggerMs);
+    return clamp(elapsed / Math.max(1, state.durationMs), 0, 1);
+}
+
+function getEffectiveSurfaceY(bar, baseSurfaceY, pointIndex) {
+    const points = bar.surfacePoints;
+    const point = points[pointIndex];
+    const surfaceY = baseSurfaceY + (point?.offset || 0);
+    const drainProgress = getDrainProgressForBar(bar.index);
+    if (drainProgress <= 0 || drainProgress >= 1 || points.length <= 1) {
+        return surfaceY;
+    }
+
+    const position = pointIndex / (points.length - 1);
+    const centerPull = Math.pow(1 - Math.abs((position - 0.5) * 2), 2.2);
+    const drainIntensity = Math.sin(drainProgress * Math.PI);
+    return surfaceY + (centerPull * drainIntensity * bar.height * 0.105);
 }
 
 function resetSurface(bar) {
@@ -192,6 +232,54 @@ function drawSplashParticle(ctx, splash, baseColor) {
     ctx.restore();
 }
 
+function drawDrainEffect(ctx, bar, baseColor, progress) {
+    if (progress <= 0 || progress >= 1) return;
+
+    const fillRatio = getFillRatio(bar, WaterBars.barCapacity);
+    if (fillRatio <= 0.015) return;
+
+    const intensity = Math.sin(progress * Math.PI);
+    const surfaceY = getBaseSurfaceY(bar, WaterBars.barCapacity) + (bar.height * 0.05 * intensity);
+    const drainX = bar.x + (bar.width * 0.5) + (Math.sin((WaterBars.frameClockMs * 0.014) + bar.index) * bar.width * 0.035);
+    const streamTop = clamp(surfaceY + 2, bar.yTop + 2, bar.yBottom - 4);
+    const streamBottom = bar.yBottom - Math.max(2, bar.height * 0.02);
+    const streamHeight = Math.max(0, streamBottom - streamTop);
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+
+    if (streamHeight > 4) {
+        const streamGradient = ctx.createLinearGradient(0, streamTop, 0, streamBottom);
+        streamGradient.addColorStop(0, rgba(lighten(baseColor, 86), 0.08 * intensity));
+        streamGradient.addColorStop(0.18, rgba(lighten(baseColor, 68), 0.34 * intensity));
+        streamGradient.addColorStop(1, rgba(darken(baseColor, 18), 0.12 * intensity));
+
+        const streamCount = 3;
+        for (let streamIndex = 0; streamIndex < streamCount; streamIndex++) {
+            const offset = (streamIndex - 1) * bar.width * 0.09;
+            const wobble = Math.sin((WaterBars.frameClockMs * 0.019) + (bar.index * 1.7) + streamIndex) * bar.width * 0.018;
+            const x = drainX + offset + wobble;
+
+            ctx.beginPath();
+            ctx.moveTo(x, streamTop);
+            ctx.bezierCurveTo(
+                x + (wobble * 1.8),
+                streamTop + (streamHeight * 0.28),
+                drainX - (offset * 0.35),
+                streamTop + (streamHeight * 0.68),
+                drainX + (offset * 0.1),
+                streamBottom
+            );
+            ctx.strokeStyle = streamGradient;
+            ctx.lineWidth = Math.max(1, bar.width * (streamIndex === 1 ? 0.06 : 0.035)) * intensity;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
+    }
+
+    ctx.restore();
+}
+
 export const WaterBars = {
     canvas: null,
     ctx: null,
@@ -212,6 +300,7 @@ export const WaterBars = {
     borderColor: '#FFFFFF',
     frameClockMs: 0,
     layoutProvider: null,
+    drainState: null,
 
     init: function(canvasElement, width, height, options: any = {}) {
         if (!canvasElement || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
@@ -321,6 +410,7 @@ export const WaterBars = {
     },
 
     setFillUnits: function(fillUnitsByBar = []) {
+        WaterBars.cancelDrainReset();
         WaterBars.droplets = [];
         WaterBars.splashParticles = [];
         WaterBars.bars.forEach((bar, index) => {
@@ -331,6 +421,7 @@ export const WaterBars = {
     },
 
     reset: function() {
+        WaterBars.cancelDrainReset();
         WaterBars.droplets = [];
         WaterBars.splashParticles = [];
         WaterBars.bars.forEach(bar => {
@@ -338,6 +429,73 @@ export const WaterBars = {
             resetSurface(bar);
         });
         WaterBars.renderOnce();
+    },
+
+    cancelDrainReset: function() {
+        const state = WaterBars.drainState;
+        if (!state) return;
+        WaterBars.drainState = null;
+        if (typeof state.resolve === 'function') {
+            state.resolve();
+        }
+    },
+
+    isReadyForDrainReset: function(options: any = {}) {
+        if (!WaterBars.isInitialized || WaterBars.bars.length === 0) return false;
+        const threshold = clamp(Number(options.threshold) || DRAIN_FULL_THRESHOLD, 0, 1);
+        return WaterBars.bars.every((bar, index) => {
+            const projectedUnits = (bar.fillUnits || 0) + WaterBars.getPendingForBar(index);
+            return projectedUnits / Math.max(1, WaterBars.barCapacity) >= threshold;
+        });
+    },
+
+    drainReset: function(options: any = {}) {
+        const requireFull = options.requireFull !== false;
+        const shouldSkipMotion = prefersReducedMotion()
+            || !WaterBars.isInitialized
+            || WaterBars.bars.length === 0
+            || (requireFull && !WaterBars.isReadyForDrainReset(options));
+
+        if (shouldSkipMotion) {
+            WaterBars.reset();
+            return Promise.resolve();
+        }
+
+        WaterBars.cancelDrainReset();
+        const sourceUnits = WaterBars.bars.map((bar, index) => {
+            const projectedUnits = (bar.fillUnits || 0) + WaterBars.getPendingForBar(index);
+            if (options.fillToTop !== false && requireFull) {
+                return WaterBars.barCapacity;
+            }
+            return clamp(projectedUnits, 0, WaterBars.barCapacity);
+        });
+
+        WaterBars.droplets = [];
+        WaterBars.splashParticles = [];
+
+        sourceUnits.forEach((units, index) => {
+            const bar = WaterBars.bars[index];
+            if (!bar) return;
+            bar.fillUnits = units;
+            resetSurface(bar);
+        });
+
+        WaterBars.frameClockMs = performance.now();
+
+        const promise = new Promise(resolve => {
+            WaterBars.drainState = {
+                startTimeMs: WaterBars.frameClockMs,
+                holdMs: Math.max(0, Number(options.holdMs) || DRAIN_HOLD_MS),
+                durationMs: Math.max(120, Number(options.durationMs) || DRAIN_DURATION_MS),
+                staggerMs: Math.max(0, Number(options.staggerMs) || DRAIN_STAGGER_MS),
+                sourceUnits,
+                resolve
+            };
+        });
+
+        WaterBars.renderOnce();
+        WaterBars.start();
+        return promise;
     },
 
     setCapacity: function(capacityPerBar) {
@@ -563,6 +721,51 @@ export const WaterBars = {
         });
     },
 
+    updateDrain: function(dt, frameTimeMs) {
+        const state = WaterBars.drainState;
+        if (!state) return;
+
+        let allComplete = true;
+        WaterBars.bars.forEach((bar, index) => {
+            const sourceUnits = clamp(Number(state.sourceUnits[index]) || 0, 0, WaterBars.barCapacity);
+            const reverseIndex = Math.max(0, (BAR_COUNT - 1) - index);
+            const progress = clamp(
+                (frameTimeMs - state.startTimeMs - state.holdMs - (reverseIndex * state.staggerMs)) / Math.max(1, state.durationMs),
+                0,
+                1
+            );
+            const easedProgress = easeOutCubic(progress);
+            bar.fillUnits = clamp(Math.round(sourceUnits * (1 - easedProgress)), 0, WaterBars.barCapacity);
+
+            if (progress < 1) {
+                allComplete = false;
+            }
+
+            if (progress > 0 && progress < 1 && bar.surfacePoints.length > 0) {
+                const centerIndex = Math.floor(bar.surfacePoints.length / 2);
+                const impulse = Math.sin(progress * Math.PI) * bar.height * 58 * dt;
+                for (let i = Math.max(0, centerIndex - 2); i <= Math.min(bar.surfacePoints.length - 1, centerIndex + 2); i++) {
+                    const distance = Math.abs(i - centerIndex);
+                    bar.surfacePoints[i].velocity += impulse * (1 - (distance * 0.24));
+                }
+            }
+        });
+
+        if (!allComplete) return;
+
+        WaterBars.drainState = null;
+        WaterBars.droplets = [];
+        WaterBars.splashParticles = [];
+        WaterBars.bars.forEach(bar => {
+            bar.fillUnits = 0;
+            resetSurface(bar);
+        });
+
+        if (typeof state.resolve === 'function') {
+            state.resolve();
+        }
+    },
+
     isNearTop: function() {
         if (WaterBars.bars.length === 0) return false;
         return WaterBars.bars.every(bar => bar.fillUnits >= WaterBars.barCapacity);
@@ -591,6 +794,7 @@ export const WaterBars = {
         WaterBars.lastFrameMs = frameTimeMs;
         WaterBars.frameClockMs = frameTimeMs;
 
+        WaterBars.updateDrain(dt, frameTimeMs);
         WaterBars.updateDroplets(dt);
         WaterBars.updateSplashParticles(dt);
         WaterBars.updateSurface(dt);
@@ -632,6 +836,7 @@ export const WaterBars = {
                 const middleColor = lighten(base, 10);
                 const bottomColor = darken(base, 28);
                 const baseSurfaceY = getBaseSurfaceY(bar, WaterBars.barCapacity);
+                const surfaceYs = bar.surfacePoints.map((_, pointIndex) => getEffectiveSurfaceY(bar, baseSurfaceY, pointIndex));
 
                 const gradient = ctx.createLinearGradient(0, bar.yTop, 0, bar.yBottom);
                 gradient.addColorStop(0, rgba(topColor, 0.78));
@@ -639,14 +844,14 @@ export const WaterBars = {
                 gradient.addColorStop(1, rgba(bottomColor, 0.93));
 
                 ctx.beginPath();
-                const firstSurfaceY = baseSurfaceY + bar.surfacePoints[0].offset;
-                const lastSurfaceY = baseSurfaceY + bar.surfacePoints[bar.surfacePoints.length - 1].offset;
+                const firstSurfaceY = surfaceYs[0];
+                const lastSurfaceY = surfaceYs[surfaceYs.length - 1];
                 ctx.moveTo(paintBounds.x, paintBounds.yBottom);
                 ctx.lineTo(paintBounds.x, firstSurfaceY);
 
                 for (let i = 1; i < bar.surfacePoints.length; i++) {
                     const px = bar.x + ((i / (bar.surfacePoints.length - 1)) * bar.width);
-                    const py = baseSurfaceY + bar.surfacePoints[i].offset;
+                    const py = surfaceYs[i];
                     ctx.lineTo(px, py);
                 }
                 ctx.lineTo(paintBounds.x + paintBounds.width, lastSurfaceY);
@@ -658,7 +863,7 @@ export const WaterBars = {
                 ctx.beginPath();
                 for (let i = 0; i < bar.surfacePoints.length; i++) {
                     const px = bar.x + ((i / (bar.surfacePoints.length - 1)) * bar.width);
-                    const py = baseSurfaceY + bar.surfacePoints[i].offset;
+                    const py = surfaceYs[i];
                     if (i === 0) {
                         ctx.moveTo(px, py);
                     } else {
@@ -668,6 +873,8 @@ export const WaterBars = {
                 ctx.lineWidth = 1.7;
                 ctx.strokeStyle = rgba(lighten(base, 85), 0.7);
                 ctx.stroke();
+
+                drawDrainEffect(ctx, bar, base, getDrainProgressForBar(bar.index));
             }
 
             splashByBar[bar.index].forEach(splash => {
@@ -686,6 +893,7 @@ export const WaterBars = {
     },
 
     destroy: function() {
+        WaterBars.cancelDrainReset();
         WaterBars.stop();
         WaterBars.bars = [];
         WaterBars.droplets = [];

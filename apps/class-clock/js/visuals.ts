@@ -137,8 +137,7 @@ export const Visuals = {
        if (!DOM.scheduleCirclesDisplayEl) {
            return;
        }
-       const now = getCurrentOffsetTime();
-       const currentPeriodInfo = Clock.getCurrentPeriodInfo(now);
+       const currentPeriodInfo = Clock.getCurrentPeriodInfo();
        const activeScheme = Settings.getActiveColourScheme();
        const circlePeriods = Visuals.getScheduleCirclePeriods();
        if (!Visuals.updateScheduleCirclesVisibility(circlePeriods)) {
@@ -176,7 +175,8 @@ export const Visuals = {
     },
 
     getTimelineProgressState: function(now = getCurrentOffsetTime(), periodInfo = undefined) {
-        const activePeriod = periodInfo === undefined ? Clock.getCurrentPeriodInfo(now) : periodInfo;
+        const activePeriod = periodInfo === undefined ? Clock.getCurrentPeriodInfo() : periodInfo;
+        now = activePeriod?.now || now;
         if (!activePeriod) return getEmptyTimelineState();
 
         const periodDurationMs = activePeriod.end.getTime() - activePeriod.start.getTime();
@@ -411,7 +411,7 @@ export const Visuals = {
             Physics.start();
             Visuals.handleColorSchemeChange();
 
-            const activePeriod = periodInfo || Clock.getCurrentPeriodInfo(getCurrentOffsetTime());
+            const activePeriod = periodInfo || Clock.getCurrentPeriodInfo();
             if (!activePeriod) {
                 Physics.stop();
                 return;
@@ -433,7 +433,7 @@ export const Visuals = {
         }
     },
 
-    setupPhysicsWaterFill: async function(periodInfo) {
+    setupPhysicsWaterFill: async function(periodInfo, options: any = {}) {
         const requestId = Visuals.beginVisualSetup();
         Visuals.stopStageVisualization();
         Visuals.stopPhysicsCheckInterval();
@@ -481,8 +481,18 @@ export const Visuals = {
             });
             WaterBars.setCapacity(metrics.capacityPerBar);
             WaterBars.setParticleRadius(metrics.particleRadius);
-            WaterBars.reset();
-            const activePeriod = periodInfo || Clock.getCurrentPeriodInfo(getCurrentOffsetTime());
+            const activePeriod = periodInfo || Clock.getCurrentPeriodInfo();
+            if (options.animateDrainReset) {
+                await WaterBars.drainReset({
+                    requireFull: true,
+                    fillToTop: true
+                });
+                if (!Visuals.isVisualSetupCurrent(requestId, 'water')) {
+                    return;
+                }
+            } else {
+                WaterBars.reset();
+            }
             Visuals.syncWaterBarsToCurrentProgress(activePeriod);
             WaterBars.start();
             Visuals.handleColorSchemeChange();
@@ -572,8 +582,8 @@ export const Visuals = {
             return;
         }
 
-        const now = getCurrentOffsetTime();
-        const periodInfo = Clock.getCurrentPeriodInfo(now);
+        const periodInfo = Clock.getCurrentPeriodInfo();
+        const now = periodInfo?.now || getCurrentOffsetTime();
         if (!periodInfo) {
             Visuals.stopPhysicsCheckInterval();
             return;
@@ -646,8 +656,8 @@ export const Visuals = {
             return;
         }
 
-        const now = getCurrentOffsetTime();
-        const periodInfo = Clock.getCurrentPeriodInfo(now);
+        const periodInfo = Clock.getCurrentPeriodInfo();
+        const now = periodInfo?.now || getCurrentOffsetTime();
         if (!periodInfo) {
             Visuals.stopPhysicsCheckInterval();
             return;
@@ -774,7 +784,7 @@ export const Visuals = {
             return;
         }
         if (mode === 'water') {
-            void Visuals.setupPhysicsWaterFill(periodInfo);
+            void Visuals.setupPhysicsWaterFill(periodInfo, { animateDrainReset: true });
             return;
         }
         if (Settings.isStageVisualizationMode()) {
@@ -788,7 +798,7 @@ export const Visuals = {
     },
 
     handleDisplayToggle: function() {
-        const periodInfo = Clock.getCurrentPeriodInfo(getCurrentOffsetTime());
+        const periodInfo = Clock.getCurrentPeriodInfo();
         const mode = Settings.getVisualizationMode();
 
         if (mode === 'sand') {

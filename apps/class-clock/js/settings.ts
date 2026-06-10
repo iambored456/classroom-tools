@@ -1,6 +1,5 @@
 /** js/settings.js */
 import { Clock } from './clock.ts';
-import { Utils, getCurrentOffsetTime } from './utils.ts';
 import {
     normalizeVisualizationMode,
     isStageVisualizationMode as isStageMode,
@@ -43,15 +42,15 @@ const DEFAULT_SYNC_TARGETS = [
     { id: 'school-2', label: 'School 2' }
 ];
 const DEFAULT_SCHEDULE = [
-    { label: "Before", start: "00:00", end: "08:50", colourSchemeId: 1, showCircles: false },
-    { label: "Period 1", start: "08:50", end: "10:05", colourSchemeId: 1, showCircles: true },
-    { label: "Break", start: "10:05", end: "10:15", colourSchemeId: 2, showCircles: false },
-    { label: "Period 2", start: "10:15", end: "11:30", colourSchemeId: 1, showCircles: true },
-    { label: "Lunch", start: "11:30", end: "12:20", colourSchemeId: 2, showCircles: false },
-    { label: "Period 3", start: "12:20", end: "13:35", colourSchemeId: 1, showCircles: true },
-    { label: "Break", start: "13:35", end: "13:45", colourSchemeId: 2, showCircles: false },
-    { label: "Period 4", start: "13:45", end: "15:00", colourSchemeId: 1, showCircles: true },
-    { label: "After", start: "15:00", end: "23:59", colourSchemeId: 1, showCircles: false }
+    { label: "Before", start: "00:00", end: "08:50", colourSchemeId: 1, syncTargetId: DEFAULT_SYNC_TARGETS[0].id },
+    { label: "Period 1", start: "08:50", end: "10:05", colourSchemeId: 1, syncTargetId: DEFAULT_SYNC_TARGETS[0].id },
+    { label: "Break", start: "10:05", end: "10:15", colourSchemeId: 2, syncTargetId: DEFAULT_SYNC_TARGETS[0].id },
+    { label: "Period 2", start: "10:15", end: "11:30", colourSchemeId: 1, syncTargetId: DEFAULT_SYNC_TARGETS[0].id },
+    { label: "Lunch", start: "11:30", end: "12:20", colourSchemeId: 2, syncTargetId: DEFAULT_SYNC_TARGETS[0].id },
+    { label: "Period 3", start: "12:20", end: "13:35", colourSchemeId: 1, syncTargetId: DEFAULT_SYNC_TARGETS[0].id },
+    { label: "Break", start: "13:35", end: "13:45", colourSchemeId: 2, syncTargetId: DEFAULT_SYNC_TARGETS[0].id },
+    { label: "Period 4", start: "13:45", end: "15:00", colourSchemeId: 1, syncTargetId: DEFAULT_SYNC_TARGETS[0].id },
+    { label: "After", start: "15:00", end: "23:59", colourSchemeId: 1, syncTargetId: DEFAULT_SYNC_TARGETS[0].id }
 ];
 
 function normalizeTimeOffset(value: any) {
@@ -59,18 +58,26 @@ function normalizeTimeOffset(value: any) {
     return Number.isFinite(parsed) ? Math.round(parsed) : 0;
 }
 
-function cloneSchedule(schedule = DEFAULT_SCHEDULE) {
-    return normalizeSchedule(schedule);
+function normalizeSyncTargetId(value: any, fallback = DEFAULT_SYNC_TARGETS[0].id) {
+    return DEFAULT_SYNC_TARGETS.some(target => target.id === value) ? value : fallback;
 }
 
-function normalizeSchedule(value: any, fallback = DEFAULT_SCHEDULE) {
-    const source = Array.isArray(value) && value.length > 0 ? value : fallback;
+function cloneSchedule(schedule = DEFAULT_SCHEDULE, fallbackSyncTargetId = DEFAULT_SYNC_TARGETS[0].id) {
+    return normalizeSchedule(schedule, DEFAULT_SCHEDULE, fallbackSyncTargetId);
+}
+
+function normalizeSchedule(value: any, fallback = DEFAULT_SCHEDULE, fallbackSyncTargetId = DEFAULT_SYNC_TARGETS[0].id) {
+    const usesFallback = !(Array.isArray(value) && value.length > 0);
+    const source = usesFallback ? fallback : value;
     return source.map(item => ({
         label: item?.label || "Unnamed",
         start: item?.start || "00:00",
         end: item?.end || "00:00",
         colourSchemeId: item?.colourSchemeId || 1,
-        showCircles: typeof item?.showCircles === 'boolean' ? item.showCircles : false
+        syncTargetId: normalizeSyncTargetId(
+            usesFallback ? fallbackSyncTargetId : (item?.syncTargetId || item?.offsetTargetId),
+            fallbackSyncTargetId
+        )
     }));
 }
 
@@ -92,7 +99,7 @@ function normalizeSyncTargets(value: any, legacyOffsetMs = 0, fallbackSchedule =
             ...target,
             times: DEFAULT_SYNC_TARGET_TIMES,
             offsetMs: fallbackOffsetMs,
-            schedule: normalizedFallbackSchedule,
+            schedule: cloneSchedule(fallbackSchedule, target.id),
             alerts: normalizedFallbackAlerts
         }));
     const targets = sourceTargets.slice(0, 2);
@@ -103,7 +110,7 @@ function normalizeSyncTargets(value: any, legacyOffsetMs = 0, fallbackSchedule =
             label: DEFAULT_SYNC_TARGETS[nextIndex].label,
             times: DEFAULT_SYNC_TARGET_TIMES,
             offsetMs: fallbackOffsetMs,
-            schedule: normalizedFallbackSchedule,
+            schedule: cloneSchedule(fallbackSchedule, DEFAULT_SYNC_TARGETS[nextIndex].id),
             alerts: normalizedFallbackAlerts
         });
     }
@@ -111,6 +118,7 @@ function normalizeSyncTargets(value: any, legacyOffsetMs = 0, fallbackSchedule =
     return targets.map((target, index) => {
         const fallbackId = DEFAULT_SYNC_TARGETS[index].id;
         const fallbackLabel = DEFAULT_SYNC_TARGETS[index].label;
+        const id = typeof target?.id === 'string' && target.id ? normalizeSyncTargetId(target.id, fallbackId) : fallbackId;
         const times = Array.isArray(target?.times)
             ? target.times.filter(time => typeof time === 'string' && /^\d{2}:\d{2}$/.test(time))
             : [];
@@ -119,13 +127,13 @@ function normalizeSyncTargets(value: any, legacyOffsetMs = 0, fallbackSchedule =
             : fallbackLabel;
 
         return {
-            id: typeof target?.id === 'string' && target.id ? target.id : fallbackId,
+            id,
             label: label === 'School A' ? 'School 1' : label === 'School B' ? 'School 2' : label,
             times: times.length > 0 ? Array.from(new Set(times)) : [...DEFAULT_SYNC_TARGET_TIMES],
             offsetMs: Object.prototype.hasOwnProperty.call(target || {}, 'offsetMs')
                 ? normalizeTimeOffset(target.offsetMs)
                 : fallbackOffsetMs,
-            schedule: normalizeSchedule(target?.schedule, normalizedFallbackSchedule),
+            schedule: normalizeSchedule(target?.schedule, normalizedFallbackSchedule, id),
             alerts: cloneAlerts(target?.alerts || normalizedFallbackAlerts)
         };
     });
@@ -134,6 +142,65 @@ function normalizeSyncTargets(value: any, legacyOffsetMs = 0, fallbackSchedule =
 function normalizeActiveSyncTargetId(value: any, targets: any[]) {
     const fallbackId = targets?.[0]?.id || DEFAULT_SYNC_TARGETS[0].id;
     return targets.some(target => target?.id === value) ? value : fallbackId;
+}
+
+function getDateForScheduleTime(timeStr: string, baseDate: Date) {
+    if (!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) {
+        const fallback = new Date(baseDate.getTime());
+        fallback.setSeconds(0, 0);
+        return fallback;
+    }
+
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    const date = new Date(baseDate.getTime());
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+}
+
+function getPeriodInfoIfActive(period: any, index: number, now: Date, offsetMs: number, syncTargetId: string) {
+    if (!period || typeof period.start !== 'string' || typeof period.end !== 'string') return null;
+
+    const startTime = getDateForScheduleTime(period.start, now);
+    const endTime = getDateForScheduleTime(period.end, now);
+    let adjustedEndTime = new Date(endTime.getTime());
+    let isOvernight = false;
+
+    if (endTime.getTime() <= startTime.getTime()) {
+        isOvernight = true;
+        if (endTime.getHours() === 0 && endTime.getMinutes() === 0 && endTime.getSeconds() === 0) {
+            adjustedEndTime = getDateForScheduleTime(period.start, now);
+            adjustedEndTime.setDate(adjustedEndTime.getDate() + 1);
+            adjustedEndTime.setHours(0, 0, 0, 0);
+        } else {
+            adjustedEndTime.setDate(adjustedEndTime.getDate() + 1);
+        }
+    }
+
+    let isActive = false;
+    if (isOvernight) {
+        const midnightAfterStart = new Date(startTime);
+        midnightAfterStart.setHours(24, 0, 0, 0);
+        const startOfNextDay = new Date(startTime);
+        startOfNextDay.setDate(startOfNextDay.getDate() + 1);
+        startOfNextDay.setHours(0, 0, 0, 0);
+
+        isActive = (now >= startTime && now < midnightAfterStart) || (now >= startOfNextDay && now < adjustedEndTime);
+    } else {
+        isActive = now >= startTime && now < adjustedEndTime;
+    }
+
+    if (!isActive && (period.end === "23:59" || period.end === "23:59:59")) {
+        const endOfDay = new Date(startTime);
+        endOfDay.setHours(23, 59, 59, 999);
+        if (now >= startTime && now <= endOfDay) {
+            isActive = true;
+            adjustedEndTime = endOfDay;
+        }
+    }
+
+    return isActive
+        ? { label: period.label, start: startTime, end: adjustedEndTime, index, now, offsetMs, syncTargetId }
+        : null;
 }
 
 export const Settings = {
@@ -153,7 +220,6 @@ export const Settings = {
         showScheduleLabel: true,
         visualizationMode: 'progress',
         showProgressBar: true,
-        showScheduleCircles: false,
         showSandBars: false,
         showWaterFill: false,
         activeSyncTargetId: DEFAULT_SYNC_TARGETS[0].id,
@@ -280,6 +346,49 @@ export const Settings = {
         return normalizeTimeOffset(Settings.getActiveSyncTarget(preferences)?.offsetMs);
     },
 
+    getScheduleItemSyncTargetId: function(item: any, preferences = Settings.preferences) {
+        const targets = Settings.getSyncTargets(preferences);
+        const fallbackId = normalizeActiveSyncTargetId(preferences?.activeSyncTargetId, targets);
+        return normalizeActiveSyncTargetId(item?.syncTargetId || item?.offsetTargetId, targets) || fallbackId;
+    },
+
+    getSyncTargetOffsetMs: function(targetId: string, preferences = Settings.preferences) {
+        const targets = Settings.getSyncTargets(preferences);
+        const fallbackTarget = Settings.getActiveSyncTarget(preferences) || targets[0];
+        const target = targets.find(syncTarget => syncTarget.id === targetId) || fallbackTarget;
+        return normalizeTimeOffset(target?.offsetMs);
+    },
+
+    getCurrentPeriodInfoForSystemTime: function(systemNow = new Date()) {
+        if (!Array.isArray(Settings.schedule) || Settings.schedule.length === 0) return null;
+
+        for (let i = 0; i < Settings.schedule.length; i++) {
+            const period = Settings.schedule[i];
+            const syncTargetId = Settings.getScheduleItemSyncTargetId(period);
+            const offsetMs = Settings.getSyncTargetOffsetMs(syncTargetId);
+            const rowNow = new Date(systemNow.getTime() + offsetMs);
+            const periodInfo = getPeriodInfoIfActive(period, i, rowNow, offsetMs, syncTargetId);
+            if (periodInfo) return periodInfo;
+        }
+
+        return null;
+    },
+
+    getCurrentScheduleOffsetMs: function(systemNow = new Date()) {
+        const periodInfo = Settings.getCurrentPeriodInfoForSystemTime(systemNow);
+        return normalizeTimeOffset(periodInfo?.offsetMs ?? Settings.getActiveTimeOffsetMs());
+    },
+
+    getCurrentClockTimeForSystemTime: function(systemNow = new Date()) {
+        return new Date(systemNow.getTime() + Settings.getCurrentScheduleOffsetMs(systemNow));
+    },
+
+    getCurrentClockSyncTargetId: function(systemNow = new Date()) {
+        const targets = Settings.getSyncTargets();
+        const periodInfo = Settings.getCurrentPeriodInfoForSystemTime(systemNow);
+        return normalizeActiveSyncTargetId(periodInfo?.syncTargetId || Settings.preferences?.activeSyncTargetId, targets);
+    },
+
     setActiveSyncTargetId: function(targetId: string) {
         Settings.persistActiveScheduleToTarget();
         const targets = Settings.getSyncTargets();
@@ -332,11 +441,7 @@ export const Settings = {
             try {
                 const parsedSchedule = JSON.parse(savedSchedule);
                 if (Array.isArray(parsedSchedule) && parsedSchedule.length > 0) {
-                    Settings.schedule = parsedSchedule.map(item => ({
-                        label: item.label || "Unnamed", start: item.start || "00:00", end: item.end || "00:00",
-                        colourSchemeId: item.colourSchemeId || 1,
-                        showCircles: typeof item.showCircles === 'boolean' ? item.showCircles : false
-                    }));
+                    Settings.schedule = normalizeSchedule(parsedSchedule);
                     scheduleLoaded = true;
                 }
             } catch (e) { console.error("Error parsing saved schedule.", e); }
@@ -391,7 +496,7 @@ export const Settings = {
                         );
                     }
                     // Type checking booleans
-                    for (const key of ['showDate', 'showTime', 'showScheduleLabel', 'showProgressBar', 'showScheduleCircles', 'showSandBars', 'showWaterFill']) {
+                    for (const key of ['showDate', 'showTime', 'showScheduleLabel', 'showProgressBar', 'showSandBars', 'showWaterFill']) {
                          if (typeof tempPrefs[key] !== 'boolean') { tempPrefs[key] = Settings.defaultPreferences[key]; }
                     }
                     // Type checking numbers (excluding removed interval)
@@ -425,6 +530,7 @@ export const Settings = {
                     tempPrefs.sandParticleSize = Math.max(1, Math.min(20, tempPrefs.sandParticleSize));
                     delete tempPrefs.progressBarHeight;
                     delete tempPrefs.timeLeftFontSize;
+                    delete tempPrefs.showScheduleCircles;
 
                     Settings.preferences = tempPrefs;
                 }
@@ -477,6 +583,9 @@ export const Settings = {
              if (Settings.preferences.hasOwnProperty('timeLeftFontSize')) {
                  delete Settings.preferences.timeLeftFontSize;
              }
+             if (Settings.preferences.hasOwnProperty('showScheduleCircles')) {
+                 delete Settings.preferences.showScheduleCircles;
+             }
             const alertsToSave = {};
             Object.keys(Settings.alerts).forEach(key => {
                 if (Settings.alerts[key] && typeof Settings.alerts[key] === 'object' && Object.keys(Settings.alerts[key]).length > 0) {
@@ -485,7 +594,8 @@ export const Settings = {
             });
             const scheduleToSave = Settings.schedule.map(item => ({
                 label: item.label, start: item.start, end: item.end,
-                colourSchemeId: item.colourSchemeId, showCircles: item.showCircles
+                colourSchemeId: item.colourSchemeId,
+                syncTargetId: Settings.getScheduleItemSyncTargetId(item)
             }));
             localStorage.setItem("clockSchedule", JSON.stringify(scheduleToSave));
             localStorage.setItem("clockPreferences", JSON.stringify(Settings.preferences));
@@ -494,9 +604,8 @@ export const Settings = {
     },
 
     getActiveColourScheme: function() {
-        const now = getCurrentOffsetTime();
         // Ensure Clock module is defined before calling its method
-        const currentPeriod = typeof Clock !== 'undefined' ? Clock.getCurrentPeriodInfo(now) : null;
+        const currentPeriod = typeof Clock !== 'undefined' ? Clock.getCurrentPeriodInfo(new Date()) : null;
         let schemeId = 1;
         if (currentPeriod && currentPeriod.index !== undefined && Settings.schedule[currentPeriod.index]) {
             const scheduleItem = Settings.schedule[currentPeriod.index];

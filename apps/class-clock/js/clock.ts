@@ -24,79 +24,13 @@ export const Clock = {
     },
 
     // This needs to be callable early, potentially before full init, handle gracefully
-    getCurrentPeriodInfo: function(now) {
-        // Check if Settings and its schedule are initialized
-        if (!Settings.schedule || Settings.schedule.length === 0) {
-            // console.warn("Schedule not ready for period check."); // Reduce noise
+    getCurrentPeriodInfo: function(systemNow = new Date()) {
+        try {
+            return Settings.getCurrentPeriodInfoForSystemTime(systemNow);
+        } catch (e) {
+            console.error("Error checking current period.", e);
             return null;
         }
-
-        for (let i = 0; i < Settings.schedule.length; i++) {
-            const period = Settings.schedule[i];
-            // Basic check for valid period structure
-            if (!period || typeof period.start !== 'string' || typeof period.end !== 'string') continue;
-
-            try {
-                const startTime = Utils.getTodayTime(period.start);
-                const endTime = Utils.getTodayTime(period.end);
-                let adjustedEndTime = new Date(endTime.getTime());
-                let isOvernight = false;
-
-                // Handle overnight periods (end time is on the next day or is 00:00)
-                if (endTime.getTime() <= startTime.getTime()) {
-                     isOvernight = true;
-                     // If end is exactly 00:00, it means the end of the start day (24:00)
-                     if (endTime.getHours() === 0 && endTime.getMinutes() === 0 && endTime.getSeconds() === 0) {
-                          adjustedEndTime = Utils.getTodayTime(period.start); // Base on start date
-                          adjustedEndTime.setDate(adjustedEndTime.getDate() + 1); // Go to next day
-                          adjustedEndTime.setHours(0, 0, 0, 0); // Set to midnight
-                     } else {
-                         // End time is simply on the next calendar day
-                          adjustedEndTime.setDate(adjustedEndTime.getDate() + 1);
-                     }
-                }
-
-                let isActive = false;
-                 // Check if 'now' is within the period boundaries
-                 if (isOvernight) {
-                     // Check if now is between start and midnight OR between start-of-next-day and adjusted end time
-                     const midnightAfterStart = new Date(startTime);
-                     midnightAfterStart.setHours(24, 0, 0, 0); // Midnight ending the day `startTime` is on
-                     const startOfNextDay = new Date(startTime);
-                     startOfNextDay.setDate(startOfNextDay.getDate() + 1);
-                     startOfNextDay.setHours(0,0,0,0);
-
-                     if ((now >= startTime && now < midnightAfterStart) || (now >= startOfNextDay && now < adjustedEndTime)) {
-                         isActive = true;
-                     }
-                 } else {
-                     // Normal period within the same day
-                     if (now >= startTime && now < adjustedEndTime) {
-                         isActive = true;
-                     }
-                 }
-
-
-                // Specific check for periods ending exactly at 23:59 - include the whole minute
-                if (!isActive && (period.end === "23:59" || period.end === "23:59:59")) {
-                    const endOfDay = new Date(startTime); // Base on start day
-                    endOfDay.setHours(23, 59, 59, 999);
-                    if (now >= startTime && now <= endOfDay) {
-                         isActive = true;
-                         adjustedEndTime = endOfDay; // Ensure end time covers the last second
-                    }
-                }
-
-                if (isActive) {
-                     // Return info for the *first* active period found
-                     return { label: period.label, start: startTime, end: adjustedEndTime, index: i };
-                }
-            } catch (e) {
-                 // Log error but continue checking other periods
-                 console.error("Error processing period:", period?.label, period?.start, period?.end, e);
-            }
-        }
-        return null; // No active period found
     },
 
     update: function() {
@@ -106,7 +40,9 @@ export const Clock = {
             return;
         }
 
-        const now = getCurrentOffsetTime();
+        const systemNow = new Date();
+        const periodInfo = Clock.getCurrentPeriodInfo(systemNow);
+        const now = periodInfo?.now || getCurrentOffsetTime(systemNow);
         const activeScheme = Settings.getActiveColourScheme();
 
         Layout.update(); // Apply layout (visibility, font sizes)
@@ -123,8 +59,6 @@ export const Clock = {
         // Sand bar physics runs independently, particle adding is interval-based
         Visuals.update(now); // Renders circles if enabled
 
-        const periodInfo = Clock.getCurrentPeriodInfo(now);
-
         // --- Detect Period Change ---
         const newPeriodIndex = periodInfo ? periodInfo.index : null;
         if (newPeriodIndex !== State.currentPeriodIndex) {
@@ -132,14 +66,11 @@ export const Clock = {
             // console.log(`Period changed from index ${previousPeriodIndex} to ${newPeriodIndex} (${periodInfo?.label || 'None'})`);
             State.currentPeriodLabel = periodInfo ? periodInfo.label : null;
             State.currentPeriodIndex = newPeriodIndex;
+            window.dispatchEvent(new CustomEvent('class-clock-period-change'));
 
-            // Trigger Alert if needed for the new period
-            if (periodInfo && Settings.alerts[periodInfo.index]?.colour?.enabled) {
-                Alerts.triggerVisualAlert(Settings.alerts[periodInfo.index].colour);
-            } else if (State.activeVisualAlertInterval) {
-                 // If entering a gap or period without alert, clear active alert
+            if (State.activeVisualAlertInterval) {
                  Alerts.clearVisualAlert();
-                 Alerts.restoreOriginalStyles(); // Restore styles for the gap/new period
+                 Alerts.restoreOriginalStyles();
             }
 
             // Let Visuals module handle state changes related to the period change (e.g., sandbars)
