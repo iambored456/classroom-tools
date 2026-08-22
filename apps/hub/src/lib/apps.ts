@@ -35,6 +35,38 @@ const withBase = (path: string) => `${baseUrl}${path.replace(/^\/+/, '')}`
 
 export const hubEntries: HubEntry[] = [
   {
+    kind: 'app',
+    id: 'read-along-highlighter',
+    name: 'ReadAlong Highlighter',
+    description:
+      'Word-by-word text highlighter for reading aloud. Navigate with arrow keys and customize colors for any passage.',
+    href: withBase('read-along-highlighter/'),
+    preview: withBase('images/ReadAlongHighlighter-screenshot.png'),
+    tags: ['Reading', 'Fluency', 'Classroom'],
+    accent: '#5a9fe0',
+  },
+  {
+    kind: 'app',
+    id: 'class-clock',
+    name: 'ClassClock',
+    description: 'A simple, distraction-free clock and timer designed for classroom display.',
+    href: withBase('class-clock/'),
+    preview: withBase('images/ClassClock-screenshot.png'),
+    tags: ['Timer', 'Clock', 'Classroom'],
+    accent: '#7abd6e',
+  },
+  {
+    kind: 'app',
+    id: 'city-navigator',
+    name: 'City Routes',
+    description:
+      'Plan and program routes through a toy city using cardinal or relative directions, then watch every instruction play out.',
+    href: withBase('city-navigator/'),
+    preview: withBase('images/CityRoutes-screenshot.png'),
+    tags: ['Directions', 'Spatial Reasoning', 'Classroom'],
+    accent: '#1f6659',
+  },
+  {
     kind: 'folder',
     id: 'math-tools',
     name: 'Math Tools',
@@ -79,27 +111,6 @@ export const hubEntries: HubEntry[] = [
     preview: withBase('images/LaunchpadWhackaMole-screenshot.png'),
     tags: ['Rhythm', 'Game', 'Ear Training'],
     accent: '#e07d5a',
-  },
-  {
-    kind: 'app',
-    id: 'read-along-highlighter',
-    name: 'ReadAlong Highlighter',
-    description:
-      'Word-by-word text highlighter for reading aloud. Navigate with arrow keys and customize colors for any passage.',
-    href: withBase('read-along-highlighter/'),
-    preview: withBase('images/ReadAlongHighlighter-screenshot.png'),
-    tags: ['Reading', 'Fluency', 'Classroom'],
-    accent: '#5a9fe0',
-  },
-  {
-    kind: 'app',
-    id: 'class-clock',
-    name: 'ClassClock',
-    description: 'A simple, distraction-free clock and timer designed for classroom display.',
-    href: withBase('class-clock/'),
-    preview: withBase('images/ClassClock-screenshot.png'),
-    tags: ['Timer', 'Clock', 'Classroom'],
-    accent: '#7abd6e',
   },
   {
     kind: 'app',

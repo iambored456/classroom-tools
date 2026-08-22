@@ -74,6 +74,11 @@ const appDistTargets = [
     distPath: join(rootDir, 'apps/rugby-play-visualizer/dist'),
     targetSubdir: 'rugby-play-visualizer',
   },
+  {
+    name: 'city-navigator',
+    distPath: join(rootDir, 'apps/city-navigator/dist'),
+    targetSubdir: 'city-navigator',
+  },
 ]
 
 console.log(`Assembling Pages output into ${outputDirName}/`)

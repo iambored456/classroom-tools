@@ -94,6 +94,7 @@ function buildTargets(rootBase) {
   const coordinatesBase = appendPath(rootBase, 'coordinates')
   const oklchVisualizerBase = appendPath(rootBase, 'oklch-visualizer')
   const rugbyPlayVisualizerBase = appendPath(rootBase, 'rugby-play-visualizer')
+  const cityNavigatorBase = appendPath(rootBase, 'city-navigator')
 
   return [
     {
@@ -332,6 +333,24 @@ header {
 }
 .app-shell {
   max-width: 960px !important;
+}
+`,
+    },
+    {
+      id: 'city-navigator',
+      outputFile: 'CityRoutes-screenshot.png',
+      distDir: 'apps/city-navigator/dist',
+      basePath: cityNavigatorBase,
+      route: cityNavigatorBase,
+      waitFor: '.home-screen .levels-launch',
+      delayMs: 350,
+      injectCss: `
+.backup-bar {
+  display: none !important;
+}
+.home-screen {
+  max-width: 1120px !important;
+  padding-top: 1.2rem !important;
 }
 `,
     },

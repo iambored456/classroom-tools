@@ -57,6 +57,10 @@ export default defineConfig({
         target: 'http://localhost:5184',
         changeOrigin: true,
       },
+      '/city-navigator': {
+        target: 'http://localhost:5185',
+        changeOrigin: true,
+      },
     },
   },
 })

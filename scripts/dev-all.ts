@@ -24,6 +24,7 @@ const servers: DevServer[] = [
   { name: 'simple-compound-interest' },
   { name: 'oklch-visualizer' },
   { name: 'rugby-play-visualizer' },
+  { name: 'city-navigator' },
   { name: 'hub' },
 ]
 
