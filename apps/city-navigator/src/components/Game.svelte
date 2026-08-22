@@ -1,6 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy } from 'svelte'
+  import DirectionSymbol from './DirectionSymbol.svelte'
   import MapView from './MapView.svelte'
+  import { DEPARTURE_CHIME_FREQUENCIES, OBJECTIVE_CHIME_FREQUENCIES } from '../lib/audio'
   import {
     advanceGoals,
     blankGoalSnapshot,
@@ -63,6 +65,7 @@
   let recipeStrip: HTMLDivElement
   let draggedCommand: Command | null = null
   let dragTarget: number | 'append' | null = null
+  let audioContext: AudioContext | null = null
 
   const durations = { slow: 1450, normal: 900, fast: 520 }
   const turnDurations = { slow: 500, normal: 320, fast: 170 }
@@ -186,13 +189,23 @@
     if (clearFeedback) feedback = ''
   }
 
-  function playChime(final: boolean): void {
-    if (muted) return
+  function ensureAudioContext(): AudioContext | null {
+    if (muted) return null
     try {
       const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-      if (!AudioContextClass) return
-      const context = new AudioContextClass()
-      const frequencies = final ? [523, 659, 784] : [660]
+      if (!AudioContextClass) return null
+      audioContext ??= new AudioContextClass()
+      if (audioContext.state === 'suspended') void audioContext.resume()
+      return audioContext
+    } catch {
+      return null
+    }
+  }
+
+  function playChime(frequencies: readonly number[]): void {
+    const context = ensureAudioContext()
+    if (!context) return
+    try {
       frequencies.forEach((frequency, index) => {
         const oscillator = context.createOscillator()
         const gain = context.createGain()
@@ -205,17 +218,19 @@
         oscillator.start(context.currentTime + index * 0.09)
         oscillator.stop(context.currentTime + index * 0.09 + 0.3)
       })
-      setTimeout(() => void context.close(), 800)
     } catch {
       // Sound is optional and some managed classroom browsers block AudioContext.
     }
   }
 
+  const playDepartureChime = () => playChime(DEPARTURE_CHIME_FREQUENCIES)
+  const playObjectiveChime = () => playChime(OBJECTIVE_CHIME_FREQUENCIES)
+
   function celebrate(previous: GoalSnapshot, next: GoalSnapshot): void {
     if (next.completedIds.length === previous.completedIds.length) return
     const reachedId = next.completedIds.at(-1) ?? null
     celebrationGoalId = reachedId
-    playChime(next.finalReached)
+    playObjectiveChime()
     if (next.finalReached) confetti = true
     setTimeout(() => {
       celebrationGoalId = null
@@ -330,12 +345,14 @@
       return 'impossible'
     }
     phase = source === 'autoplay' ? 'autoplay' : 'stepping'
+    ensureAudioContext()
     const before = clone(goalState)
     const offset = traceOffsetFor(history, move.from.id, move.to.id)
     const glyphOffset = glyphOffsetFor(history, move.from.id)
     await new Promise((resolve) => setTimeout(resolve, speed === 'fast' ? 90 : 170))
     const turned = await animateTurn(move.heading)
     if (!turned) return 'stopped'
+    playDepartureChime()
     const result = await animateMove(move, offset, false, { command, glyphOffset })
     if (result === 'origin') {
       currentNodeId = move.from.id
@@ -454,6 +471,7 @@
   onDestroy(() => {
     animationRun += 1
     cancelAnimationFrame(animationFrame)
+    if (audioContext) void audioContext.close()
   })
 </script>
 
@@ -536,8 +554,13 @@
               on:drop={(event) => dropCommand(event, index)}
             >
               <small>{index + 1}</small>
-              <b>{commandText(command, representation)}</b>
-              {#if index < pointer}<span aria-label="completed">✓</span>{/if}
+              <b>
+                {#if representation === 'letters-arrows'}
+                  <DirectionSymbol {command} />
+                {:else}
+                  {commandText(command, representation)}
+                {/if}
+              </b>
             </button>
             {#if level.activityType === 'plan-route'}
               <button
@@ -582,7 +605,13 @@
                 on:dragstart={(event) => beginCommandDrag(event, command)}
                 on:dragend={finishCommandDrag}
               >
-                <b>{commandText(command, representation)}</b>
+                <b>
+                  {#if representation === 'letters-arrows'}
+                    <DirectionSymbol {command} />
+                  {:else}
+                    {commandText(command, representation)}
+                  {/if}
+                </b>
                 <span>{commandName(command)}</span>
               </button>
             {/each}
@@ -592,16 +621,18 @@
           </div>
         {/if}
 
-        {#if level.activityType === 'plan-route'}
-          <button class="dock-control-button" type="button" disabled={busy || !recipe.length} on:click={clearRecipe}>Clear</button>
-        {/if}
-
-        <div class="transport-controls">
-          <button type="button" disabled={busy || !history.length} on:click={stepBack}><span>↶</span> Step back</button>
-          <button type="button" disabled={busy || pointer >= recipe.length} on:click={stepForward}>Step forward <span>→</span></button>
-          {#if level.activityType === 'where-end'}
-            <button type="button" disabled={busy} on:click={() => resetSimulation()}><span>↺</span> Reset</button>
+        <div class="route-controls">
+          {#if level.activityType === 'plan-route'}
+            <button class="dock-control-button" type="button" disabled={busy || !recipe.length} on:click={clearRecipe}>Clear</button>
           {/if}
+
+          <div class="transport-controls">
+            <button type="button" disabled={busy || !history.length} on:click={stepBack}><span>↶</span> Step back</button>
+            <button type="button" disabled={busy || pointer >= recipe.length} on:click={stepForward}>Step forward <span>→</span></button>
+            {#if level.activityType === 'where-end'}
+              <button type="button" disabled={busy} on:click={() => resetSimulation()}><span>↺</span> Reset</button>
+            {/if}
+          </div>
         </div>
       </div>
 

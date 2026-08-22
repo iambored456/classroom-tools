@@ -83,13 +83,6 @@ export function createSeedLibrary(): LibraryData {
     overpasses: [],
   }
 
-  const bendMap: CityMap = {
-    id: 'map-bend',
-    nodes: [node('b-a', 14, 22), node('b-b', 58, 22, 'Cedar Corner'), node('b-c', 58, 51)],
-    edges: [edge('be-1', 'b-a', 'b-b', 'Cedar Street'), edge('be-2', 'b-b', 'b-c', 'River Road')],
-    overpasses: [],
-  }
-
   const overpassMap: CityMap = {
     id: 'map-overpass',
     nodes: [node('o-a', 10, 32), node('o-b', 90, 32), node('o-c', 50, 7), node('o-d', 50, 57)],
@@ -107,13 +100,12 @@ export function createSeedLibrary(): LibraryData {
     schemaVersion: 1,
     seeded: true,
     groups: [
-      { id: introId, name: 'Getting Around', order: 0 },
-      { id: challengeId, name: 'City Challenges', order: 1 },
-      { id: predictionId, name: 'Prediction Activities', order: 2 },
+      { id: introId, name: 'One Goal', order: 0 },
+      { id: challengeId, name: 'Multiple Goals', order: 1 },
+      { id: predictionId, name: 'Predict the Destination', order: 2 },
     ],
     levels: [
       level('level-grid', introId, 'Across the Grid', gridMap, 'g-g', 'north', [goal('gg-1', 'g-c', 0, 'star', 'Yellow Star')], 0),
-      level('level-bend', introId, 'Cedar Corner', bendMap, 'b-a', 'east', [goal('bg-1', 'b-c', 0, 'school', 'School')], 1),
       level('level-overpass', challengeId, 'Under the Bridge', overpassMap, 'o-a', 'east', [goal('og-1', 'o-b', 0, 'library', 'Library')], 0, { complexity: 'intermediate' }),
       level('level-multi', challengeId, 'Saturday Errands', multiMap, 'g-a', 'south', [
         goal('mg-1', 'g-d', 0, 'grocery', 'Grocery Store', -4, -4),

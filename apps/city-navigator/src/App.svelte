@@ -16,6 +16,11 @@
   import type { DirectionMode, Level, LibraryData, RepresentationMode } from './lib/types'
 
   type Screen = 'home' | 'levels' | 'builder' | 'game' | 'preview'
+  const renamedSeedGroups: Record<string, { from: string; to: string }> = {
+    'group-intro': { from: 'Getting Around', to: 'One Goal' },
+    'group-challenges': { from: 'City Challenges', to: 'Multiple Goals' },
+    'group-prediction': { from: 'Prediction Activities', to: 'Predict the Destination' },
+  }
 
   let screen: Screen = 'home'
   let data: LibraryData = createSeedLibrary()
@@ -31,8 +36,16 @@
     directionMode = preferences.directionMode
     representation = preferences.representation
     const stored = await loadLibrary()
-    if (stored) data = stored
-    else await saveLibrary(data)
+    if (stored) {
+      const levels = stored.levels.filter((level) => level.id !== 'level-bend')
+      const groups = stored.groups.map((group) => {
+        const rename = renamedSeedGroups[group.id]
+        return rename && group.name === rename.from ? { ...group, name: rename.to } : group
+      })
+      const groupsChanged = groups.some((group, index) => group !== stored.groups[index])
+      data = levels.length === stored.levels.length && !groupsChanged ? stored : { ...stored, levels, groups }
+      if (data !== stored) await saveLibrary(data)
+    } else await saveLibrary(data)
     loaded = true
   })
 
@@ -144,12 +157,10 @@
 {:else if screen === 'levels'}
   <LevelLibrary
     {data}
-    {directionMode}
     {representation}
     on:home={() => screen = 'home'}
     on:play={(event) => play(event.detail)}
     on:edit={(event) => edit(event.detail)}
-    on:create={(event) => create(event.detail)}
     on:change={(event) => commit(event.detail)}
   />
 {:else if screen === 'builder' && builderSource}

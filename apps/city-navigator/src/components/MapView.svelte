@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
+  import DirectionSymbol from './DirectionSymbol.svelte'
   import { commandText, nodeById } from '../lib/domain'
   import {
     cityBlocks,
@@ -48,8 +49,14 @@
   }>()
 
   const headingAngle: Record<Heading, number> = { north: 0, east: 90, south: 180, west: 270 }
+  const bridgeHalfSpan = 7.5
+  const bridgeHalfWidth = 2.8
+  const houseIcons = ['#side-view-house', '#side-view-house-blue', '#side-view-house-bungalow'] as const
+  const deciduousTreeIcons = ['#side-view-tree', '#side-view-tree-wide', '#side-view-tree-tall'] as const
   const orderedGoals = () => [...goals].sort((a, b) => a.order - b.order)
   const pointFor = (nodeId: string) => nodeById(map, nodeId) ?? { x: 0, y: 0 }
+  const bridgeGradientId = (kind: 'surface' | 'edge', crossingId: string) =>
+    `bridge-${kind}-${map.id}-${crossingId}`.replace(/[^a-zA-Z0-9_-]/g, '-')
 
   const edgeGeometry = (edgeId: string) => {
     const edge = map.edges.find((item) => item.id === edgeId)
@@ -152,10 +159,63 @@
     <filter id="goal-glow" x="-80%" y="-80%" width="260%" height="260%">
       <feDropShadow dx="0" dy="0" stdDeviation="1.5" flood-color="#ffd84d" flood-opacity=".9" />
     </filter>
+    {#each map.overpasses as crossing (crossing.id)}
+      {@const horizontal = crossing.upper === 'horizontal'}
+      <linearGradient
+        id={bridgeGradientId('surface', crossing.id)}
+        gradientUnits="userSpaceOnUse"
+        x1={crossing.x - (horizontal ? bridgeHalfSpan : 0)}
+        y1={crossing.y - (horizontal ? 0 : bridgeHalfSpan)}
+        x2={crossing.x + (horizontal ? bridgeHalfSpan : 0)}
+        y2={crossing.y + (horizontal ? 0 : bridgeHalfSpan)}
+      >
+        <stop offset="0" stop-color="#646e70" />
+        <stop offset=".24" stop-color="#6f797b" />
+        <stop offset=".5" stop-color="#98a1a2" />
+        <stop offset=".76" stop-color="#6f797b" />
+        <stop offset="1" stop-color="#646e70" />
+      </linearGradient>
+      <linearGradient
+        id={bridgeGradientId('edge', crossing.id)}
+        gradientUnits="userSpaceOnUse"
+        x1={crossing.x - (horizontal ? bridgeHalfSpan : 0)}
+        y1={crossing.y - (horizontal ? 0 : bridgeHalfSpan)}
+        x2={crossing.x + (horizontal ? bridgeHalfSpan : 0)}
+        y2={crossing.y + (horizontal ? 0 : bridgeHalfSpan)}
+      >
+        <stop offset="0" stop-color="#263533" stop-opacity="0" />
+        <stop offset=".25" stop-color="#263533" stop-opacity=".16" />
+        <stop offset=".5" stop-color="#263533" stop-opacity=".52" />
+        <stop offset=".75" stop-color="#263533" stop-opacity=".16" />
+        <stop offset="1" stop-color="#263533" stop-opacity="0" />
+      </linearGradient>
+    {/each}
     <g id="side-view-tree">
       <rect class="tree-trunk" x="-.38" y=".25" width=".76" height="2.25" rx=".18" />
       <path class="tree-canopy" d="M0,-3.05 C-1.25,-3.05 -2.1,-2.22 -1.82,-1.22 C-2.48,-.7 -2.2,.42 -1.18,.65 C-.72,1.2 .08,1.08 .42,.62 C1.34,.95 2.17,.3 1.88,-.62 C2.5,-1.27 1.92,-2.22 .95,-2.2 C.78,-2.72 .42,-3.05 0,-3.05 Z" />
       <path class="tree-highlight" d="M-.98,-1.95 C-.55,-2.46 .12,-2.58 .58,-2.25 C-.15,-2.1 -.68,-1.62 -.76,-.98 C-1.16,-1.13 -1.28,-1.58 -.98,-1.95 Z" />
+    </g>
+    <g id="side-view-tree-wide" class="tree-variant-wide">
+      <rect class="tree-trunk" x="-.42" y=".1" width=".84" height="2.45" rx=".18" />
+      <path class="tree-branch" d="M0,1 V-.7 M0,-.15 L-1.05,-1.1 M.05,-.45 L1.12,-1.35" />
+      <circle class="tree-canopy" cx="-1.25" cy="-1.25" r="1.35" />
+      <circle class="tree-canopy" cx=".05" cy="-2" r="1.55" />
+      <circle class="tree-canopy" cx="1.4" cy="-1.2" r="1.28" />
+      <circle class="tree-canopy" cx=".05" cy="-.85" r="1.5" />
+      <path class="tree-highlight" d="M-1.6,-1.75 C-.95,-2.65 -.12,-2.85 .55,-2.45 C-.4,-2.25 -1.05,-1.75 -1.25,-1.08 Z" />
+    </g>
+    <g id="side-view-tree-tall" class="tree-variant-tall">
+      <rect class="tree-trunk" x="-.34" y="-.1" width=".68" height="2.75" rx=".17" />
+      <path class="tree-branch" d="M0,.8 V-1.35 M0,-.6 L-.9,-1.5 M.02,-.9 L.88,-1.75" />
+      <ellipse class="tree-canopy" cx="0" cy="-2.05" rx="1.55" ry="2.05" />
+      <circle class="tree-canopy" cx="-.92" cy="-1.2" r=".92" />
+      <circle class="tree-canopy" cx=".95" cy="-1.25" r=".9" />
+      <path class="tree-highlight" d="M-.72,-2.75 C-.28,-3.42 .35,-3.35 .7,-2.88 C.05,-2.72 -.35,-2.2 -.4,-1.55 C-.92,-1.82 -1.02,-2.3 -.72,-2.75 Z" />
+    </g>
+    <g id="side-view-evergreen">
+      <rect class="tree-trunk" x="-.34" y=".5" width=".68" height="2.05" rx=".14" />
+      <path class="evergreen-canopy" d="M0,-4.05 L-1.62,-1.55 L-.82,-1.55 L-2.15,.45 L-.85,.45 L-2.45,1.65 H2.45 L.85,.45 H2.15 L.82,-1.55 H1.62 Z" />
+      <path class="evergreen-highlight" d="M0,-3.45 L-.78,-1.85 H-.28 L-1.05,-.25 H-.38 L-1.15,.95 H-.18 V-3.45 Z" />
     </g>
     <g id="side-view-house">
       <ellipse class="house-shadow" cx="0" cy="2.38" rx="3.25" ry=".46" />
@@ -172,6 +232,35 @@
       <circle class="house-doorknob" cx=".34" cy="1.2" r=".1" />
       <path class="house-foundation" d="M-3.05,2.34 H3.05" />
     </g>
+    <g id="side-view-house-blue" class="house-variant-blue">
+      <ellipse class="house-shadow" cx="0" cy="2.42" rx="3.45" ry=".46" />
+      <rect class="house-chimney" x="-2.25" y="-3.22" width=".76" height="1.6" rx=".12" />
+      <rect class="house-wall" x="-3.18" y="-1.38" width="6.36" height="3.78" rx=".3" />
+      <path class="house-side-shade" d="M2.35,-1.38 H3.18 V2.4 H2.35 Z" />
+      <path class="house-roof" d="M-3.75,-1.18 L0,-3.88 L3.75,-1.18 Z" />
+      <path class="house-roof-trim" d="M-3.55,-1.15 L0,-3.62 L3.55,-1.15" />
+      <circle class="house-attic-window" cx="0" cy="-2.05" r=".48" />
+      <path class="house-window-pane" d="M0,-2.48 V-1.62 M-.42,-2.05 H.42" />
+      <rect class="house-window" x="-2.35" y="-.22" width="1.38" height="1.22" rx=".13" />
+      <path class="house-window-pane" d="M-1.66,-.18 V.96 M-2.3,.38 H-1.02" />
+      <rect class="house-door" x="1.02" y="-.05" width="1.34" height="2.45" rx=".16" />
+      <circle class="house-doorknob" cx="2.02" cy="1.2" r=".1" />
+      <path class="house-foundation" d="M-3.23,2.4 H3.23" />
+    </g>
+    <g id="side-view-house-bungalow" class="house-variant-bungalow">
+      <ellipse class="house-shadow" cx="0" cy="2.32" rx="3.85" ry=".44" />
+      <rect class="house-chimney" x="2.2" y="-2.82" width=".72" height="1.45" rx=".12" />
+      <rect class="house-wall" x="-3.55" y="-1.02" width="7.1" height="3.3" rx=".3" />
+      <path class="house-side-shade" d="M2.62,-1.02 H3.55 V2.28 H2.62 Z" />
+      <path class="house-roof" d="M-4.05,-.85 L-1.75,-3.05 L1.85,-3.05 L4.05,-.85 Z" />
+      <path class="house-roof-trim" d="M-3.85,-.82 L-1.6,-2.82 H1.7 L3.85,-.82" />
+      <rect class="house-door" x="-2.55" y="-.08" width="1.25" height="2.36" rx=".15" />
+      <circle class="house-doorknob" cx="-1.62" cy="1.12" r=".1" />
+      <rect class="house-window house-picture-window" x="-.25" y="-.18" width="2.6" height="1.42" rx=".15" />
+      <path class="house-window-pane" d="M1.05,-.14 V1.2 M-.2,.52 H2.3" />
+      <path class="house-awning" d="M-.55,-.42 H2.65 L2.3,-.82 H-.2 Z" />
+      <path class="house-foundation" d="M-3.6,2.28 H3.6" />
+    </g>
   </defs>
 
   <rect class="map-ground" x="0" y="0" width="100" height="64" rx="2" />
@@ -181,18 +270,19 @@
       {#if block.width > 9 && block.height > 7}
         {#if index % 3 === 1}
           <g class="park-trees">
-            <use href="#side-view-tree" transform={`translate(${block.x + block.width * .29} ${block.y + block.height * .42}) scale(.92)`} />
-            <use href="#side-view-tree" transform={`translate(${block.x + block.width * .57} ${block.y + block.height * .68}) scale(.78)`} />
-            <use href="#side-view-tree" transform={`translate(${block.x + block.width * .75} ${block.y + block.height * .39}) scale(.86)`} />
+            <use href={deciduousTreeIcons[0]} transform={`translate(${block.x + block.width * .2} ${block.y + block.height * .45}) scale(.82)`} />
+            <use href={deciduousTreeIcons[1]} transform={`translate(${block.x + block.width * .43} ${block.y + block.height * .67}) scale(.68)`} />
+            <use href={deciduousTreeIcons[2]} transform={`translate(${block.x + block.width * .67} ${block.y + block.height * .43}) scale(.76)`} />
+            <use href="#side-view-evergreen" transform={`translate(${block.x + block.width * .83} ${block.y + block.height * .7}) scale(.7)`} />
           </g>
         {:else}
           <g class="side-view-houses">
-            <use href="#side-view-house" transform={`translate(${block.x + block.width * (block.width > 18 ? .3 : .55)} ${block.y + block.height * .58}) scale(${block.width > 18 ? .92 : .8})`} />
+            <use href={houseIcons[Math.floor(index / 2) % houseIcons.length]} transform={`translate(${block.x + block.width * (block.width > 18 ? .3 : .55)} ${block.y + block.height * .58}) scale(${block.width > 18 ? .92 : .8})`} />
             {#if block.width > 18}
-              <use href="#side-view-tree" transform={`translate(${block.x + block.width * .51} ${block.y + block.height * .68}) scale(.58)`} />
-              <use href="#side-view-house" transform={`translate(${block.x + block.width * .72} ${block.y + block.height * .61}) scale(.82)`} />
+              <use href={index % 4 === 0 ? '#side-view-evergreen' : deciduousTreeIcons[Math.floor(index / 2) % deciduousTreeIcons.length]} transform={`translate(${block.x + block.width * .51} ${block.y + block.height * .68}) scale(.58)`} />
+              <use href={houseIcons[(Math.floor(index / 2) + 1) % houseIcons.length]} transform={`translate(${block.x + block.width * .72} ${block.y + block.height * .61}) scale(.82)`} />
             {:else if block.width > 12}
-              <use href="#side-view-tree" transform={`translate(${block.x + block.width * .2} ${block.y + block.height * .68}) scale(.58)`} />
+              <use href={index % 4 === 0 ? '#side-view-evergreen' : deciduousTreeIcons[(Math.floor(index / 2) + 1) % deciduousTreeIcons.length]} transform={`translate(${block.x + block.width * .2} ${block.y + block.height * .68}) scale(.58)`} />
             {/if}
           </g>
         {/if}
@@ -265,7 +355,11 @@
         {:else}
           <circle class="route-glyph-frame" r="2.25" />
         {/if}
-        <text y=".15">{commandText(step.command, representation)}</text>
+        {#if representation === 'letters-arrows'}
+          <DirectionSymbol command={step.command} map />
+        {:else}
+          <text y=".15">{commandText(step.command, representation)}</text>
+        {/if}
       </g>
     {/each}
     {#if transientTrace}
@@ -281,7 +375,11 @@
           {:else}
             <circle class="route-glyph-frame" r="2.25" />
           {/if}
-          <text y=".15">{commandText(transientTrace.command, representation)}</text>
+          {#if representation === 'letters-arrows'}
+            <DirectionSymbol command={transientTrace.command} map />
+          {:else}
+            <text y=".15">{commandText(transientTrace.command, representation)}</text>
+          {/if}
         </g>
       {/if}
     {/if}
@@ -319,34 +417,49 @@
   </g>
 
   <g class="bridge-layer" aria-label="Overpasses">
-    {#each map.overpasses as crossing}
-      <line
-        class="bridge-shadow"
-        x1={crossing.x - (crossing.upper === 'horizontal' ? 5.6 : 0)}
-        y1={crossing.y - (crossing.upper === 'vertical' ? 5.6 : 0)}
-        x2={crossing.x + (crossing.upper === 'horizontal' ? 5.6 : 0)}
-        y2={crossing.y + (crossing.upper === 'vertical' ? 5.6 : 0)}
-      />
-      <line
-        class="bridge-curb"
-        x1={crossing.x - (crossing.upper === 'horizontal' ? 5.2 : 0)}
-        y1={crossing.y - (crossing.upper === 'vertical' ? 5.2 : 0)}
-        x2={crossing.x + (crossing.upper === 'horizontal' ? 5.2 : 0)}
-        y2={crossing.y + (crossing.upper === 'vertical' ? 5.2 : 0)}
-      />
+    {#each map.overpasses as crossing (crossing.id)}
+      {@const horizontal = crossing.upper === 'horizontal'}
       <line
         class="bridge-road"
-        x1={crossing.x - (crossing.upper === 'horizontal' ? 5.2 : 0)}
-        y1={crossing.y - (crossing.upper === 'vertical' ? 5.2 : 0)}
-        x2={crossing.x + (crossing.upper === 'horizontal' ? 5.2 : 0)}
-        y2={crossing.y + (crossing.upper === 'vertical' ? 5.2 : 0)}
+        stroke={`url(#${bridgeGradientId('surface', crossing.id)})`}
+        x1={crossing.x - (horizontal ? bridgeHalfSpan : 0)}
+        y1={crossing.y - (horizontal ? 0 : bridgeHalfSpan)}
+        x2={crossing.x + (horizontal ? bridgeHalfSpan : 0)}
+        y2={crossing.y + (horizontal ? 0 : bridgeHalfSpan)}
       />
+      {#if horizontal}
+        <line
+          class="bridge-edge-shadow"
+          stroke={`url(#${bridgeGradientId('edge', crossing.id)})`}
+          x1={crossing.x - bridgeHalfSpan} y1={crossing.y - bridgeHalfWidth}
+          x2={crossing.x + bridgeHalfSpan} y2={crossing.y - bridgeHalfWidth}
+        />
+        <line
+          class="bridge-edge-shadow"
+          stroke={`url(#${bridgeGradientId('edge', crossing.id)})`}
+          x1={crossing.x - bridgeHalfSpan} y1={crossing.y + bridgeHalfWidth}
+          x2={crossing.x + bridgeHalfSpan} y2={crossing.y + bridgeHalfWidth}
+        />
+      {:else}
+        <line
+          class="bridge-edge-shadow"
+          stroke={`url(#${bridgeGradientId('edge', crossing.id)})`}
+          x1={crossing.x - bridgeHalfWidth} y1={crossing.y - bridgeHalfSpan}
+          x2={crossing.x - bridgeHalfWidth} y2={crossing.y + bridgeHalfSpan}
+        />
+        <line
+          class="bridge-edge-shadow"
+          stroke={`url(#${bridgeGradientId('edge', crossing.id)})`}
+          x1={crossing.x + bridgeHalfWidth} y1={crossing.y - bridgeHalfSpan}
+          x2={crossing.x + bridgeHalfWidth} y2={crossing.y + bridgeHalfSpan}
+        />
+      {/if}
       <line
         class="bridge-center"
-        x1={crossing.x - (crossing.upper === 'horizontal' ? 5.2 : 0)}
-        y1={crossing.y - (crossing.upper === 'vertical' ? 5.2 : 0)}
-        x2={crossing.x + (crossing.upper === 'horizontal' ? 5.2 : 0)}
-        y2={crossing.y + (crossing.upper === 'vertical' ? 5.2 : 0)}
+        x1={crossing.x - (horizontal ? bridgeHalfSpan : 0)}
+        y1={crossing.y - (horizontal ? 0 : bridgeHalfSpan)}
+        x2={crossing.x + (horizontal ? bridgeHalfSpan : 0)}
+        y2={crossing.y + (horizontal ? 0 : bridgeHalfSpan)}
       />
     {/each}
   </g>

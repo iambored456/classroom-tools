@@ -6,6 +6,39 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
 const errors = []
 const captureScreenshots = process.env.CITY_ROUTES_SCREENSHOTS === '1'
 page.on('pageerror', (error) => errors.push(error.message))
+await page.addInitScript(() => {
+  window.__cityRouteAudioFrequencies = []
+  class MockAudioContext {
+    currentTime = 0
+    state = 'running'
+    destination = {}
+
+    createOscillator() {
+      const oscillator = {
+        frequency: { value: 0 },
+        type: 'sine',
+        connect: (target) => target,
+        start: () => window.__cityRouteAudioFrequencies.push(oscillator.frequency.value),
+        stop: () => {},
+      }
+      return oscillator
+    }
+
+    createGain() {
+      return {
+        gain: {
+          setValueAtTime: () => {},
+          exponentialRampToValueAtTime: () => {},
+        },
+        connect: (target) => target,
+      }
+    }
+
+    resume() { this.state = 'running'; return Promise.resolve() }
+    close() { this.state = 'closed'; return Promise.resolve() }
+  }
+  Object.defineProperty(window, 'AudioContext', { configurable: true, value: MockAudioContext })
+})
 
 try {
   await page.goto(baseUrl)
@@ -20,9 +53,43 @@ try {
   if (titleHomeLink.href !== expectedHubUrl.toString() || titleHomeLink.text !== 'Home' || titleHomeLink.iconSource !== 'music-learning-tools/packages/diatonic-compass-ui/public/assets/home-icon.svg' || !titleHomeLink.iconFile.endsWith('/assets/home-icon.svg')) {
     throw new Error(`The title-page Home button did not target Classroom Learning Tools: ${JSON.stringify({ expected: expectedHubUrl.toString(), actual: titleHomeLink })}`)
   }
+  const titleChoiceHeights = {
+    directionMode: (await page.locator('.direction-choices button').first().boundingBox())?.height,
+    directionSymbols: (await page.locator('.representation-choices button').first().boundingBox())?.height,
+  }
+  const titleLaunchArrows = await page.locator('.launch-card > i').count()
+  if (!titleChoiceHeights.directionMode || !titleChoiceHeights.directionSymbols || Math.abs(titleChoiceHeights.directionMode - titleChoiceHeights.directionSymbols) > 0.1) {
+    throw new Error(`The title-page choice buttons did not have matching heights: ${JSON.stringify(titleChoiceHeights)}`)
+  }
+  if (titleLaunchArrows !== 0) throw new Error(`The title-page launch cards still contained ${titleLaunchArrows} arrow icons.`)
+  const bothChoice = page.getByRole('button', { name: 'Both', exact: true })
+  const titleCombinedSymbol = {
+    symbols: await bothChoice.locator('.combined-direction-symbol').count(),
+    outlines: await bothChoice.locator('.combined-arrow-outline').count(),
+    letters: await bothChoice.locator('.combined-arrow-letter').allTextContents(),
+  }
+  if (titleCombinedSymbol.symbols !== 1 || titleCombinedSymbol.outlines !== 1 || titleCombinedSymbol.letters.join('') !== 'N') {
+    throw new Error(`The title-page Both preview was not a letter inside an outlined arrow: ${JSON.stringify(titleCombinedSymbol)}`)
+  }
+  await bothChoice.click()
   if (captureScreenshots) await page.screenshot({ path: '.tmp-city-home.png', fullPage: true })
   await page.getByRole('button', { name: /Choose a level/i }).click()
   await page.waitForSelector('.level-card')
+  const libraryLayout = {
+    title: await page.locator('.page-header h1').innerText(),
+    classroomLibraryCopy: await page.getByText(/Classroom route library/i).count(),
+    routeVisibilityCopy: await page.getByText(/Every route stays visible/i).count(),
+    modePills: await page.locator('.mode-pill').count(),
+    groupNames: await page.locator('.group-heading h2').allTextContents(),
+    routeMetadata: await page.locator('.level-card-body > p').count(),
+    organizeButtons: await page.getByRole('button', { name: 'Organize', exact: true }).count(),
+    manageButtons: await page.getByRole('button', { name: 'Manage', exact: true }).count(),
+    newLevelButtons: await page.getByRole('button', { name: /New level/i }).count(),
+    newLevelCards: await page.locator('.new-level-card').count(),
+  }
+  if (libraryLayout.title !== 'Choose a level' || libraryLayout.classroomLibraryCopy !== 0 || libraryLayout.routeVisibilityCopy !== 0 || libraryLayout.modePills !== 0 || libraryLayout.groupNames.join('|') !== 'One Goal|Multiple Goals|Predict the Destination' || libraryLayout.routeMetadata !== 0 || libraryLayout.organizeButtons !== 1 || libraryLayout.manageButtons !== 0 || libraryLayout.newLevelButtons !== 0 || libraryLayout.newLevelCards !== 0) {
+    throw new Error(`The simplified route library did not render as expected: ${JSON.stringify(libraryLayout)}`)
+  }
   if (captureScreenshots) await page.screenshot({ path: '.tmp-city-library.png', fullPage: true })
 
   await page.getByRole('button', { name: 'Play Across the Grid' }).click()
@@ -62,8 +129,12 @@ try {
     }),
     dockControlFontSizes: await page.locator('.dock-control-button, .transport-controls button').evaluateAll((buttons) => buttons.map((button) => Number.parseFloat(getComputedStyle(button).fontSize))),
     sideViewTrees: await page.locator('.park-trees use').count(),
-    sideViewHouses: await page.locator('.side-view-houses use[href="#side-view-house"]').count(),
-    residentialTrees: await page.locator('.side-view-houses use[href="#side-view-tree"]').count(),
+    sideViewHouses: await page.locator('.side-view-houses use[href^="#side-view-house"]').count(),
+    residentialTrees: await page.locator('.side-view-houses use[href^="#side-view-tree"], .side-view-houses use[href="#side-view-evergreen"]').count(),
+    houseDefinitions: await page.locator('defs > g[id^="side-view-house"]').count(),
+    treeDefinitions: await page.locator('defs > g[id^="side-view-tree"], defs > g[id="side-view-evergreen"]').count(),
+    houseVariantsUsed: await page.locator('.side-view-houses use[href^="#side-view-house"]').evaluateAll((icons) => new Set(icons.map((icon) => icon.getAttribute('href'))).size),
+    treeVariantsUsed: await page.locator('.park-trees use, .side-view-houses use[href^="#side-view-tree"], .side-view-houses use[href="#side-view-evergreen"]').evaluateAll((icons) => new Set(icons.map((icon) => icon.getAttribute('href'))).size),
     houseAnatomy: await page.locator('#side-view-house .house-roof, #side-view-house .house-wall, #side-view-house .house-door, #side-view-house .house-window').count(),
     genericBuildingRoofs: await page.locator('.building-roofs').count(),
     emptyRecipeText: await page.locator('.empty-recipe').innerText(),
@@ -83,6 +154,8 @@ try {
       return Boolean(surface && box.width >= surface.width * .92 && box.height >= surface.height * .92 && cornerRadius === 0)
     })),
     initialCarCount: await page.locator('.car').count(),
+    combinedPaletteSymbols: await page.locator('.direction-palette .combined-direction-symbol').count(),
+    combinedPaletteLetters: await page.locator('.direction-palette .combined-arrow-letter').allTextContents(),
     startLabelInsideIntersection: await page.locator('.start-marker.initial-start').evaluate((marker) => {
       const outline = marker.querySelector('.start-outline')?.getBBox()
       const label = marker.querySelector('text')?.getBBox()
@@ -96,7 +169,7 @@ try {
     return Boolean(intersectionBox && starBox.width < intersectionBox.width && starBox.height < intersectionBox.height)
   })
   const mapNodeCount = await page.locator('.intersection-surface').count()
-  if (gameplayLayout.topbarCount || gameplayLayout.removedDockHeadings || gameplayLayout.dockPosition !== 'fixed' || gameplayLayout.dockPadding.some((value) => value !== '0px') || gameplayLayout.settingsIcon.source !== 'music-learning-tools/packages/diatonic-compass-ui/public/assets/Settings_optimized.svg' || !gameplayLayout.settingsIcon.file.endsWith('/assets/Settings_optimized.svg') || gameplayLayout.settingsIcon.width !== 48 || gameplayLayout.settingsIcon.height !== 48 || gameplayLayout.homeIcon.source !== 'music-learning-tools/packages/diatonic-compass-ui/public/assets/home-icon.svg' || !gameplayLayout.homeIcon.file.endsWith('/assets/home-icon.svg') || gameplayLayout.homeIcon.width < 24 || gameplayLayout.homeIcon.height < 24 || gameplayLayout.goButtonSize.width < 84 || gameplayLayout.goButtonSize.height < 84 || gameplayLayout.goButtonSize.fontSize < 24 || !gameplayLayout.objectiveOverlay || gameplayLayout.objectiveProgressLines !== 0 || /stops? reached/i.test(gameplayLayout.objectiveText) || gameplayLayout.mapStageSpacing.padding.some((value) => value !== '0px') || gameplayLayout.mapStageSpacing.margin.some((value) => value !== '0px') || gameplayLayout.mapStageSpacing.dockGap > 1 || gameplayLayout.dockControlFontSizes.some((size) => size < 16) || !gameplayLayout.sideViewTrees || !gameplayLayout.sideViewHouses || !gameplayLayout.residentialTrees || gameplayLayout.houseAnatomy < 5 || gameplayLayout.genericBuildingRoofs !== 0 || gameplayLayout.emptyRecipeText || gameplayLayout.recipeScrollbar !== 'none' || !gameplayLayout.streetLabelBackgrounds || !gameplayLayout.paddedVerticalStreetLabels || gameplayLayout.intersectionMarkings !== mapNodeCount - 1 || !gameplayLayout.squircleIntersections || !gameplayLayout.fullSizeIntersectionMarkings || gameplayLayout.initialCarCount !== 0 || !gameplayLayout.startLabelInsideIntersection || emptyRecipeWidth < 1200 || !starFitsIntersection) {
+  if (gameplayLayout.topbarCount || gameplayLayout.removedDockHeadings || gameplayLayout.dockPosition !== 'fixed' || gameplayLayout.dockPadding.some((value) => value !== '0px') || gameplayLayout.settingsIcon.source !== 'music-learning-tools/packages/diatonic-compass-ui/public/assets/Settings_optimized.svg' || !gameplayLayout.settingsIcon.file.endsWith('/assets/Settings_optimized.svg') || gameplayLayout.settingsIcon.width !== 48 || gameplayLayout.settingsIcon.height !== 48 || gameplayLayout.homeIcon.source !== 'music-learning-tools/packages/diatonic-compass-ui/public/assets/home-icon.svg' || !gameplayLayout.homeIcon.file.endsWith('/assets/home-icon.svg') || gameplayLayout.homeIcon.width < 24 || gameplayLayout.homeIcon.height < 24 || gameplayLayout.goButtonSize.width < 84 || gameplayLayout.goButtonSize.height < 84 || gameplayLayout.goButtonSize.fontSize < 24 || !gameplayLayout.objectiveOverlay || gameplayLayout.objectiveProgressLines !== 0 || /stops? reached/i.test(gameplayLayout.objectiveText) || gameplayLayout.mapStageSpacing.padding.some((value) => value !== '0px') || gameplayLayout.mapStageSpacing.margin.some((value) => value !== '0px') || gameplayLayout.mapStageSpacing.dockGap > 1 || gameplayLayout.dockControlFontSizes.some((size) => size < 16) || !gameplayLayout.sideViewTrees || !gameplayLayout.sideViewHouses || !gameplayLayout.residentialTrees || gameplayLayout.houseDefinitions !== 3 || gameplayLayout.treeDefinitions !== 4 || gameplayLayout.houseVariantsUsed !== 3 || gameplayLayout.treeVariantsUsed !== 4 || gameplayLayout.houseAnatomy < 5 || gameplayLayout.genericBuildingRoofs !== 0 || gameplayLayout.emptyRecipeText || gameplayLayout.recipeScrollbar !== 'none' || !gameplayLayout.streetLabelBackgrounds || !gameplayLayout.paddedVerticalStreetLabels || gameplayLayout.intersectionMarkings !== mapNodeCount - 1 || !gameplayLayout.squircleIntersections || !gameplayLayout.fullSizeIntersectionMarkings || gameplayLayout.initialCarCount !== 0 || gameplayLayout.combinedPaletteSymbols !== 4 || gameplayLayout.combinedPaletteLetters.join('|') !== 'N|E|S|W' || !gameplayLayout.startLabelInsideIntersection || emptyRecipeWidth < 1200 || !starFitsIntersection) {
     throw new Error(`Gameplay layout did not match the bottom-dock design: ${JSON.stringify(gameplayLayout)}`)
   }
   if (captureScreenshots) await page.screenshot({ path: '.tmp-city-grid.png', fullPage: true })
@@ -107,22 +180,32 @@ try {
     || !(compassButtons.West.x < compassButtons.North.x && compassButtons.North.x < compassButtons.East.x)
     || Object.values(compassButtons).some((box) => Math.abs(box.width - box.height) > 1 || box.width < 63)
   ) throw new Error(`Cardinal controls were not arranged as a compass: ${JSON.stringify(compassButtons)}`)
+  await page.setViewportSize({ width: 390, height: 844 })
+  const mobileRouteControls = await Promise.all([
+    page.getByRole('button', { name: 'Clear', exact: true }).boundingBox(),
+    page.getByRole('button', { name: /Step back/i }).boundingBox(),
+    page.getByRole('button', { name: /Step forward/i }).boundingBox(),
+  ])
+  if (mobileRouteControls.some((box) => !box) || !(mobileRouteControls[0].y < mobileRouteControls[1].y && mobileRouteControls[1].y < mobileRouteControls[2].y)) {
+    throw new Error(`The mobile route controls were not stacked vertically: ${JSON.stringify(mobileRouteControls)}`)
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 })
   await page.getByRole('button', { name: 'Home' }).click()
 
-  await page.getByRole('button', { name: 'Play Cedar Corner' }).click()
+  await page.getByRole('button', { name: 'Play Across the Grid' }).click()
+  await page.getByRole('button', { name: 'North', exact: true }).click()
   await page.getByRole('button', { name: 'East', exact: true }).click()
-  await page.getByRole('button', { name: 'South', exact: true }).click()
-  await page.getByRole('button', { name: 'East', exact: true }).click()
+  await page.getByRole('button', { name: 'North', exact: true }).click()
   const middleRecipeDirection = page.locator('.recipe-command').nth(1)
   const draggableDirection = await page.getByRole('button', { name: 'West', exact: true }).getAttribute('draggable')
   await page.getByRole('button', { name: 'West', exact: true }).dragTo(middleRecipeDirection)
   const recipeAfterMiddleDrop = await page.locator('.recipe-command').evaluateAll((buttons) => buttons.map((button) => button.getAttribute('aria-label')))
-  if (draggableDirection !== 'true' || recipeAfterMiddleDrop.join('|') !== '1: East|2: West|3: East') {
+  if (draggableDirection !== 'true' || recipeAfterMiddleDrop.join('|') !== '1: North|2: West|3: North') {
     throw new Error(`Dragging did not replace only the middle direction: ${JSON.stringify({ draggableDirection, recipeAfterMiddleDrop })}`)
   }
-  await page.getByRole('button', { name: 'South', exact: true }).dragTo(middleRecipeDirection)
+  await page.getByRole('button', { name: 'East', exact: true }).dragTo(middleRecipeDirection)
   const recipeAfterRestoringMiddle = await page.locator('.recipe-command').evaluateAll((buttons) => buttons.map((button) => button.getAttribute('aria-label')))
-  if (recipeAfterRestoringMiddle.join('|') !== '1: East|2: South|3: East') {
+  if (recipeAfterRestoringMiddle.join('|') !== '1: North|2: East|3: North') {
     throw new Error(`A second drop did not preserve the following direction: ${JSON.stringify(recipeAfterRestoringMiddle)}`)
   }
   await page.getByRole('button', { name: /Remove direction 3/i }).click()
@@ -137,7 +220,8 @@ try {
     borderStyle: getComputedStyle(button).borderStyle,
   }))
   const firstRecipeMarkerCount = await page.locator('.recipe-command.first-command').count()
-  if (firstRecipeMarkerCount !== 1 || firstRecipeOutline.borderStyle !== 'dashed' || firstRecipeOutline.borderColor !== 'rgb(201, 57, 49)') {
+  const recipeCombinedSymbols = await page.locator('.recipe-command .combined-direction-symbol').count()
+  if (firstRecipeMarkerCount !== 1 || firstRecipeOutline.borderStyle !== 'dashed' || firstRecipeOutline.borderColor !== 'rgb(201, 57, 49)' || recipeCombinedSymbols !== 2) {
     throw new Error(`The first recipe direction did not match the map's red dashed outline: ${JSON.stringify({ firstRecipeMarkerCount, firstRecipeOutline })}`)
   }
   await page.locator('.recipe-tile').first().hover()
@@ -146,12 +230,19 @@ try {
   const centeredRemoveIcon = await page.getByRole('button', { name: /Remove direction 1/i }).locator('svg').count()
   if (removeButtonOpacity !== '1' || centeredRemoveIcon !== 1) throw new Error(`Recipe remove button did not render correctly (opacity ${removeButtonOpacity}, icons ${centeredRemoveIcon})`)
   await page.getByRole('button', { name: /Remove direction 2/i }).click()
-  await page.getByRole('button', { name: 'South', exact: true }).click()
+  await page.getByRole('button', { name: 'East', exact: true }).click()
   const recipeBeforeStep = await page.locator('.recipe-command').count()
   await page.getByRole('button', { name: /Step forward/i }).click()
   await page.waitForTimeout(340)
   const directionShownAfterDeparture = await page.locator('.transient-route-glyph').count()
   if (directionShownAfterDeparture !== 1) throw new Error('The direction marker did not appear after the car cleared its intersection.')
+  const mapCombinedSymbol = {
+    symbols: await page.locator('.transient-route-glyph .map-direction-symbol').count(),
+    letters: await page.locator('.transient-route-glyph .combined-arrow-letter').allTextContents(),
+  }
+  if (mapCombinedSymbol.symbols !== 1 || mapCombinedSymbol.letters.join('') !== 'N') {
+    throw new Error(`The map direction was not a letter inside an outlined arrow: ${JSON.stringify(mapCombinedSymbol)}`)
+  }
   const movingCarVisual = await page.locator('.car').evaluate((car) => {
     const plate = car.querySelector('circle')
     const arrow = car.querySelector(':scope > path:not(.car-window)')
@@ -181,7 +272,8 @@ try {
     backgroundColor: getComputedStyle(button).backgroundColor,
     opacity: getComputedStyle(button).opacity,
   }))
-  if (completedRecipeVisual.backgroundColor !== 'rgb(255, 240, 168)' || completedRecipeVisual.opacity !== '1') {
+  const completionCheckmarks = await page.locator('.recipe-command [aria-label="completed"]').count()
+  if (completedRecipeVisual.backgroundColor !== 'rgb(255, 240, 168)' || completedRecipeVisual.opacity !== '1' || completionCheckmarks !== 0) {
     throw new Error(`The completed recipe direction was not fully visible in light yellow: ${JSON.stringify(completedRecipeVisual)}`)
   }
   const checkpoint = {
@@ -196,7 +288,7 @@ try {
   await page.getByRole('button', { name: /Step forward/i }).click()
   await page.waitForTimeout(300)
   const cardinalTurnAngle = await page.locator('.car').evaluate((car) => Number(car.getAttribute('transform')?.match(/rotate\(([-\d.]+)/)?.[1] ?? NaN))
-  if (!(cardinalTurnAngle > 95 && cardinalTurnAngle < 175)) {
+  if (!(cardinalTurnAngle > 5 && cardinalTurnAngle < 85)) {
     throw new Error(`The cardinal car did not rotate smoothly through its intersection: ${cardinalTurnAngle}`)
   }
   await page.waitForTimeout(1200)
@@ -207,8 +299,8 @@ try {
   await page.waitForTimeout(1200)
   const tracesAfterBack = await page.locator('.route-trace').count()
   await page.getByRole('button', { name: 'Clear', exact: true }).click()
-  await page.getByRole('button', { name: 'East', exact: true }).click()
-  await page.getByRole('button', { name: 'East', exact: true }).click()
+  await page.getByRole('button', { name: 'North', exact: true }).click()
+  await page.getByRole('button', { name: 'West', exact: true }).click()
   await page.getByRole('button', { name: /Step forward/i }).click()
   await page.waitForTimeout(1300)
   await page.getByRole('button', { name: /Step forward/i }).click()
@@ -236,7 +328,26 @@ try {
   }
 
   await page.getByRole('button', { name: 'Home' }).click()
-  await page.getByRole('button', { name: 'Play Cedar Corner' }).click()
+  if (await page.getByRole('button', { name: 'Play Cedar Corner' }).count()) {
+    throw new Error('Cedar Corner still appeared in the level library.')
+  }
+  const overpassPreview = page.getByRole('button', { name: 'Play Under the Bridge' }).locator('.city-map')
+  const overpassVisual = await overpassPreview.evaluate((map) => {
+    const road = map.querySelector('.bridge-road')
+    const gradient = map.querySelector(`linearGradient#${road?.getAttribute('stroke')?.match(/#(.+)\)/)?.[1]}`)
+    return {
+      broadShadows: map.querySelectorAll('.bridge-shadow').length,
+      bridgeCurbs: map.querySelectorAll('.bridge-curb').length,
+      sideEdgeShadows: map.querySelectorAll('.bridge-edge-shadow').length,
+      surfaceStops: [...(gradient?.querySelectorAll('stop') ?? [])].map((stop) => stop.getAttribute('stop-color')),
+      centerLines: map.querySelectorAll('.bridge-center').length,
+    }
+  })
+  if (overpassVisual.broadShadows !== 0 || overpassVisual.bridgeCurbs !== 0 || overpassVisual.sideEdgeShadows !== 2 || overpassVisual.surfaceStops.at(2) !== '#98a1a2' || overpassVisual.centerLines !== 1) {
+    throw new Error(`The overpass did not use a centered elevation gradient with side-edge shadows: ${JSON.stringify(overpassVisual)}`)
+  }
+  await page.getByRole('button', { name: 'Play Under the Bridge' }).click()
+  if (captureScreenshots) await page.screenshot({ path: '.tmp-city-overpass.png', fullPage: true })
   await page.getByRole('button', { name: 'East', exact: true }).click()
   await page.getByRole('button', { name: /GO/ }).click()
   await page.waitForTimeout(420)
@@ -323,9 +434,17 @@ try {
   await page.getByRole('button', { name: 'Play Across the Grid' }).click()
   const relativeInitialCarCount = await page.locator('.car').count()
   const relativeInitialStartOnlyCount = await page.locator('.start-marker.initial-start').count()
-  if (relativeInitialCarCount !== 1 || relativeInitialStartOnlyCount !== 0) {
-    throw new Error(`Relative mode did not show the starting car: ${JSON.stringify({ relativeInitialCarCount, relativeInitialStartOnlyCount })}`)
+  const relativeCombinedSymbols = {
+    letters: await page.locator('.direction-palette .combined-arrow-letter').allTextContents(),
+    forwardPath: await page.getByRole('button', { name: 'Forward', exact: true }).locator('.combined-arrow-outline').getAttribute('d'),
+    leftPath: await page.getByRole('button', { name: 'Left', exact: true }).locator('.combined-arrow-outline').getAttribute('d'),
+    rightPath: await page.getByRole('button', { name: 'Right', exact: true }).locator('.combined-arrow-outline').getAttribute('d'),
+    rightTransform: await page.getByRole('button', { name: 'Right', exact: true }).locator('.combined-arrow-outline').getAttribute('transform'),
   }
+  if (relativeInitialCarCount !== 1 || relativeInitialStartOnlyCount !== 0 || relativeCombinedSymbols.letters.join('|') !== 'L|F|R|U' || relativeCombinedSymbols.forwardPath !== 'M9.5 30 V15 H2.5 L16 1.5 L29.5 15 H22.5 V30 Z' || relativeCombinedSymbols.leftPath !== relativeCombinedSymbols.rightPath || !relativeCombinedSymbols.leftPath?.includes('C') || !relativeCombinedSymbols.rightTransform?.includes('scale(-1 1)')) {
+    throw new Error(`Relative mode did not show the expected car and combined symbols: ${JSON.stringify({ relativeInitialCarCount, relativeInitialStartOnlyCount, relativeCombinedSymbols })}`)
+  }
+  if (captureScreenshots) await page.screenshot({ path: '.tmp-city-relative.png', fullPage: true })
   await page.getByRole('button', { name: 'Right', exact: true }).click()
   await page.getByRole('button', { name: /Step forward/i }).click()
   await page.waitForTimeout(300)
@@ -334,8 +453,15 @@ try {
     throw new Error(`The relative car did not rotate smoothly through its intersection: ${relativeTurnAngle}`)
   }
   await page.waitForTimeout(1200)
+  const audioFrequencies = await page.evaluate(() => window.__cityRouteAudioFrequencies)
+  const departureChimes = audioFrequencies.filter((frequency) => frequency === 523).length
+  const objectiveChimes = audioFrequencies.filter((frequency) => frequency === 1047).length
+  const nonDepartureFrequencies = audioFrequencies.filter((frequency) => frequency !== 523)
+  if (departureChimes < 5 || objectiveChimes !== 1 || nonDepartureFrequencies.join('|') !== '659|784|1047') {
+    throw new Error(`Departures did not use single tones or the objective cue was incorrect: ${JSON.stringify({ audioFrequencies, departureChimes, objectiveChimes, nonDepartureFrequencies })}`)
+  }
 
-  console.log(JSON.stringify({ gameplayLayout, cardinalTurnAngle, relativeInitialCarCount, relativeInitialStartOnlyCount, relativeTurnAngle, tracesAfterStep, tracesAfterBack, impossible, tracesAfterEarlyPause, tracesAfterLatePause, predictionResult, builderGridNodes, ghostRoad, roadsAfterLineTool, roadsAfterContextErase, nodesAfterContextErase, previewPreservedName, generatedRoadCount, savedGeneratedLevel, errors, url: page.url() }))
+  console.log(JSON.stringify({ titleChoiceHeights, titleLaunchArrows, libraryLayout, gameplayLayout, mobileRouteControls, overpassVisual, audioFrequencies, departureChimes, objectiveChimes, cardinalTurnAngle, relativeInitialCarCount, relativeInitialStartOnlyCount, relativeCombinedSymbols, relativeTurnAngle, tracesAfterStep, tracesAfterBack, impossible, tracesAfterEarlyPause, tracesAfterLatePause, predictionResult, builderGridNodes, ghostRoad, roadsAfterLineTool, roadsAfterContextErase, nodesAfterContextErase, previewPreservedName, generatedRoadCount, savedGeneratedLevel, errors, url: page.url() }))
 } finally {
   await browser.close()
 }

@@ -1,4 +1,6 @@
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { createConnection } from 'node:net'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createInterface } from 'node:readline'
@@ -10,23 +12,31 @@ const comspec = process.env.ComSpec ?? 'cmd.exe'
 
 type DevServer = {
   name: string
+  port: number
+  path: string
 }
 
 const servers: DevServer[] = [
-  { name: 'class-clock' },
-  { name: 'class-schedule-widget' },
-  { name: 'read-along-highlighter' },
-  { name: 'launchpad-whack-a-mole' },
-  { name: 'fish-visualizer' },
-  { name: 'launchpad-controller' },
-  { name: 'tax-brackets-marble-visual' },
-  { name: 'coordinates' },
-  { name: 'simple-compound-interest' },
-  { name: 'oklch-visualizer' },
-  { name: 'rugby-play-visualizer' },
-  { name: 'city-navigator' },
-  { name: 'hub' },
+  { name: 'class-clock', port: 5174, path: '/class-clock/' },
+  { name: 'class-schedule-widget', port: 5181, path: '/class-schedule-widget/' },
+  { name: 'read-along-highlighter', port: 5175, path: '/read-along-highlighter/' },
+  { name: 'launchpad-whack-a-mole', port: 5176, path: '/launchpad-whack-a-mole/' },
+  { name: 'fish-visualizer', port: 5177, path: '/fish-visualizer/' },
+  { name: 'launchpad-controller', port: 5178, path: '/launchpad-controller/' },
+  { name: 'tax-brackets-marble-visual', port: 5179, path: '/tax-brackets-marble-visual/' },
+  { name: 'coordinates', port: 5182, path: '/coordinates/' },
+  { name: 'simple-compound-interest', port: 5183, path: '/simple-compound-interest/' },
+  { name: 'oklch-visualizer', port: 5180, path: '/oklch-visualizer/' },
+  { name: 'rugby-play-visualizer', port: 5184, path: '/rugby-play-visualizer/' },
+  { name: 'city-navigator', port: 5185, path: '/city-navigator/' },
+  { name: 'hub', port: 5173, path: '/' },
 ]
+
+type ServerProbe = {
+  server: DevServer
+  status: 'available' | 'reusable' | 'conflict'
+  detail?: string
+}
 
 const recentLogs = new Map<string, string[]>()
 const children = new Map<string, ChildProcess>()
@@ -81,16 +91,98 @@ function printHubUrl(line: string): void {
   console.log(match[0])
 }
 
+function serverUrl(server: DevServer): string {
+  return `http://localhost:${server.port}${server.path}`
+}
+
+function expectedTitle(server: DevServer): string {
+  const html = readFileSync(join(rootDir, 'apps', server.name, 'index.html'), 'utf8')
+  return html.match(/<title>([^<]+)<\/title>/i)?.[1]?.trim() ?? server.name
+}
+
+function isPortListening(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = createConnection({ host: 'localhost', port })
+    let settled = false
+
+    const finish = (listening: boolean) => {
+      if (settled) return
+      settled = true
+      socket.destroy()
+      resolve(listening)
+    }
+
+    socket.setTimeout(500)
+    socket.once('connect', () => finish(true))
+    socket.once('timeout', () => finish(false))
+    socket.once('error', () => finish(false))
+  })
+}
+
+async function requestPageTitle(server: DevServer): Promise<string | null> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 1_000)
+
+  try {
+    const response = await fetch(serverUrl(server), {
+      headers: { accept: 'text/html' },
+      signal: controller.signal,
+    })
+    if (!response.ok) return `HTTP ${response.status}`
+    const html = await response.text()
+    return html.match(/<title>([^<]+)<\/title>/i)?.[1]?.trim() ?? '(page without a title)'
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+async function probeServer(server: DevServer): Promise<ServerProbe> {
+  if (!(await isPortListening(server.port))) {
+    return { server, status: 'available' }
+  }
+
+  const wantedTitle = expectedTitle(server)
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const actualTitle = await requestPageTitle(server)
+    if (actualTitle === wantedTitle) {
+      return { server, status: 'reusable' }
+    }
+    if (actualTitle !== null) {
+      return {
+        server,
+        status: 'conflict',
+        detail: `expected "${wantedTitle}" but received "${actualTitle}"`,
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 150))
+  }
+
+  return {
+    server,
+    status: 'conflict',
+    detail: 'the process on this port did not respond like the expected Vite app',
+  }
+}
+
+async function waitForServer(server: DevServer, timeoutMs = 30_000): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs
+  const wantedTitle = expectedTitle(server)
+
+  while (Date.now() < deadline) {
+    if ((await requestPageTitle(server)) === wantedTitle) return true
+    await new Promise((resolve) => setTimeout(resolve, 200))
+  }
+
+  return false
+}
+
 function handleOutput(name: string, line: string): void {
   const clean = stripAnsi(line).trim()
   rememberLine(name, clean)
 
-  if (clean.includes('Local:')) {
-    if (name === 'hub') {
-      printHubUrl(clean)
-    }
-    return
-  }
+  if (clean.includes('Local:')) return
 
   if (isNoise(clean)) return
 
@@ -167,20 +259,61 @@ function printFailure(name: string, code: number | null, signal: NodeJS.Signals 
   }
 }
 
-for (const server of servers) {
-  const child = spawnServer(server.name)
-  children.set(server.name, child)
+async function main(): Promise<void> {
+  // Start one server at a time and confirm ownership of its fixed port before
+  // moving on. This avoids Windows startup races when many pnpm/Vite children
+  // are launched together and also closes the probe-to-spawn timing gap.
+  for (const server of servers) {
+    const { status, detail } = await probeServer(server)
+    if (status === 'conflict') {
+      console.error(`Unable to use port ${server.port} for ${server.name}: ${detail}.`)
+      console.error('Close that program, then run pnpm dev again. Existing classroom-tool Vite servers are reused automatically.')
+      shutdown(1)
+      return
+    }
 
-  attachOutput(server.name, child.stdout)
-  attachOutput(server.name, child.stderr)
+    if (status === 'reusable') {
+      console.log(`[${server.name}] already running at ${serverUrl(server)} (reusing)`)
+      continue
+    }
 
-  child.on('exit', (code, signal) => {
-    if (shuttingDown) return
+    const child = spawnServer(server.name)
+    children.set(server.name, child)
 
-    printFailure(server.name, code, signal)
-    shutdown(code ?? 1)
-  })
+    attachOutput(server.name, child.stdout)
+    attachOutput(server.name, child.stderr)
+
+    child.on('error', (error) => {
+      if (shuttingDown) return
+      console.error(`[${server.name}] could not be launched: ${error.message}`)
+      shutdown(1)
+    })
+
+    child.on('exit', (code, signal) => {
+      if (shuttingDown) return
+
+      printFailure(server.name, code, signal)
+      shutdown(code ?? 1)
+    })
+
+    if (!(await waitForServer(server))) {
+      console.error(`Timed out waiting for ${server.name} on port ${server.port}.`)
+      shutdown(1)
+      return
+    }
+  }
+
+  console.log('All classroom-tool dev servers are ready.')
+  printHubUrl('http://localhost:5173/')
+  if (children.size === 0) {
+    console.log('All classroom-tool dev servers are already running; no duplicate processes were started.')
+  }
 }
+
+void main().catch((error: unknown) => {
+  console.error(error instanceof Error ? error.message : error)
+  shutdown(1)
+})
 
 process.on('SIGINT', () => {
   shutdown(0)

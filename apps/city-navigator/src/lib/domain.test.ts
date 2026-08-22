@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict'
+import { DEPARTURE_CHIME_FREQUENCIES, OBJECTIVE_CHIME_FREQUENCIES } from './audio'
+import { combinedDirectionSymbol } from './direction-symbol'
 import {
   advanceGoals,
   blankGoalSnapshot,
@@ -10,6 +12,20 @@ import {
 import { cityBlocks, goalVisualOffset, shortenedCenterLine, streetLabels } from './layout'
 import { addOrthogonalRoad, createSeedLibrary, generateLevel } from './maps'
 import type { CityMap, Goal } from './types'
+
+assert.deepEqual(DEPARTURE_CHIME_FREQUENCIES, [523])
+assert.deepEqual(OBJECTIVE_CHIME_FREQUENCIES, [659, 784, 1047])
+assert.deepEqual(
+  [combinedDirectionSymbol('north').letter, combinedDirectionSymbol('east').letter, combinedDirectionSymbol('south').letter, combinedDirectionSymbol('west').letter],
+  ['N', 'E', 'S', 'W'],
+)
+assert.match(combinedDirectionSymbol('east').pathTransform ?? '', /rotate\(90/)
+assert.match(combinedDirectionSymbol('right').pathTransform ?? '', /scale\(-1 1\)/)
+assert.equal(combinedDirectionSymbol('forward').path, combinedDirectionSymbol('north').path)
+assert.equal(combinedDirectionSymbol('forward').letter, 'F')
+assert.equal(combinedDirectionSymbol('left').path, combinedDirectionSymbol('right').path)
+assert.match(combinedDirectionSymbol('left').path, /C/)
+assert.equal(combinedDirectionSymbol('uturn').letter, 'U')
 
 assert.equal(resolveRelative('east', 'forward'), 'east')
 assert.equal(resolveRelative('east', 'left'), 'north')

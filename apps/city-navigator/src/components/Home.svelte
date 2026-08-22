@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
+  import DirectionSymbol from './DirectionSymbol.svelte'
   import type { DirectionMode, RepresentationMode } from '../lib/types'
 
   export let directionMode: DirectionMode
@@ -54,13 +55,11 @@
     <button class="launch-card levels-launch" type="button" on:click={() => dispatch('levels')}>
       <span class="launch-icon">▦</span>
       <span><b>Choose a level</b></span>
-      <i>→</i>
     </button>
 
     <button class="launch-card builder-launch" type="button" on:click={() => dispatch('builder')}>
       <span class="launch-icon">✎</span>
       <span><b>Level Builder</b></span>
-      <i>→</i>
     </button>
   </section>
 
@@ -89,7 +88,7 @@
     <div class="choice-grid representation-choices">
       <button class:active={representation === 'letters'} type="button" on:click={() => dispatch('representation', 'letters')}><b>N</b><strong>Letters</strong></button>
       <button class:active={representation === 'arrows'} type="button" on:click={() => dispatch('representation', 'arrows')}><b>↑</b><strong>Arrows</strong></button>
-      <button class:active={representation === 'letters-arrows'} type="button" on:click={() => dispatch('representation', 'letters-arrows')}><b>↑ N</b><strong>Both</strong></button>
+      <button class:active={representation === 'letters-arrows'} type="button" on:click={() => dispatch('representation', 'letters-arrows')}><b><DirectionSymbol command="north" /></b><strong>Both</strong></button>
     </div>
   </section>
 

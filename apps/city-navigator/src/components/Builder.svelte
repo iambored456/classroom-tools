@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
+  import DirectionSymbol from './DirectionSymbol.svelte'
   import { addOrthogonalRoad, cycleCrossing, generateLevel } from '../lib/maps'
   import {
     CARDINAL_COMMANDS,
@@ -396,8 +397,22 @@
         <section>
           <div class="inspector-heading"><p class="eyebrow">Prediction recipe</p><h2>Stored directions</h2></div>
           <div class="segmented"><button class:active={storedMode() === 'cardinal'} type="button" on:click={() => setStoredMode('cardinal')}>Cardinal</button><button class:active={storedMode() === 'relative'} type="button" on:click={() => setStoredMode('relative')}>Relative</button></div>
-          <div class="mini-recipe">{#each draft.storedRecipe ?? [] as command}<span>{commandText(command, representation)}</span>{/each}{#if !draft.storedRecipe?.length}<small>No directions yet</small>{/if}</div>
-          <div class="mini-palette">{#each storedCommands() as command}<button type="button" on:click={() => addStoredCommand(command)}><b>{commandText(command, representation)}</b><small>{commandName(command)}</small></button>{/each}</div>
+          <div class="mini-recipe">
+            {#each draft.storedRecipe ?? [] as command}
+              <span>
+                {#if representation === 'letters-arrows'}<DirectionSymbol {command} />{:else}{commandText(command, representation)}{/if}
+              </span>
+            {/each}
+            {#if !draft.storedRecipe?.length}<small>No directions yet</small>{/if}
+          </div>
+          <div class="mini-palette">
+            {#each storedCommands() as command}
+              <button type="button" on:click={() => addStoredCommand(command)}>
+                <b>{#if representation === 'letters-arrows'}<DirectionSymbol {command} />{:else}{commandText(command, representation)}{/if}</b>
+                <small>{commandName(command)}</small>
+              </button>
+            {/each}
+          </div>
           <button type="button" disabled={!draft.storedRecipe?.length} on:click={() => { draft.storedRecipe = draft.storedRecipe?.slice(0, -1); draft = clone(draft) }}>Delete last</button>
         </section>
       {/if}

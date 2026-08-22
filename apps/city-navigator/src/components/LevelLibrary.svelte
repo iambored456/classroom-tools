@@ -2,10 +2,9 @@
   import { createEventDispatcher } from 'svelte'
   import { clone, nodeById, uid } from '../lib/domain'
   import MapView from './MapView.svelte'
-  import type { DirectionMode, Heading, Level, LibraryData, RepresentationMode } from '../lib/types'
+  import type { Heading, Level, LibraryData, RepresentationMode } from '../lib/types'
 
   export let data: LibraryData
-  export let directionMode: DirectionMode
   export let representation: RepresentationMode
 
   const dispatch = createEventDispatcher<{
@@ -13,7 +12,6 @@
     play: string
     edit: string
     change: LibraryData
-    create: string
   }>()
   let manage = false
 
@@ -128,11 +126,9 @@
 <main class="library-screen">
   <header class="page-header">
     <button class="round-button" type="button" aria-label="Back to home" on:click={() => dispatch('home')}>←</button>
-    <div><p class="eyebrow">Classroom route library</p><h1>Choose a level</h1><p>Every route stays visible, whichever direction mode you selected.</p></div>
+    <div><h1>Choose a level</h1></div>
     <div class="header-actions">
-      <span class="mode-pill">{directionMode === 'cardinal' ? 'N E S W' : 'L F R U'}</span>
-      <button class:active={manage} type="button" on:click={() => manage = !manage}>{manage ? 'Done' : 'Manage'}</button>
-      <button class="primary-button" type="button" on:click={() => dispatch('create', data.groups[0]?.id)}>＋ New level</button>
+      <button class:active={manage} type="button" on:click={() => manage = !manage}>{manage ? 'Done' : 'Organize'}</button>
     </div>
   </header>
 
@@ -159,7 +155,6 @@
               </button>
               <div class="level-card-body">
                 <div class="level-title-row"><h3>{level.name}</h3><span>{level.goals.length || '—'} stop{level.goals.length === 1 ? '' : 's'}</span></div>
-                <p>{level.activityType === 'where-end' ? 'Where Will It End?' : 'Plan a Route'} · {level.complexity}</p>
                 {#if level.activityType === 'where-end'}<span class="required-badge">Uses {level.requiredMode}</span>{/if}
               </div>
               {#if manage}
@@ -177,7 +172,6 @@
               {/if}
             </article>
           {/each}
-          <button class="new-level-card" type="button" on:click={() => dispatch('create', group.id)}><b>＋</b><span>Create a level in {group.name}</span></button>
         </div>
       </section>
     {/each}

@@ -11,7 +11,9 @@ export default defineConfig({
   plugins: [svelte()],
   server: {
     port: 5173,
-    strictPort: false,
+    // The launcher reuses a matching server on this port. Never silently move the hub,
+    // because all classroom-tool URLs are intentionally rooted at localhost:5173.
+    strictPort: true,
     proxy: {
       '/class-clock': {
         target: 'http://localhost:5174',
