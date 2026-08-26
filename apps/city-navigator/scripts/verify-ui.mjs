@@ -42,6 +42,19 @@ await page.addInitScript(() => {
 
 try {
   await page.goto(baseUrl)
+  await page.evaluate(() => document.fonts.ready)
+  const atkinsonLoaded = await page.evaluate(() => document.fonts.check('16px "Atkinson Hyperlegible Next"'))
+  const atkinsonMismatches = await page
+    .locator('body, h1, h2, h3, button, input, select, .combined-arrow-letter')
+    .evaluateAll((elements) => elements
+      .map((element) => ({
+        element: `${element.tagName.toLowerCase()}.${typeof element.className === 'string' ? element.className : element.getAttribute('class') ?? ''}`,
+        fontFamily: getComputedStyle(element).fontFamily,
+      }))
+      .filter(({ fontFamily }) => !fontFamily.includes('Atkinson Hyperlegible Next')))
+  if (!atkinsonLoaded || atkinsonMismatches.length > 0) {
+    throw new Error(`Atkinson Hyperlegible Next was not loaded and applied throughout City Routes: ${JSON.stringify({ atkinsonLoaded, atkinsonMismatches })}`)
+  }
   const expectedHubUrl = new URL('..', baseUrl)
   if ((expectedHubUrl.hostname === 'localhost' || expectedHubUrl.hostname === '127.0.0.1') && expectedHubUrl.port === '5185') expectedHubUrl.port = '5173'
   const titleHomeLink = await page.getByRole('link', { name: 'Back to Classroom Learning Tools' }).evaluate((link) => ({
@@ -369,6 +382,19 @@ try {
   await page.getByRole('button', { name: /GO/ }).click()
   await page.waitForTimeout(3200)
   const predictionResult = await page.locator('.feedback-card').innerText()
+  const predictionTracesBeforeReplay = await page.locator('.route-trace').count()
+  const replayStartedAt = Date.now()
+  await page.getByRole('button', { name: /GO/ }).click()
+  await page.locator('.feedback-card').waitFor({ state: 'detached' })
+  const goDisabledDuringReplayRewind = await page.locator('.go-button').isDisabled()
+  await page.getByRole('button', { name: /Pause/i }).waitFor({ timeout: 1200 })
+  const replayRewindMs = Date.now() - replayStartedAt
+  await page.locator('.feedback-card').waitFor({ state: 'visible', timeout: 6000 })
+  const replayResult = await page.locator('.feedback-card').innerText()
+  const predictionTracesAfterReplay = await page.locator('.route-trace').count()
+  if (!goDisabledDuringReplayRewind || replayRewindMs > 900 || replayResult !== predictionResult || predictionTracesAfterReplay !== predictionTracesBeforeReplay) {
+    throw new Error(`GO did not rapidly rewind and replay the completed route: ${JSON.stringify({ goDisabledDuringReplayRewind, replayRewindMs, predictionResult, replayResult, predictionTracesBeforeReplay, predictionTracesAfterReplay })}`)
+  }
   await page.getByRole('button', { name: 'Home' }).click()
   await page.getByRole('button', { name: /Back to home/i }).click()
   await page.getByRole('button', { name: /Level Builder/i }).click()
@@ -461,7 +487,7 @@ try {
     throw new Error(`Departures did not use single tones or the objective cue was incorrect: ${JSON.stringify({ audioFrequencies, departureChimes, objectiveChimes, nonDepartureFrequencies })}`)
   }
 
-  console.log(JSON.stringify({ titleChoiceHeights, titleLaunchArrows, libraryLayout, gameplayLayout, mobileRouteControls, overpassVisual, audioFrequencies, departureChimes, objectiveChimes, cardinalTurnAngle, relativeInitialCarCount, relativeInitialStartOnlyCount, relativeCombinedSymbols, relativeTurnAngle, tracesAfterStep, tracesAfterBack, impossible, tracesAfterEarlyPause, tracesAfterLatePause, predictionResult, builderGridNodes, ghostRoad, roadsAfterLineTool, roadsAfterContextErase, nodesAfterContextErase, previewPreservedName, generatedRoadCount, savedGeneratedLevel, errors, url: page.url() }))
+  console.log(JSON.stringify({ titleChoiceHeights, titleLaunchArrows, libraryLayout, gameplayLayout, mobileRouteControls, overpassVisual, audioFrequencies, departureChimes, objectiveChimes, cardinalTurnAngle, relativeInitialCarCount, relativeInitialStartOnlyCount, relativeCombinedSymbols, relativeTurnAngle, tracesAfterStep, tracesAfterBack, impossible, tracesAfterEarlyPause, tracesAfterLatePause, predictionResult, replayRewindMs, replayResult, builderGridNodes, ghostRoad, roadsAfterLineTool, roadsAfterContextErase, nodesAfterContextErase, previewPreservedName, generatedRoadCount, savedGeneratedLevel, errors, url: page.url() }))
 } finally {
   await browser.close()
 }

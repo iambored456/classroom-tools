@@ -30,6 +30,16 @@ const appDistTargets = [
     targetSubdir: 'class-schedule-widget',
   },
   {
+    name: 'classroom-connections',
+    distPath: join(rootDir, 'apps/classroom-connections/dist'),
+    targetSubdir: 'classroom-connections',
+  },
+  {
+    name: 'classroom-wordle',
+    distPath: join(rootDir, 'apps/classroom-wordle/dist'),
+    targetSubdir: 'classroom-wordle',
+  },
+  {
     name: 'read-along-highlighter',
     distPath: join(rootDir, 'apps/read-along-highlighter/dist'),
     targetSubdir: 'read-along-highlighter',

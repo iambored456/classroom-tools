@@ -86,6 +86,8 @@ const resolveRootBase = () => {
 function buildTargets(rootBase) {
   const classClockBase = appendPath(rootBase, 'class-clock')
   const classScheduleWidgetBase = appendPath(rootBase, 'class-schedule-widget')
+  const classroomConnectionsBase = appendPath(rootBase, 'classroom-connections')
+  const classroomWordleBase = appendPath(rootBase, 'classroom-wordle')
   const readAlongBase = appendPath(rootBase, 'read-along-highlighter')
   const whackAMoleBase = appendPath(rootBase, 'launchpad-whack-a-mole')
   const fishVisualizerBase = appendPath(rootBase, 'fish-visualizer')
@@ -97,6 +99,41 @@ function buildTargets(rootBase) {
   const cityNavigatorBase = appendPath(rootBase, 'city-navigator')
 
   return [
+    {
+      id: 'classroom-wordle',
+      outputFile: 'ClassroomWordle-screenshot.png',
+      distDir: 'apps/classroom-wordle/dist',
+      basePath: classroomWordleBase,
+      route: classroomWordleBase,
+      waitFor: '[data-action="play"]',
+      postReadyScript: async () => {
+        Math.random = () => 0
+        document.querySelector<HTMLElement>('[data-action="play"]')?.click()
+        await new Promise((resolve) => requestAnimationFrame(resolve))
+        document.querySelector<HTMLElement>('[data-action="choose-random"]')?.click()
+        await new Promise((resolve) => requestAnimationFrame(resolve))
+        for (const letter of 'dream') {
+          window.dispatchEvent(new KeyboardEvent('keydown', { key: letter }))
+        }
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
+      },
+      postReadyWaitFor: '.letter-tile.evaluated',
+      delayMs: 900,
+    },
+    {
+      id: 'classroom-connections',
+      outputFile: 'ClassroomConnections-screenshot.png',
+      distDir: 'apps/classroom-connections/dist',
+      basePath: classroomConnectionsBase,
+      route: classroomConnectionsBase,
+      waitFor: '.landing-card .landing-button',
+      delayMs: 250,
+      injectCss: `
+.hub-link {
+  display: none !important;
+}
+`,
+    },
     {
       id: 'class-clock',
       outputFile: 'ClassClock-screenshot.png',

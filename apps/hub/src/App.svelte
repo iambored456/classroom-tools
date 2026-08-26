@@ -150,12 +150,6 @@
         {/if}
 
         <p class="description">{entry.description}</p>
-        <div class="tags">
-          {#each entry.tags as tag}
-            <span class="tag">{tag}</span>
-          {/each}
-          <span class="status" aria-hidden="true"></span>
-        </div>
       </article>
     {/each}
   </section>

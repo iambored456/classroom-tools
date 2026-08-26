@@ -19,6 +19,8 @@ type DevServer = {
 const servers: DevServer[] = [
   { name: 'class-clock', port: 5174, path: '/class-clock/' },
   { name: 'class-schedule-widget', port: 5181, path: '/class-schedule-widget/' },
+  { name: 'classroom-connections', port: 5186, path: '/classroom-connections/' },
+  { name: 'classroom-wordle', port: 5187, path: '/classroom-wordle/' },
   { name: 'read-along-highlighter', port: 5175, path: '/read-along-highlighter/' },
   { name: 'launchpad-whack-a-mole', port: 5176, path: '/launchpad-whack-a-mole/' },
   { name: 'fish-visualizer', port: 5177, path: '/fish-visualizer/' },
@@ -260,23 +262,32 @@ function printFailure(name: string, code: number | null, signal: NodeJS.Signals 
 }
 
 async function main(): Promise<void> {
-  // Start one server at a time and confirm ownership of its fixed port before
-  // moving on. This avoids Windows startup races when many pnpm/Vite children
-  // are launched together and also closes the probe-to-spawn timing gap.
-  for (const server of servers) {
-    const { status, detail } = await probeServer(server)
-    if (status === 'conflict') {
-      console.error(`Unable to use port ${server.port} for ${server.name}: ${detail}.`)
-      console.error('Close that program, then run pnpm dev again. Existing classroom-tool Vite servers are reused automatically.')
-      shutdown(1)
-      return
-    }
+  // Probe every fixed port before launching anything so a conflict cannot leave
+  // behind a partially started stack. Distinct Vite servers can then start and
+  // complete their readiness checks concurrently.
+  const probes = await Promise.all(servers.map((server) => probeServer(server)))
+  const conflict = probes.find(({ status }) => status === 'conflict')
 
-    if (status === 'reusable') {
+  if (conflict) {
+    const { server, detail } = conflict
+    console.error(`Unable to use port ${server.port} for ${server.name}: ${detail}.`)
+    console.error('Close that program, then run pnpm dev again. Existing classroom-tool Vite servers are reused automatically.')
+    shutdown(1)
+    return
+  }
+
+  const serversToLaunch = probes
+    .filter(({ status }) => status === 'available')
+    .map(({ server }) => server)
+
+  for (const { server } of probes) {
+    if (!serversToLaunch.includes(server)) {
       console.log(`[${server.name}] already running at ${serverUrl(server)} (reusing)`)
-      continue
     }
+  }
 
+  for (const server of serversToLaunch) {
+    console.log(`[${server.name}] starting at ${serverUrl(server)}`)
     const child = spawnServer(server.name)
     children.set(server.name, child)
 
@@ -295,12 +306,20 @@ async function main(): Promise<void> {
       printFailure(server.name, code, signal)
       shutdown(code ?? 1)
     })
+  }
 
-    if (!(await waitForServer(server))) {
-      console.error(`Timed out waiting for ${server.name} on port ${server.port}.`)
-      shutdown(1)
-      return
-    }
+  const readiness = await Promise.all(
+    serversToLaunch.map(async (server) => ({
+      server,
+      ready: await waitForServer(server),
+    })),
+  )
+  const timedOut = readiness.find(({ ready }) => !ready)
+
+  if (timedOut) {
+    console.error(`Timed out waiting for ${timedOut.server.name} on port ${timedOut.server.port}.`)
+    shutdown(1)
+    return
   }
 
   console.log('All classroom-tool dev servers are ready.')

@@ -122,6 +122,8 @@ console.log(`Using root BASE_URL=${rootBase}`)
 
 runBuild('class-clock', appendPath(rootBase, 'class-clock'))
 runBuild('class-schedule-widget', appendPath(rootBase, 'class-schedule-widget'))
+runBuild('classroom-connections', appendPath(rootBase, 'classroom-connections'))
+runBuild('classroom-wordle', appendPath(rootBase, 'classroom-wordle'))
 runBuild('read-along-highlighter', appendPath(rootBase, 'read-along-highlighter'))
 runBuild('launchpad-whack-a-mole', appendPath(rootBase, 'launchpad-whack-a-mole'))
 runBuild('fish-visualizer', appendPath(rootBase, 'fish-visualizer'))

@@ -36,6 +36,28 @@ const withBase = (path: string) => `${baseUrl}${path.replace(/^\/+/, '')}`
 export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
+    id: 'classroom-wordle',
+    name: 'Classroom Wordle',
+    description:
+      'Guess a hidden classroom word with adjustable length, attempts, and teacher-managed answer banks.',
+    href: withBase('classroom-wordle/'),
+    preview: withBase('images/ClassroomWordle-screenshot.png'),
+    tags: ['Word Game', 'Spelling', 'Classroom'],
+    accent: '#d99500',
+  },
+  {
+    kind: 'app',
+    id: 'classroom-connections',
+    name: 'Classroom Connections',
+    description:
+      'Find four groups of connected words, with a teacher-managed library designed for grades 3–6.',
+    href: withBase('classroom-connections/'),
+    preview: withBase('images/ClassroomConnections-screenshot.png'),
+    tags: ['Word Game', 'Vocabulary', 'Classroom'],
+    accent: '#aaa2f5',
+  },
+  {
+    kind: 'app',
     id: 'read-along-highlighter',
     name: 'ReadAlong Highlighter',
     description:

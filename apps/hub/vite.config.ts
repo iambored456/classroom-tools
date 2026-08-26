@@ -23,6 +23,14 @@ export default defineConfig({
         target: 'http://localhost:5181',
         changeOrigin: true,
       },
+      '/classroom-connections': {
+        target: 'http://localhost:5186',
+        changeOrigin: true,
+      },
+      '/classroom-wordle': {
+        target: 'http://localhost:5187',
+        changeOrigin: true,
+      },
       '/read-along-highlighter': {
         target: 'http://localhost:5175',
         changeOrigin: true,

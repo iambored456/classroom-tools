@@ -61,6 +61,7 @@
   let turning = false
   let transientTrace: { from: Point; to: Point; offset: number; progress: number; command: Command; glyphOffset: Point } | null = null
   let celebrationGoalId: string | null = null
+  let celebrationTimer: ReturnType<typeof setTimeout> | null = null
   let confetti = false
   let recipeStrip: HTMLDivElement
   let draggedCommand: Command | null = null
@@ -69,6 +70,7 @@
 
   const durations = { slow: 1450, normal: 900, fast: 520 }
   const turnDurations = { slow: 500, normal: 320, fast: 170 }
+  const replayRewindDuration = (stepCount: number) => Math.max(40, Math.min(90, 240 / stepCount))
   const commands = mode === 'relative' ? RELATIVE_COMMANDS : CARDINAL_COMMANDS
   const isBusy = () => phase === 'autoplay' || phase === 'stepping' || phase === 'rewinding'
   const orderedGoals = () => [...level.goals].sort((a, b) => a.order - b.order)
@@ -170,6 +172,8 @@
   function resetSimulation(clearFeedback = true): void {
     animationRun += 1
     cancelAnimationFrame(animationFrame)
+    if (celebrationTimer) clearTimeout(celebrationTimer)
+    celebrationTimer = null
     pauseRequested = false
     history = []
     pointer = 0
@@ -232,9 +236,11 @@
     celebrationGoalId = reachedId
     playObjectiveChime()
     if (next.finalReached) confetti = true
-    setTimeout(() => {
+    if (celebrationTimer) clearTimeout(celebrationTimer)
+    celebrationTimer = setTimeout(() => {
       celebrationGoalId = null
       confetti = false
+      celebrationTimer = null
     }, next.finalReached ? 1100 : 650)
   }
 
@@ -243,11 +249,11 @@
     offset: number,
     backwards = false,
     departure?: { command: Command; glyphOffset: Point },
+    duration = durations[speed],
   ): Promise<'origin' | 'destination'> {
     const run = ++animationRun
     const origin = backwards ? move.to : move.from
     const destination = backwards ? move.from : move.to
-    const duration = durations[speed]
     const started = performance.now()
     let settling = false
     let settleStarted = 0
@@ -404,6 +410,45 @@
     }
   }
 
+  async function rewindCompletedRoute(): Promise<boolean> {
+    const completedSteps = [...history]
+    if (!completedSteps.length) {
+      resetSimulation(false)
+      return true
+    }
+
+    phase = 'rewinding'
+    feedback = ''
+    pauseRequested = false
+    transientTrace = null
+    celebrationGoalId = null
+    confetti = false
+    if (celebrationTimer) clearTimeout(celebrationTimer)
+    celebrationTimer = null
+    const duration = replayRewindDuration(completedSteps.length)
+
+    for (const step of completedSteps.reverse()) {
+      const from = nodeById(level.map, step.fromNodeId)!
+      const to = nodeById(level.map, step.toNodeId)!
+      const edge = level.map.edges.find((item) => item.id === step.edgeId)!
+      activeCommandIndex = step.commandIndex
+      const result = await animateMove({ edge, from, to, heading: step.headingAfter }, step.traceOffset, true, undefined, duration)
+      if (result !== 'destination') return false
+      history = history.slice(0, -1)
+      pointer = step.commandIndex
+      currentNodeId = step.fromNodeId
+      carX = from.x
+      carY = from.y
+      carHeading = step.headingBefore
+      carAngle = headingAngles[step.headingBefore]
+      goalState = clone(step.goalsBefore)
+    }
+
+    phase = 'input'
+    activeCommandIndex = null
+    return true
+  }
+
   async function go(): Promise<void> {
     if (isBusy()) {
       pauseRequested = true
@@ -414,8 +459,8 @@
       return
     }
     if (pointer >= recipe.length) {
-      finishReview()
-      return
+      const rewound = await rewindCompletedRoute()
+      if (!rewound) return
     }
     feedback = ''
     pauseRequested = false
@@ -471,6 +516,7 @@
   onDestroy(() => {
     animationRun += 1
     cancelAnimationFrame(animationFrame)
+    if (celebrationTimer) clearTimeout(celebrationTimer)
     if (audioContext) void audioContext.close()
   })
 </script>

@@ -1,5 +1,21 @@
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  src: url('../../class-clock/fonts/AtkinsonHyperlegibleNext-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  src: url('../../class-clock/fonts/AtkinsonHyperlegibleNext-Bold.woff2') format('woff2');
+  font-weight: 700 950;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  font-family: ui-rounded, 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Atkinson Hyperlegible Next', Arial, sans-serif;
   color: #172d29;
   background: #f4efe5;
   font-synthesis: none;
@@ -21,13 +37,13 @@
 
 * { box-sizing: border-box; }
 html, body, #app { min-height: 100%; }
-body { margin: 0; min-width: 320px; background: var(--cream); }
+body { margin: 0; min-width: 320px; background: var(--cream); font-family: 'Atkinson Hyperlegible Next', Arial, sans-serif; }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .42; }
 button:focus-visible, input:focus-visible, select:focus-visible, label:focus-within { outline: 3px solid rgba(40, 127, 155, .38); outline-offset: 3px; }
 h1, h2, h3, p { margin: 0; }
-h1, h2, h3, button strong { font-family: ui-rounded, 'Avenir Next', 'Segoe UI', system-ui, sans-serif; }
+h1, h2, h3, button strong { font-family: 'Atkinson Hyperlegible Next', Arial, sans-serif; }
 .eyebrow { color: var(--orange-dark); font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 
 .round-button {
