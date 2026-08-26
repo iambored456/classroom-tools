@@ -238,6 +238,7 @@
       if (!source) return []
 
       const sourceRect = source.getBoundingClientRect()
+      const sourceStyle = getComputedStyle(source)
       const clone = source.cloneNode(true) as HTMLElement
       clone.classList.remove('pending', 'wrong')
       clone.classList.add('moving-card-clone')
@@ -248,6 +249,8 @@
       clone.style.top = `${sourceRect.top}px`
       clone.style.width = `${sourceRect.width}px`
       clone.style.height = `${sourceRect.height}px`
+      clone.style.backgroundColor = sourceStyle.backgroundColor
+      clone.style.color = sourceStyle.color
       document.body.appendChild(clone)
 
       return [{ tileId: tile.id, element: clone, sourceRect }]
@@ -456,19 +459,6 @@
   </main>
 {:else}
   <div class="game-screen" class:dark-mode={darkMode}>
-    <button
-      type="button"
-      class="header-action home-action"
-      aria-label="Return to home"
-      disabled={isSubmitting}
-      on:click={requestExit}
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="m3.5 11 8.5-7 8.5 7"></path>
-        <path d="M6 9.5V20h12V9.5M9.5 20v-6h5v6"></path>
-      </svg>
-    </button>
-
     <main class="game-main">
       <section
         class="game-board"
@@ -554,6 +544,18 @@
         </section>
       {:else}
         <div class="game-controls">
+          <button
+            type="button"
+            class="header-action home-action"
+            aria-label="Return to home"
+            disabled={isSubmitting}
+            on:click={requestExit}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m3.5 11 8.5-7 8.5 7"></path>
+              <path d="M6 9.5V20h12V9.5M9.5 20v-6h5v6"></path>
+            </svg>
+          </button>
           <button type="button" class="control-button" disabled={isSubmitting} on:click={shuffleTiles}>Shuffle</button>
           <button
             type="button"

@@ -345,12 +345,8 @@ select:focus-visible,
 }
 
 .home-action {
-  position: fixed;
-  top: clamp(0.65rem, 1.5vw, 1rem);
-  left: clamp(0.65rem, 1.5vw, 1rem);
-  z-index: 10;
-  width: clamp(3rem, 4.8vw, 3.75rem);
-  min-height: clamp(3rem, 4.8vw, 3.75rem);
+  width: clamp(3.75rem, 6vw, 5.5rem);
+  min-height: clamp(3.75rem, 6vw, 5.5rem);
   padding: 0;
 }
 
@@ -361,7 +357,8 @@ select:focus-visible,
 }
 
 .game-main {
-  width: min(100%, 70rem);
+  --game-row-height: clamp(5.75rem, min(14vw, 18vh), 16rem);
+  width: 100%;
   margin: 0 auto;
   padding: clamp(0.65rem, 1.5vw, 1rem) 1rem 2rem;
 }
@@ -378,7 +375,7 @@ select:focus-visible,
 
 .solved-group {
   position: relative;
-  min-height: 6rem;
+  min-height: var(--game-row-height);
   display: grid;
   align-content: center;
   justify-items: center;
@@ -410,14 +407,14 @@ select:focus-visible,
 
 .solved-group h2 {
   margin: 0;
-  font-size: clamp(1.25rem, 2.6vw, 1.65rem);
+  font-size: clamp(1.25rem, 2.6vw, 2.5rem);
   line-height: 1.12;
   text-transform: uppercase;
 }
 
 .solved-group p {
   margin: 0;
-  font-size: clamp(1rem, 2.2vw, 1.35rem);
+  font-size: clamp(1rem, 2.2vw, 2rem);
   line-height: 1.2;
   text-transform: uppercase;
 }
@@ -448,7 +445,7 @@ select:focus-visible,
 
 .solving-stage {
   position: relative;
-  min-height: clamp(5.75rem, 12vw, 7.5rem);
+  min-height: var(--game-row-height);
   overflow: hidden;
   border-radius: 7px;
   background: transparent;
@@ -474,7 +471,7 @@ select:focus-visible,
 }
 
 .solving-stage.illuminating {
-  min-height: 6rem;
+  min-height: var(--game-row-height);
 }
 
 .solving-cards {
@@ -500,7 +497,7 @@ select:focus-visible,
   border-radius: 7px;
   background: var(--tile);
   color: #111;
-  font-size: clamp(0.9rem, 2.4vw, 1.55rem);
+  font-size: clamp(0.9rem, 2.2vw, 2.5rem);
   font-weight: 800;
   line-height: 1.08;
   text-align: center;
@@ -536,14 +533,14 @@ select:focus-visible,
 
 .solving-answer h2 {
   margin: 0;
-  font-size: clamp(1.25rem, 2.6vw, 1.65rem);
+  font-size: clamp(1.25rem, 2.6vw, 2.5rem);
   line-height: 1.12;
   text-transform: uppercase;
 }
 
 .solving-answer p {
   margin: 0;
-  font-size: clamp(1rem, 2.2vw, 1.35rem);
+  font-size: clamp(1rem, 2.2vw, 2rem);
   line-height: 1.2;
   text-transform: uppercase;
 }
@@ -556,14 +553,14 @@ select:focus-visible,
 
 .word-tile {
   min-width: 0;
-  min-height: clamp(5.75rem, 12vw, 7.5rem);
+  min-height: var(--game-row-height);
   padding: 0.55rem 0.35rem;
   overflow-wrap: anywhere;
   border: 0;
   border-radius: 7px;
   background: var(--tile);
   color: #111;
-  font-size: clamp(0.9rem, 2.4vw, 1.55rem);
+  font-size: clamp(0.9rem, 2.2vw, 2.5rem);
   font-weight: 800;
   line-height: 1.08;
   text-transform: uppercase;
@@ -573,7 +570,7 @@ select:focus-visible,
     color 100ms ease;
 }
 
-.word-tile:hover {
+.word-tile:hover:not(.selected) {
   transform: translateY(-1px);
   background: #e5e5dd;
 }
@@ -636,7 +633,18 @@ select:focus-visible,
   transform: scale(0.65);
 }
 
-.game-controls,
+.game-controls {
+  display: grid;
+  grid-template-columns: auto repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 0.65rem;
+  margin-top: 1.05rem;
+}
+
+.game-controls .control-button {
+  width: 100%;
+}
+
 .completion-card > div {
   display: flex;
   flex-wrap: wrap;
@@ -646,13 +654,13 @@ select:focus-visible,
 }
 
 .control-button {
-  min-height: 3.75rem;
+  min-height: clamp(3.75rem, 6vw, 5.5rem);
   padding: 0.8rem 1.5rem;
   border: 1px solid #111;
   border-radius: 999px;
   background: #fff;
   color: #111;
-  font-size: 1.2rem;
+  font-size: clamp(1.2rem, 1.6vw, 1.75rem);
   font-weight: 800;
 }
 
@@ -773,7 +781,7 @@ select:focus-visible,
   color: #f8f7fb;
 }
 
-.game-screen.dark-mode .word-tile:hover {
+.game-screen.dark-mode .word-tile:hover:not(.selected) {
   background: #3b3948;
 }
 
@@ -1609,6 +1617,21 @@ select:focus-visible,
     min-height: 3.3rem;
     padding-inline: 1rem;
     font-size: 1rem;
+  }
+
+  .game-controls {
+    grid-template-columns: 3.3rem repeat(3, minmax(0, 1fr));
+    gap: 0.36rem;
+  }
+
+  .game-controls .home-action {
+    width: 3.3rem;
+    min-height: 3.3rem;
+  }
+
+  .game-controls .control-button {
+    padding-inline: 0.35rem;
+    font-size: clamp(0.78rem, 3.6vw, 1rem);
   }
 
   .library-header {

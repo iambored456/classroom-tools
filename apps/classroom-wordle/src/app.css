@@ -1454,11 +1454,40 @@ button:disabled {
   }
 
   .game-settings {
-    grid-template-columns: max-content;
+    width: min(100%, 30rem);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.4rem, 1vw, 0.65rem);
+    margin-top: 1.35rem;
+  }
+
+  .game-settings fieldset {
+    width: 100%;
+    padding: clamp(0.55rem, 1.5vw, 0.85rem);
+  }
+
+  .game-settings legend {
+    padding-inline: 0.2rem;
+    font-size: clamp(0.72rem, 2.2vw, 1rem);
+    white-space: nowrap;
   }
 
   .stepper {
-    min-height: 3.5rem;
+    min-height: clamp(2.35rem, 7vw, 3.5rem);
+    grid-template-columns:
+      clamp(2.35rem, 7vw, 3.5rem)
+      clamp(1.9rem, 6vw, 3.3rem)
+      clamp(2.35rem, 7vw, 3.5rem);
+    gap: clamp(0.15rem, 0.8vw, 0.4rem);
+  }
+
+  .stepper button {
+    width: clamp(2.35rem, 7vw, 3.5rem);
+    height: clamp(2.35rem, 7vw, 3.5rem);
+    font-size: clamp(1.4rem, 4vw, 2rem);
+  }
+
+  .stepper output strong {
+    font-size: clamp(1.75rem, 5vw, 2.45rem);
   }
 
   .library-dialog {

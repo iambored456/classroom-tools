@@ -10,6 +10,7 @@ const rootDir = resolve(import.meta.dirname, '..')
 const setupShot = join(tmpdir(), 'classroom-wordle-setup.png')
 const chooserShot = join(tmpdir(), 'classroom-wordle-word-chooser.png')
 const gameShot = join(tmpdir(), 'classroom-wordle-game.png')
+const mobileSetupShot = join(tmpdir(), 'classroom-wordle-mobile-setup.png')
 const mobileShot = join(tmpdir(), 'classroom-wordle-mobile.png')
 
 const server = await startStaticServer({
@@ -238,6 +239,18 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 })
   await page.reload({ waitUntil: 'networkidle' })
+  const mobileSettingBoxes = await page.locator('.game-settings fieldset').evaluateAll((fieldsets) =>
+    fieldsets.map((fieldset) => {
+      const rect = fieldset.getBoundingClientRect()
+      return { left: rect.left, right: rect.right, top: rect.top }
+    }),
+  )
+  assert.equal(mobileSettingBoxes.length, 2)
+  assert.ok(Math.abs(mobileSettingBoxes[0].top - mobileSettingBoxes[1].top) <= 1)
+  assert.ok(mobileSettingBoxes[0].right < mobileSettingBoxes[1].left)
+  assert.ok(mobileSettingBoxes.every((box) => box.left >= 0 && box.right <= 390))
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1), false)
+  await page.screenshot({ path: mobileSetupShot, fullPage: false })
   await page.getByRole('button', { name: 'More letters' }).click()
   await page.getByRole('button', { name: /Word Library/ }).click()
   await page.getByText('No set is on').waitFor()
@@ -249,6 +262,7 @@ try {
   console.log(`Setup: ${setupShot}`)
   console.log(`Word chooser: ${chooserShot}`)
   console.log(`Game: ${gameShot}`)
+  console.log(`Mobile setup: ${mobileSetupShot}`)
   console.log(`Mobile library: ${mobileShot}`)
 
   await context.close()

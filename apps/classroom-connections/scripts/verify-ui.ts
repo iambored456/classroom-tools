@@ -159,6 +159,47 @@ try {
       await page.getByRole('button', { name: 'Shuffle' }).evaluate((button) => getComputedStyle(button).fontSize),
     ) >= 18,
   )
+  await page.setViewportSize({ width: 1600, height: 1000 })
+  const wideLayout = await page.evaluate(() => {
+    const main = document.querySelector<HTMLElement>('.game-main')?.getBoundingClientRect()
+    const tile = document.querySelector<HTMLElement>('.word-tile')?.getBoundingClientRect()
+    const controls = document.querySelector<HTMLElement>('.game-controls')?.getBoundingClientRect()
+    const home = document.querySelector<HTMLElement>('.home-action')?.getBoundingClientRect()
+    const shuffle = document.querySelector<HTMLElement>('.game-controls .control-button')?.getBoundingClientRect()
+    return {
+      mainWidth: main?.width ?? 0,
+      tileWidth: tile?.width ?? 0,
+      controlsWidth: controls?.width ?? 0,
+      homeLeft: home?.left ?? 0,
+      homeTop: home?.top ?? 0,
+      shuffleLeft: shuffle?.left ?? 0,
+      shuffleTop: shuffle?.top ?? 0,
+      shuffleWidth: shuffle?.width ?? 0,
+    }
+  })
+  assert.ok(wideLayout.mainWidth >= 1590, JSON.stringify(wideLayout))
+  assert.ok(wideLayout.tileWidth >= 380, JSON.stringify(wideLayout))
+  assert.ok(wideLayout.controlsWidth >= 1560, JSON.stringify(wideLayout))
+  assert.ok(wideLayout.shuffleWidth >= 450, JSON.stringify(wideLayout))
+  assert.ok(wideLayout.homeLeft < wideLayout.shuffleLeft)
+  assert.ok(Math.abs(wideLayout.homeTop - wideLayout.shuffleTop) <= 1)
+  await page.setViewportSize({ width: 1200, height: 900 })
+  const hoveredTile = page.locator('.word-tile').first()
+  await hoveredTile.click()
+  await page.waitForFunction(() => {
+    const tile = document.querySelector<HTMLElement>('.word-tile:hover.selected')
+    return tile && getComputedStyle(tile).backgroundColor === 'rgb(183, 175, 245)'
+  })
+  assert.equal(await hoveredTile.evaluate((tile) => tile.matches(':hover')), true)
+  assert.deepEqual(
+    await hoveredTile.evaluate((tile) => {
+      const style = getComputedStyle(tile)
+      return { background: style.backgroundColor, color: style.color }
+    }),
+    { background: 'rgb(183, 175, 245)', color: 'rgb(25, 23, 33)' },
+  )
+  await hoveredTile.click()
+  await page.waitForFunction(() => !document.querySelector('.word-tile.selected'))
   await page.getByRole('button', { name: 'Return to home' }).click()
   await page.getByRole('dialog', { name: 'Are you sure you want to exit the game?' }).waitFor()
   await page.getByRole('button', { name: 'Stay' }).click()
@@ -215,6 +256,17 @@ try {
   await page.getByRole('button', { name: 'Submit' }).click()
   await page.locator('.solving-stage').waitFor()
   await page.waitForTimeout(180)
+  assert.deepEqual(
+    new Set(
+      await page.locator('.moving-card-clone').evaluateAll((tiles) =>
+        tiles.map((tile) => {
+          const style = getComputedStyle(tile)
+          return `${style.backgroundColor}|${style.color}`
+        }),
+      ),
+    ),
+    new Set(['rgb(183, 175, 245)|rgb(25, 23, 33)']),
+  )
   await page.screenshot({ path: movingShot, fullPage: false })
   await page.locator('.solved-group').waitFor()
   const solvingClassHistory = await page.evaluate(
