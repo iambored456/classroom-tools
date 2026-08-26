@@ -265,7 +265,7 @@ try {
         }),
       ),
     ),
-    new Set(['rgb(183, 175, 245)|rgb(25, 23, 33)']),
+    new Set(['rgb(98, 91, 135)|rgb(255, 255, 255)']),
   )
   await page.screenshot({ path: movingShot, fullPage: false })
   await page.locator('.solved-group').waitFor()

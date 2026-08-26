@@ -26,6 +26,7 @@
   let libraryOpen = false
   let roundSetupOpen = false
   let exitConfirmOpen = false
+  let returningHomeWithinApp = false
   let library: WordLibraryData = createStarterLibrary()
   let selectedLength: WordLength = 5
   let guessLimit = 6
@@ -212,11 +213,7 @@
 
   const eraseLetter = () => {
     if (screen !== 'game' || gameEnded) return
-    if (currentGuess) {
-      currentGuess = currentGuess.slice(0, -1)
-    } else {
-      returnHome()
-    }
+    if (currentGuess) currentGuess = currentGuess.slice(0, -1)
   }
 
   const useKey = (key: string) => {
@@ -250,6 +247,7 @@
     exitConfirmOpen = false
     closeRoundSetup()
     if (screen === 'game' && history.state?.classroomWordleScreen === 'game') {
+      returningHomeWithinApp = true
       history.back()
       return
     }
@@ -276,6 +274,15 @@
     exitConfirmOpen = false
     closeRoundSetup()
     gameMessage = ''
+    if (returningHomeWithinApp) {
+      returningHomeWithinApp = false
+      screen = 'home'
+      return
+    }
+    if (screen === 'game' && event.state?.classroomWordleScreen !== 'game') {
+      window.location.assign(new URL('../', window.location.href).href)
+      return
+    }
     screen = event.state?.classroomWordleScreen === 'game' && answer ? 'game' : 'home'
   }
 

@@ -137,18 +137,25 @@ try {
   await page.keyboard.press('Backspace')
   assert.equal(await page.locator('.guess-row').first().innerText(), '')
   await page.keyboard.press('Backspace')
-  await page.getByRole('heading', { name: 'Classroom Wordle' }).waitFor()
-  assert.equal(new URL(page.url()).pathname, '/')
+  await page.locator('.word-grid').waitFor()
+  assert.equal(await page.getByRole('heading', { name: 'Classroom Wordle' }).count(), 0)
+  await page.getByRole('button', { name: 'Backspace' }).click()
+  await page.locator('.word-grid').waitFor()
 
+  await page.evaluate(() => {
+    const state = history.state && typeof history.state === 'object' ? history.state : {}
+    history.replaceState({ ...state, classroomWordleScreen: 'home' }, '', '/classroom-tools/classroom-wordle/')
+    history.pushState({ ...state, classroomWordleScreen: 'game' }, '', '/classroom-tools/classroom-wordle/')
+  })
+  await page.goBack()
+  await page.waitForURL((url) => url.pathname === '/classroom-tools/')
+  assert.equal(new URL(page.url()).pathname, '/classroom-tools/')
+
+  await page.goto(server.url, { waitUntil: 'networkidle' })
+  await page.getByRole('heading', { name: 'Classroom Wordle' }).waitFor()
   await page.getByRole('button', { name: /Play 3-letter Wordle/ }).click()
   await page.getByLabel('Type in the word').fill('cat')
   await page.getByRole('button', { name: 'Use this word' }).click()
-  await page.locator('.word-grid').waitFor()
-
-  await page.goBack()
-  await page.getByRole('heading', { name: 'Classroom Wordle' }).waitFor()
-  assert.equal(new URL(page.url()).pathname, '/')
-  await page.goForward()
   await page.locator('.word-grid').waitFor()
 
   await page.keyboard.type('aaa')
@@ -237,7 +244,7 @@ try {
   assert.ok(keyboardBox)
   assert.ok(keyboardBox.y + keyboardBox.height <= 901, JSON.stringify(keyboardBox))
 
-  await page.setViewportSize({ width: 390, height: 844 })
+  await page.setViewportSize({ width: 320, height: 844 })
   await page.reload({ waitUntil: 'networkidle' })
   const mobileSettingBoxes = await page.locator('.game-settings fieldset').evaluateAll((fieldsets) =>
     fieldsets.map((fieldset) => {
@@ -248,7 +255,7 @@ try {
   assert.equal(mobileSettingBoxes.length, 2)
   assert.ok(Math.abs(mobileSettingBoxes[0].top - mobileSettingBoxes[1].top) <= 1)
   assert.ok(mobileSettingBoxes[0].right < mobileSettingBoxes[1].left)
-  assert.ok(mobileSettingBoxes.every((box) => box.left >= 0 && box.right <= 390))
+  assert.ok(mobileSettingBoxes.every((box) => box.left >= 0 && box.right <= 320))
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1), false)
   await page.screenshot({ path: mobileSetupShot, fullPage: false })
   await page.getByRole('button', { name: 'More letters' }).click()

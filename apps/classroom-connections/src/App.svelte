@@ -249,8 +249,8 @@
       clone.style.top = `${sourceRect.top}px`
       clone.style.width = `${sourceRect.width}px`
       clone.style.height = `${sourceRect.height}px`
-      clone.style.backgroundColor = sourceStyle.backgroundColor
-      clone.style.color = sourceStyle.color
+      clone.style.backgroundColor = sourceStyle.getPropertyValue('--moving-tile').trim() || sourceStyle.backgroundColor
+      clone.style.color = sourceStyle.getPropertyValue('--moving-tile-text').trim() || sourceStyle.color
       document.body.appendChild(clone)
 
       return [{ tileId: tile.id, element: clone, sourceRect }]

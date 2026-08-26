@@ -26,6 +26,8 @@
   --landing: #aaa2f5;
   --tile: #efefe7;
   --selected: #5a594e;
+  --moving-tile: #5a594e;
+  --moving-tile-text: #fff;
   --line: #deded8;
 }
 
@@ -764,6 +766,8 @@ select:focus-visible,
   background: #15141e;
   --tile: #302f3b;
   --selected: #b7aff5;
+  --moving-tile: #625b87;
+  --moving-tile-text: #fff;
 }
 
 .game-screen.dark-mode .header-action {
