@@ -191,6 +191,65 @@ select:focus-visible,
   font-weight: 700;
 }
 
+.game-settings {
+  width: fit-content;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.game-settings fieldset {
+  width: max-content;
+  min-width: 0;
+  margin: 0;
+  padding: 0.85rem;
+  border: 1px solid rgba(18, 18, 18, 0.25);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.game-settings legend {
+  padding: 0 0.3rem;
+  color: #282532;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.stepper {
+  display: grid;
+  grid-template-columns: 3.25rem 3rem 3.25rem;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.stepper button {
+  width: 3.25rem;
+  height: 3.25rem;
+  border: 1px solid rgba(18, 18, 18, 0.42);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.32);
+  color: #17151f;
+  font-size: 1.9rem;
+  font-weight: 800;
+}
+
+.stepper button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.stepper button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.stepper output strong {
+  font-size: 2.35rem;
+  line-height: 1;
+}
+
 .landing-actions {
   width: min(100%, 34rem);
   display: grid;
@@ -230,6 +289,18 @@ select:focus-visible,
 
 .landing-button.secondary:hover {
   background: rgba(255, 255, 255, 0.18);
+}
+
+.library-button-label,
+.library-button-label strong,
+.library-button-label small {
+  display: block;
+}
+
+.library-button-label small {
+  margin-top: 0.18rem;
+  font-size: 0.78em;
+  font-weight: 700;
 }
 
 .home-message {
@@ -359,7 +430,7 @@ select:focus-visible,
 }
 
 .game-main {
-  --game-row-height: clamp(5.75rem, min(14vw, 18vh), 16rem);
+  --game-row-height: clamp(4rem, calc((100dvh - 13rem) / var(--group-count)), 16rem);
   width: 100%;
   margin: 0 auto;
   padding: clamp(0.65rem, 1.5vw, 1rem) 1rem 2rem;
@@ -495,11 +566,12 @@ select:focus-visible,
   display: grid;
   place-items: center;
   padding: 0.55rem 0.35rem;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  white-space: nowrap;
   border-radius: 7px;
   background: var(--tile);
   color: #111;
-  font-size: clamp(0.9rem, 2.2vw, 2.5rem);
+  font-size: var(--tile-word-font-size, clamp(0.9rem, 2.2vw, 2.5rem));
   font-weight: 800;
   line-height: 1.08;
   text-align: center;
@@ -557,12 +629,13 @@ select:focus-visible,
   min-width: 0;
   min-height: var(--game-row-height);
   padding: 0.55rem 0.35rem;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  white-space: nowrap;
   border: 0;
   border-radius: 7px;
   background: var(--tile);
   color: #111;
-  font-size: clamp(0.9rem, 2.2vw, 2.5rem);
+  font-size: var(--tile-word-font-size, clamp(0.9rem, 2.2vw, 2.5rem));
   font-weight: 800;
   line-height: 1.08;
   text-transform: uppercase;
@@ -590,6 +663,26 @@ select:focus-visible,
 
 .word-tile.wrong {
   animation: wrong-shake 460ms ease-in-out both;
+}
+
+.word-tile.hinted {
+  background: #568f4b;
+  color: #fff;
+  animation: hint-spin 650ms cubic-bezier(0.3, 0.72, 0.25, 1) both;
+}
+
+@keyframes hint-spin {
+  from {
+    transform: rotateY(0deg) scale(0.98);
+  }
+
+  55% {
+    transform: rotateY(200deg) scale(1.04);
+  }
+
+  to {
+    transform: rotateY(360deg) scale(0.98);
+  }
 }
 
 .moving-card-clone {
@@ -633,6 +726,21 @@ select:focus-visible,
 .mistake-dots > span.spent {
   opacity: 0.14;
   transform: scale(0.65);
+}
+
+.hint-button {
+  min-height: 2.35rem;
+  padding: 0.3rem 1rem;
+  border: 1px solid #43743b;
+  border-radius: 999px;
+  background: #568f4b;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.hint-button:hover:not(:disabled) {
+  background: #477d3e;
 }
 
 .game-controls {
@@ -793,6 +901,12 @@ select:focus-visible,
   color: #191721;
 }
 
+.game-screen.dark-mode .word-tile.hinted,
+.game-screen.dark-mode .word-tile.hinted:hover {
+  background: #64a956 !important;
+  color: #fff !important;
+}
+
 .game-screen.dark-mode .solved-group,
 .game-screen.dark-mode .solving-stage.illuminating {
   color: #17151d;
@@ -843,6 +957,169 @@ select:focus-visible,
 
 .game-screen.dark-mode .completion-time strong {
   color: #fff;
+}
+
+/* Scoreboard */
+
+.scoreboard-backdrop {
+  position: fixed;
+  z-index: 70;
+  inset: 0;
+  background: rgba(22, 20, 31, 0.62);
+  backdrop-filter: blur(6px);
+}
+
+.scoreboard-dialog {
+  position: fixed;
+  z-index: 71;
+  inset: 50% auto auto 50%;
+  width: min(calc(100% - 2rem), 58rem);
+  max-height: min(88dvh, 45rem);
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1rem, 3vw, 1.6rem);
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+  border: 1px solid #d1d1ca;
+  border-radius: 20px;
+  background: #fbfbf7;
+  color: #171717;
+  box-shadow: 0 26px 90px rgba(22, 20, 31, 0.38);
+  animation: modal-in 180ms ease-out both;
+}
+
+.scoreboard-dialog.dark-mode {
+  border-color: #555260;
+  background: #24232e;
+  color: #f8f7fb;
+}
+
+.scoreboard-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.scoreboard-heading p,
+.scoreboard-heading h2 {
+  margin: 0;
+}
+
+.scoreboard-heading p {
+  color: #67635b;
+  font-size: 0.8rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.scoreboard-dialog.dark-mode .scoreboard-heading p {
+  color: #bcb8c7;
+}
+
+.scoreboard-heading h2 {
+  margin-top: 0.12rem;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+}
+
+.scoreboard-heading > button {
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 1px solid #aaa69f;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.scoreboard-table-wrap {
+  overflow: auto;
+  border: 1px solid #deded7;
+  border-radius: 12px;
+}
+
+.scoreboard-dialog.dark-mode .scoreboard-table-wrap {
+  border-color: #4f4c59;
+}
+
+.scoreboard-dialog table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreboard-dialog th,
+.scoreboard-dialog td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e1da;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.scoreboard-dialog th {
+  background: #efefe9;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.scoreboard-dialog tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.scoreboard-dialog.dark-mode th {
+  background: #302f3b;
+}
+
+.scoreboard-dialog.dark-mode th,
+.scoreboard-dialog.dark-mode td {
+  border-color: #4f4c59;
+}
+
+.empty-scoreboard {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.scoreboard-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.scoreboard-actions button {
+  min-height: 3.1rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid #77736d;
+  border-radius: 999px;
+  background: #fff;
+  color: #171717;
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.scoreboard-actions button:disabled {
+  opacity: 0.4;
+}
+
+.scoreboard-actions .close-scoreboard-button {
+  border-color: #171717;
+  background: #171717;
+  color: #fff;
+}
+
+.scoreboard-dialog.dark-mode .scoreboard-actions button {
+  border-color: #777380;
+  background: #302f3b;
+  color: #fff;
+}
+
+.scoreboard-dialog.dark-mode .scoreboard-actions .close-scoreboard-button {
+  border-color: #eeecf5;
+  background: #eeecf5;
+  color: #17151d;
 }
 
 /* Exit confirmation */
@@ -1109,6 +1386,46 @@ select:focus-visible,
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 0.6rem;
+}
+
+.tier-toggle {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.25rem 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.tier-chevron {
+  display: inline-grid;
+  place-items: center;
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
+.tier-toggle[aria-expanded='true'] .tier-chevron {
+  transform: rotate(180deg);
+}
+
+.tier-content {
+  animation: tier-open 160ms ease-out both;
+}
+
+@keyframes tier-open {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .tier-title-row {
@@ -1489,6 +1806,46 @@ select:focus-visible,
 }
 
 @media (max-width: 760px) {
+  .landing-screen {
+    overflow: auto;
+    align-items: start;
+    padding-top: 4rem;
+    padding-bottom: 5.5rem;
+  }
+
+  .game-settings {
+    width: min(100%, 30rem);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 1.2rem;
+  }
+
+  .game-settings fieldset {
+    width: 100%;
+    padding: 0.55rem;
+  }
+
+  .game-settings legend {
+    padding-inline: 0.15rem;
+    font-size: clamp(0.72rem, 2.2vw, 0.95rem);
+    white-space: nowrap;
+  }
+
+  .stepper {
+    grid-template-columns: 2.4rem minmax(1.8rem, 1fr) 2.4rem;
+    gap: 0.2rem;
+  }
+
+  .stepper button {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1.45rem;
+  }
+
+  .stepper output strong {
+    font-size: 1.8rem;
+  }
+
   .game-main {
     padding-inline: 0.6rem;
   }
@@ -1560,7 +1917,6 @@ select:focus-visible,
     min-height: clamp(4.3rem, 20vw, 5.5rem);
     padding: 0.4rem 0.18rem;
     border-radius: 5px;
-    font-size: clamp(0.72rem, 3.3vw, 1rem);
   }
 
   .solved-group {
@@ -1584,7 +1940,6 @@ select:focus-visible,
   .solving-card {
     padding: 0.4rem 0.18rem;
     border-radius: 5px;
-    font-size: clamp(0.72rem, 3.3vw, 1rem);
   }
 
   .solved-group h2 {

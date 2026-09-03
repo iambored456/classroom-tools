@@ -35,6 +35,11 @@ const appDistTargets = [
     targetSubdir: 'classroom-connections',
   },
   {
+    name: 'book-of-questions',
+    distPath: join(rootDir, 'apps/book-of-questions/dist'),
+    targetSubdir: 'book-of-questions',
+  },
+  {
     name: 'classroom-wordle',
     distPath: join(rootDir, 'apps/classroom-wordle/dist'),
     targetSubdir: 'classroom-wordle',

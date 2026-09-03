@@ -87,6 +87,7 @@ function buildTargets(rootBase) {
   const classClockBase = appendPath(rootBase, 'class-clock')
   const classScheduleWidgetBase = appendPath(rootBase, 'class-schedule-widget')
   const classroomConnectionsBase = appendPath(rootBase, 'classroom-connections')
+  const bookOfQuestionsBase = appendPath(rootBase, 'book-of-questions')
   const classroomWordleBase = appendPath(rootBase, 'classroom-wordle')
   const readAlongBase = appendPath(rootBase, 'read-along-highlighter')
   const whackAMoleBase = appendPath(rootBase, 'launchpad-whack-a-mole')
@@ -94,6 +95,7 @@ function buildTargets(rootBase) {
   const launchpadControllerBase = appendPath(rootBase, 'launchpad-controller')
   const taxBracketsMarbleVisualBase = appendPath(rootBase, 'tax-brackets-marble-visual')
   const coordinatesBase = appendPath(rootBase, 'coordinates')
+  const simpleCompoundInterestBase = appendPath(rootBase, 'simple-compound-interest')
   const oklchVisualizerBase = appendPath(rootBase, 'oklch-visualizer')
   const rugbyPlayVisualizerBase = appendPath(rootBase, 'rugby-play-visualizer')
   const cityNavigatorBase = appendPath(rootBase, 'city-navigator')
@@ -127,6 +129,20 @@ function buildTargets(rootBase) {
       basePath: classroomConnectionsBase,
       route: classroomConnectionsBase,
       waitFor: '.landing-card .landing-button',
+      delayMs: 250,
+      injectCss: `
+.hub-link {
+  display: none !important;
+}
+`,
+    },
+    {
+      id: 'book-of-questions',
+      outputFile: 'BookOfQuestions-screenshot.png',
+      distDir: 'apps/book-of-questions/dist',
+      basePath: bookOfQuestionsBase,
+      route: bookOfQuestionsBase,
+      waitFor: '.landing-card .new-session-button',
       delayMs: 250,
       injectCss: `
 .hub-link {
@@ -305,6 +321,21 @@ button {
 }
 .workspace {
   grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.8fr) !important;
+}
+`,
+    },
+    {
+      id: 'simple-compound-interest',
+      outputFile: 'SimpleCompoundInterest-screenshot.png',
+      distDir: 'apps/simple-compound-interest/dist',
+      basePath: simpleCompoundInterestBase,
+      route: simpleCompoundInterestBase,
+      waitFor: '.chart-stage .chart',
+      delayMs: 300,
+      injectCss: `
+.home-link,
+.fullscreen-button {
+  display: none !important;
 }
 `,
     },

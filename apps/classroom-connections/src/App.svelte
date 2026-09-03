@@ -14,9 +14,29 @@
   type Screen = 'home' | 'game'
   type StatusTone = 'neutral' | 'success' | 'error'
   type SubmissionPhase = 'idle' | 'pending' | 'wrong' | 'moving' | 'illuminating'
+  type ScoreEntry = {
+    id: string
+    completedAt: number
+    durationMs: number
+    groupCount: number
+    guessesUsed: number
+    guessLimit: number
+  }
 
-  const MAX_MISTAKES = 4
+  const MIN_GROUPS = 2
+  const MAX_GROUPS = 6
+  const MIN_GUESSES = 3
+  const MAX_GUESSES = 10
+  const SETTINGS_KEY = 'classroom-connections:settings:v1'
+  const SCORE_HISTORY_KEY = 'classroom-connections:score-history:v1'
   const THEME_KEY = 'classroom-connections:dark-mode:v1'
+  const groupCountWords: Record<number, string> = {
+    2: 'two',
+    3: 'three',
+    4: 'four',
+    5: 'five',
+    6: 'six',
+  }
   const logoUrl = `${import.meta.env.BASE_URL}logo.svg`
 
   let screen: Screen = 'home'
@@ -24,12 +44,14 @@
   let exitConfirmOpen = false
   let darkMode = true
   let groups: WordGroup[] = createStarterGroups()
+  let groupCount = 4
+  let guessLimit = 4
   let activeGroups: WordGroup[] = []
   let tiles: GameTile[] = []
   let selectedIds: string[] = []
   let solvedGroups: WordGroup[] = []
   let revealedGroupIds: string[] = []
-  let mistakesRemaining = MAX_MISTAKES
+  let guessesRemaining = guessLimit
   let statusMessage = ''
   let statusTone: StatusTone = 'neutral'
   let gameEnded = false
@@ -46,8 +68,20 @@
   let homeMessage = ''
   let exitStayButton: HTMLButtonElement | null = null
   let statusTimer: ReturnType<typeof setTimeout> | null = null
+  let tileFontMeasureFrame: number | null = null
+  let hintGroupId: string | null = null
+  let hintAvailable = false
+  let hintedTileIds: string[] = []
+  let scoreHistory: ScoreEntry[] = []
+  let scoreboardOpen = false
 
   $: enabledCount = groups.filter((group) => group.enabled).length
+  $: enabledDifficulties = DIFFICULTIES.filter((difficulty) =>
+    groups.some((group) => group.enabled && group.difficulty === difficulty),
+  )
+  $: enabledDifficultySummary =
+    enabledDifficulties.map((difficulty) => difficulty[0].toUpperCase() + difficulty.slice(1)).join(', ') ||
+    'No difficulties enabled'
   $: isSubmitting = submissionPhase !== 'idle'
 
   const delay = (duration: number) => new Promise<void>((resolve) => setTimeout(resolve, duration))
@@ -70,19 +104,20 @@
   const chooseGameGroups = (
     availableGroups: WordGroup[],
     playedGroupIds: Set<string>,
+    requestedGroupCount: number,
   ): WordGroup[] => {
     const candidates = shuffle(availableGroups)
     const picked: WordGroup[] = []
     const usedWords = new Set<string>()
     const maximumFreshGroups = Math.min(
-      4,
+      requestedGroupCount,
       candidates.filter((group) => !playedGroupIds.has(group.id)).length,
     )
     let bestPicked: WordGroup[] = []
     let bestFreshCount = -1
 
     const search = (startIndex: number): boolean => {
-      if (picked.length === 4) {
+      if (picked.length === requestedGroupCount) {
         const freshCount = picked.filter((group) => !playedGroupIds.has(group.id)).length
         if (freshCount > bestFreshCount) {
           bestFreshCount = freshCount
@@ -91,7 +126,7 @@
         return freshCount === maximumFreshGroups
       }
 
-      if (picked.length + candidates.length - startIndex < 4) return false
+      if (picked.length + candidates.length - startIndex < requestedGroupCount) return false
 
       for (let index = startIndex; index < candidates.length; index += 1) {
         const candidate = candidates[index]
@@ -147,14 +182,50 @@
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
+  const formatCompletedAt = (timestamp: number) =>
+    new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(timestamp))
+
+  const saveScoreHistory = (history: ScoreEntry[]) => {
+    scoreHistory = history
+    try {
+      localStorage.setItem(SCORE_HISTORY_KEY, JSON.stringify(history))
+    } catch {
+      // Score history remains available for this visit when storage is unavailable.
+    }
+  }
+
+  const recordScore = () => {
+    const completedAt = Date.now()
+    const entry: ScoreEntry = {
+      id: `${completedAt}-${Math.random().toString(36).slice(2, 8)}`,
+      completedAt,
+      durationMs: completedTimeMs ?? 0,
+      groupCount,
+      guessesUsed: guessLimit - guessesRemaining,
+      guessLimit,
+    }
+    saveScoreHistory([entry, ...scoreHistory].slice(0, 50))
+    scoreboardOpen = true
+  }
+
+  const clearScoreHistory = () => saveScoreHistory([])
+
   const assignPuzzleColours = (chosenGroups: WordGroup[]): Record<string, Difficulty> => {
     const rankedGroups = [...chosenGroups].sort(
       (first, second) =>
         DIFFICULTIES.indexOf(first.difficulty) - DIFFICULTIES.indexOf(second.difficulty),
     )
 
+    const lastColourIndex = DIFFICULTIES.length - 1
+    const lastGroupIndex = Math.max(1, rankedGroups.length - 1)
     return Object.fromEntries(
-      rankedGroups.map((group, index) => [group.id, DIFFICULTIES[index]]),
+      rankedGroups.map((group, index) => [
+        group.id,
+        DIFFICULTIES[Math.round((index * lastColourIndex) / lastGroupIndex)],
+      ]),
     )
   }
 
@@ -172,14 +243,82 @@
     }
   }
 
+  const saveSettings = () => {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ groupCount, guessLimit }))
+    } catch {
+      // Settings still work for this session when storage is unavailable.
+    }
+  }
+
+  const changeGroupCount = (amount: number) => {
+    groupCount = Math.min(MAX_GROUPS, Math.max(MIN_GROUPS, groupCount + amount))
+    saveSettings()
+    homeMessage = ''
+  }
+
+  const changeGuessLimit = (amount: number) => {
+    guessLimit = Math.min(MAX_GUESSES, Math.max(MIN_GUESSES, guessLimit + amount))
+    saveSettings()
+  }
+
+  const measureTileFontSize = () => {
+    if (screen !== 'game' || !gameBoard || activeGroups.length === 0) return
+    const sampleTile = gameBoard.querySelector<HTMLElement>('.word-tile')
+    if (!sampleTile) return
+
+    const tileRect = sampleTile.getBoundingClientRect()
+    const tileStyle = getComputedStyle(sampleTile)
+    const measurement = document.createElement('span')
+    measurement.style.cssText = `
+      position: fixed;
+      left: -10000px;
+      top: -10000px;
+      visibility: hidden;
+      white-space: nowrap;
+      font-family: ${tileStyle.fontFamily};
+      font-size: 100px;
+      font-weight: ${tileStyle.fontWeight};
+      letter-spacing: ${tileStyle.letterSpacing};
+      text-transform: uppercase;
+    `
+    document.body.appendChild(measurement)
+
+    let widestWordAt100Px = 1
+    activeGroups.flatMap((group) => group.words).forEach((word) => {
+      measurement.textContent = word
+      widestWordAt100Px = Math.max(widestWordAt100Px, measurement.getBoundingClientRect().width)
+    })
+    measurement.remove()
+
+    const horizontalPadding =
+      Number.parseFloat(tileStyle.paddingLeft) + Number.parseFloat(tileStyle.paddingRight)
+    const verticalPadding =
+      Number.parseFloat(tileStyle.paddingTop) + Number.parseFloat(tileStyle.paddingBottom)
+    const innerMargin = Math.max(8, tileRect.width * 0.08)
+    const widthLimitedSize =
+      ((tileRect.width - horizontalPadding - innerMargin) * 100) / widestWordAt100Px
+    const heightLimitedSize = (tileRect.height - verticalPadding) * 0.44
+    const nextSize = Math.max(8, Math.min(widthLimitedSize, heightLimitedSize))
+    gameBoard.style.setProperty('--tile-word-font-size', `${Math.floor(nextSize * 2) / 2}px`)
+  }
+
+  const scheduleTileFontSize = () => {
+    if (tileFontMeasureFrame !== null) cancelAnimationFrame(tileFontMeasureFrame)
+    tileFontMeasureFrame = requestAnimationFrame(() => {
+      tileFontMeasureFrame = null
+      measureTileFontSize()
+    })
+  }
+
   const startGame = () => {
     const availableGroups = groups.filter((group) => group.enabled)
-    const chosenGroups = chooseGameGroups(availableGroups, sessionPlayedGroupIds)
-    if (chosenGroups.length < 4) {
+    const chosenGroups = chooseGameGroups(availableGroups, sessionPlayedGroupIds, groupCount)
+    if (chosenGroups.length < groupCount) {
       homeMessage =
-        enabledCount < 4
-          ? 'Enable at least four groups before starting a game.'
-          : 'Choose four enabled groups that do not repeat the same word.'
+        enabledCount < groupCount
+          ? `Enable at least ${groupCount} groups before starting a game.`
+          : `Choose ${groupCount} enabled groups that do not repeat the same word.`
       libraryOpen = true
       return
     }
@@ -199,7 +338,7 @@
     selectedIds = []
     solvedGroups = []
     revealedGroupIds = []
-    mistakesRemaining = MAX_MISTAKES
+    guessesRemaining = guessLimit
     gameEnded = false
     gameWon = false
     submissionPhase = 'idle'
@@ -208,14 +347,22 @@
     solvingIlluminating = false
     gameStartedAt = Date.now()
     completedTimeMs = null
+    hintGroupId = null
+    hintAvailable = false
+    hintedTileIds = []
+    scoreboardOpen = false
     homeMessage = ''
     statusMessage = ''
     exitConfirmOpen = false
     screen = 'game'
+    void tick().then(scheduleTileFontSize)
   }
 
   const selectTile = (tileId: string) => {
     if (gameEnded || isSubmitting) return
+    hintGroupId = null
+    hintAvailable = false
+    hintedTileIds = []
     if (selectedIds.includes(tileId)) {
       selectedIds = selectedIds.filter((id) => id !== tileId)
       return
@@ -225,6 +372,21 @@
 
   const selectedVisualIndex = (tileId: string) =>
     tiles.filter((tile) => selectedIds.includes(tile.id)).findIndex((tile) => tile.id === tileId)
+
+  const deselectAll = () => {
+    selectedIds = []
+    hintGroupId = null
+    hintAvailable = false
+    hintedTileIds = []
+  }
+
+  const useHint = () => {
+    if (!hintAvailable || !hintGroupId) return
+    hintedTileIds = tiles
+      .filter((tile) => selectedIds.includes(tile.id) && tile.groupId === hintGroupId)
+      .map((tile) => tile.id)
+    hintAvailable = false
+  }
 
   const animateCorrectGroup = async (matchingGroup: WordGroup, selectedTiles: GameTile[]) => {
     const sourceElements = new Map<string, HTMLElement>()
@@ -249,6 +411,7 @@
       clone.style.top = `${sourceRect.top}px`
       clone.style.width = `${sourceRect.width}px`
       clone.style.height = `${sourceRect.height}px`
+      clone.style.fontSize = sourceStyle.fontSize
       clone.style.backgroundColor = sourceStyle.getPropertyValue('--moving-tile').trim() || sourceStyle.backgroundColor
       clone.style.color = sourceStyle.getPropertyValue('--moving-tile-text').trim() || sourceStyle.color
       document.body.appendChild(clone)
@@ -300,7 +463,7 @@
     })
     await tick()
     movingClones.forEach(({ element }) => element.remove())
-    setStatus(solvedGroups.length === 3 ? 'Perfect!' : 'Nice!', 'success', 1800)
+    setStatus(solvedGroups.length === groupCount - 1 ? 'Perfect!' : 'Nice!', 'success', 1800)
     await delay(animationDuration(340, 100))
 
     solvedGroups = [...solvedGroups, matchingGroup]
@@ -308,9 +471,10 @@
     solvingTiles = []
     solvingIlluminating = false
 
-    if (solvedGroups.length === 4) {
+    if (solvedGroups.length === groupCount) {
       gameEnded = true
       gameWon = true
+      recordScore()
     }
     submissionPhase = 'idle'
   }
@@ -319,6 +483,9 @@
     if (selectedIds.length !== 4 || gameEnded || isSubmitting) return
 
     const selectedTiles = tiles.filter((tile) => selectedIds.includes(tile.id))
+    hintGroupId = null
+    hintAvailable = false
+    hintedTileIds = []
     submissionPhase = 'pending'
     await delay(animationDuration(650, 100))
 
@@ -329,7 +496,7 @@
     )
 
     if (matchingGroup) {
-      if (solvedGroups.length === 3) stopGameTimer()
+      if (solvedGroups.length === groupCount - 1) stopGameTimer()
       await animateCorrectGroup(matchingGroup, selectedTiles)
       return
     }
@@ -338,15 +505,20 @@
     selectedTiles.forEach((tile) => {
       selectedByGroup.set(tile.groupId, (selectedByGroup.get(tile.groupId) ?? 0) + 1)
     })
-    const oneAway = [...selectedByGroup.values()].some((count) => count === 3)
+    const bestMatch = [...selectedByGroup.entries()].sort((first, second) => second[1] - first[1])[0]
+    const matchingCount = bestMatch?.[1] ?? 0
 
-    mistakesRemaining -= 1
-    if (mistakesRemaining <= 0) stopGameTimer()
+    guessesRemaining -= 1
+    if (guessesRemaining <= 0) stopGameTimer()
     submissionPhase = 'wrong'
-    setStatus(oneAway ? 'One away…' : 'Not quite', 'error')
+    setStatus(matchingCount === 3 ? 'Three match' : matchingCount === 2 ? 'Two match' : 'Not quite', 'error')
+    if (matchingCount >= 2 && guessesRemaining > 0) {
+      hintGroupId = bestMatch[0]
+      hintAvailable = true
+    }
     await delay(animationDuration(460, 100))
 
-    if (mistakesRemaining <= 0) {
+    if (guessesRemaining <= 0) {
       const remainingGroups = activeGroups.filter(
         (group) => !solvedGroups.some((solved) => solved.id === group.id),
       )
@@ -369,6 +541,7 @@
   const returnHome = () => {
     if (isSubmitting) return
     exitConfirmOpen = false
+    scoreboardOpen = false
     screen = 'home'
     statusMessage = ''
     selectedIds = []
@@ -413,9 +586,45 @@
     groups = loadGroups()
     sessionPlayedGroupIds = loadSessionPlayedGroupIds()
     try {
+      const savedScores = JSON.parse(localStorage.getItem(SCORE_HISTORY_KEY) ?? '[]') as unknown
+      if (Array.isArray(savedScores)) {
+        scoreHistory = savedScores.filter(
+          (entry): entry is ScoreEntry =>
+            Boolean(entry) &&
+            typeof entry === 'object' &&
+            typeof (entry as ScoreEntry).id === 'string' &&
+            typeof (entry as ScoreEntry).completedAt === 'number' &&
+            typeof (entry as ScoreEntry).durationMs === 'number' &&
+            typeof (entry as ScoreEntry).groupCount === 'number' &&
+            typeof (entry as ScoreEntry).guessesUsed === 'number' &&
+            typeof (entry as ScoreEntry).guessLimit === 'number',
+        )
+      }
+    } catch {
+      scoreHistory = []
+    }
+    try {
       darkMode = localStorage.getItem(THEME_KEY) !== 'false'
+      const rawSettings = localStorage.getItem(SETTINGS_KEY)
+      if (rawSettings) {
+        const settings = JSON.parse(rawSettings) as { groupCount?: unknown; guessLimit?: unknown }
+        if (typeof settings.groupCount === 'number') {
+          groupCount = Math.min(MAX_GROUPS, Math.max(MIN_GROUPS, Math.round(settings.groupCount)))
+        }
+        if (typeof settings.guessLimit === 'number') {
+          guessLimit = Math.min(MAX_GUESSES, Math.max(MIN_GUESSES, Math.round(settings.guessLimit)))
+        }
+      }
     } catch {
       darkMode = true
+    }
+    const handleResize = () => scheduleTileFontSize()
+    window.addEventListener('resize', handleResize)
+    void document.fonts.ready.then(scheduleTileFontSize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      if (tileFontMeasureFrame !== null) cancelAnimationFrame(tileFontMeasureFrame)
     }
   })
 </script>
@@ -436,13 +645,56 @@
 
       <div class="landing-copy">
         <h1 id="landing-title">Classroom<br />Connections</h1>
-        <p>Find four groups of four.</p>
+        <p>Find {groupCountWords[groupCount]} groups of four.</p>
+      </div>
+
+      <div class="game-settings" aria-label="Game setup">
+        <fieldset>
+          <legend>Number of Groups</legend>
+          <div class="stepper">
+            <button
+              type="button"
+              aria-label="Fewer groups"
+              disabled={groupCount <= MIN_GROUPS}
+              on:click={() => changeGroupCount(-1)}
+            >−</button>
+            <output aria-live="polite"><strong>{groupCount}</strong></output>
+            <button
+              type="button"
+              aria-label="More groups"
+              disabled={groupCount >= MAX_GROUPS}
+              on:click={() => changeGroupCount(1)}
+            >+</button>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Number of Guesses</legend>
+          <div class="stepper">
+            <button
+              type="button"
+              aria-label="Fewer guesses"
+              disabled={guessLimit <= MIN_GUESSES}
+              on:click={() => changeGuessLimit(-1)}
+            >−</button>
+            <output aria-live="polite"><strong>{guessLimit}</strong></output>
+            <button
+              type="button"
+              aria-label="More guesses"
+              disabled={guessLimit >= MAX_GUESSES}
+              on:click={() => changeGuessLimit(1)}
+            >+</button>
+          </div>
+        </fieldset>
       </div>
 
       <div class="landing-actions">
         <button type="button" class="landing-button primary" on:click={startGame}>Play</button>
         <button type="button" class="landing-button secondary" on:click={() => (libraryOpen = true)}>
-          Group Library
+          <span class="library-button-label">
+            <strong>Group Library</strong>
+            <small>{enabledDifficultySummary}</small>
+          </span>
         </button>
       </div>
 
@@ -458,7 +710,7 @@
     </label>
   </main>
 {:else}
-  <div class="game-screen" class:dark-mode={darkMode}>
+  <div class="game-screen" class:dark-mode={darkMode} style={`--group-count: ${groupCount};`}>
     <main class="game-main">
       <section
         class="game-board"
@@ -508,6 +760,7 @@
                 class:selected={selectedIds.includes(tile.id)}
                 class:pending={submissionPhase === 'pending' && selectedIds.includes(tile.id)}
                 class:wrong={submissionPhase === 'wrong' && selectedIds.includes(tile.id)}
+                class:hinted={hintedTileIds.includes(tile.id)}
                 style={`--pending-index: ${selectedVisualIndex(tile.id)};`}
                 data-tile-id={tile.id}
                 aria-pressed={selectedIds.includes(tile.id)}
@@ -522,13 +775,16 @@
         {/if}
       </section>
 
-      <div class="mistakes" aria-label={`${mistakesRemaining} mistakes remaining`}>
-        <span>Mistakes Remaining:</span>
+      <div class="mistakes" aria-label={`${guessesRemaining} guesses remaining`}>
+        <span>Guesses Remaining:</span>
         <span class="mistake-dots" aria-hidden="true">
-          {#each Array(MAX_MISTAKES) as _, index}
-            <span class:spent={index >= mistakesRemaining}></span>
+          {#each Array(guessLimit) as _, index}
+            <span class:spent={index >= guessesRemaining}></span>
           {/each}
         </span>
+        {#if hintAvailable}
+          <button type="button" class="hint-button" disabled={isSubmitting} on:click={useHint}>Hint</button>
+        {/if}
       </div>
 
       {#if gameEnded}
@@ -561,7 +817,7 @@
             type="button"
             class="control-button"
             disabled={selectedIds.length === 0 || isSubmitting}
-            on:click={() => (selectedIds = [])}
+            on:click={deselectAll}
           >
             Deselect All
           </button>
@@ -579,6 +835,52 @@
 
     <div class={`game-toast ${statusTone}`} class:visible={statusMessage} role="status" aria-live="polite">
       {statusMessage}
+    </div>
+  </div>
+{/if}
+
+{#if scoreboardOpen}
+  <div class="scoreboard-backdrop" aria-hidden="true"></div>
+  <div
+    class="scoreboard-dialog"
+    class:dark-mode={darkMode}
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="scoreboard-title"
+  >
+    <div class="scoreboard-heading">
+      <div>
+        <p>Game history</p>
+        <h2 id="scoreboard-title">Scoreboard</h2>
+      </div>
+      <button type="button" aria-label="Close scoreboard" on:click={() => (scoreboardOpen = false)}>×</button>
+    </div>
+
+    {#if scoreHistory.length > 0}
+      <div class="scoreboard-table-wrap">
+        <table>
+          <thead>
+            <tr><th>Date and time</th><th>Solve time</th><th>Groups</th><th>Guesses</th></tr>
+          </thead>
+          <tbody>
+            {#each scoreHistory as score (score.id)}
+              <tr>
+                <td>{formatCompletedAt(score.completedAt)}</td>
+                <td>{formatElapsedTime(score.durationMs)}</td>
+                <td>{score.groupCount}</td>
+                <td>{score.guessesUsed} / {score.guessLimit}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {:else}
+      <p class="empty-scoreboard">No saved games yet.</p>
+    {/if}
+
+    <div class="scoreboard-actions">
+      <button type="button" class="clear-history-button" disabled={scoreHistory.length === 0} on:click={clearScoreHistory}>Clear History</button>
+      <button type="button" class="close-scoreboard-button" on:click={() => (scoreboardOpen = false)}>Close</button>
     </div>
   </div>
 {/if}

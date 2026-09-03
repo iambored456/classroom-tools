@@ -27,6 +27,10 @@ export default defineConfig({
         target: 'http://localhost:5186',
         changeOrigin: true,
       },
+      '/book-of-questions': {
+        target: 'http://localhost:5188',
+        changeOrigin: true,
+      },
       '/classroom-wordle': {
         target: 'http://localhost:5187',
         changeOrigin: true,

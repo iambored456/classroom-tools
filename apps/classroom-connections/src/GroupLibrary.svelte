@@ -26,6 +26,7 @@
   let formError = ''
   let copyFeedback: { difficulty: Difficulty; message: 'Copied!' | 'Copy failed' } | null = null
   let copyFeedbackTimer: ReturnType<typeof setTimeout> | null = null
+  let expandedDifficulties = new Set<Difficulty>()
 
   $: enabledCount = groups.filter((group) => group.enabled).length
 
@@ -142,6 +143,13 @@
         group.difficulty === difficulty ? { ...group, enabled } : group,
       ),
     )
+  }
+
+  const toggleDifficulty = (difficulty: Difficulty) => {
+    const nextExpanded = new Set(expandedDifficulties)
+    if (nextExpanded.has(difficulty)) nextExpanded.delete(difficulty)
+    else nextExpanded.add(difficulty)
+    expandedDifficulties = nextExpanded
   }
 
   const copyDifficultyGroups = async (difficulty: Difficulty) => {
@@ -301,10 +309,19 @@
         {@const tierGroups = groups.filter((group) => group.difficulty === difficulty)}
         <section class="tier-section" aria-labelledby={`tier-${difficulty}`}>
           <div class="tier-heading">
-            <div class={`tier-title-row ${difficulty}`}>
-              <span class="tier-swatch" aria-hidden="true"></span>
-              <h3 id={`tier-${difficulty}`}>{difficultyDetails[difficulty].label}</h3>
-            </div>
+            <button
+              type="button"
+              class="tier-toggle"
+              aria-expanded={expandedDifficulties.has(difficulty)}
+              aria-controls={`tier-content-${difficulty}`}
+              on:click={() => toggleDifficulty(difficulty)}
+            >
+              <span class={`tier-title-row ${difficulty}`}>
+                <span class="tier-swatch" aria-hidden="true"></span>
+                <h3 id={`tier-${difficulty}`}>{difficultyDetails[difficulty].label}</h3>
+              </span>
+              <span class="tier-chevron" aria-hidden="true">⌄</span>
+            </button>
             <div class="tier-section-actions">
               <button
                 type="button"
@@ -338,8 +355,10 @@
             </div>
           </div>
 
-          {#if tierGroups.length > 0}
-            <div class="group-list">
+          {#if expandedDifficulties.has(difficulty)}
+            <div id={`tier-content-${difficulty}`} class="tier-content">
+            {#if tierGroups.length > 0}
+              <div class="group-list">
               {#each tierGroups as group (group.id)}
                 <article class="group-card" class:disabled={!group.enabled}>
                   <div class="group-toggle-row">
@@ -382,10 +401,12 @@
                   <p class="word-preview">{group.words.join(' · ')}</p>
                 </article>
               {/each}
-            </div>
-          {:else}
-            <div class="empty-tier">
-              <p>No groups are in this difficulty yet.</p>
+              </div>
+            {:else}
+              <div class="empty-tier">
+                <p>No groups are in this difficulty yet.</p>
+              </div>
+            {/if}
             </div>
           {/if}
         </section>

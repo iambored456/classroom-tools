@@ -47,6 +47,10 @@ try {
   )
   await page.locator('.landing-card').waitFor()
   await page.getByRole('heading', { name: 'Classroom Connections' }).waitFor()
+  await page.getByText('Find four groups of four.', { exact: true }).waitFor()
+  await page.getByText('Number of Groups', { exact: true }).waitFor()
+  await page.getByText('Number of Guesses', { exact: true }).waitFor()
+  assert.match(await page.getByRole('button', { name: /Group Library/ }).innerText(), /Easy, Medium, Hard, Tricky/)
   const themeToggle = page.getByRole('checkbox', { name: 'Dark mode' })
   assert.equal(await themeToggle.isChecked(), true)
   const darkLandingBackground = await page.locator('.landing-screen').evaluate((screen) =>
@@ -94,6 +98,13 @@ try {
   await page.getByRole('button', { name: 'Group Library' }).click()
   await page.getByRole('dialog', { name: 'Group Library' }).waitFor()
   assert.equal(await page.locator('.tier-section').count(), 4)
+  assert.equal(await page.locator('.group-card').count(), 0)
+  for (const difficulty of ['Easy', 'Medium', 'Hard', 'Tricky']) {
+    const toggle = page.getByRole('button', { name: difficulty, exact: true })
+    assert.equal(await toggle.getAttribute('aria-expanded'), 'false')
+    await toggle.click()
+    assert.equal(await toggle.getAttribute('aria-expanded'), 'true')
+  }
   assert.equal(await page.locator('.group-card').count(), 96)
 
   const easySection = page.locator('.tier-section').first()
@@ -123,7 +134,8 @@ try {
   })
   await page.reload({ waitUntil: 'networkidle' })
   await page.getByRole('button', { name: 'Group Library' }).click()
-  assert.equal(await page.locator('.group-card').count(), 96)
+  assert.equal(await page.locator('.group-card').count(), 0)
+  await page.getByRole('button', { name: 'Easy', exact: true }).click()
   await page.getByText('Vegetables', { exact: true }).waitFor()
 
   await page.getByRole('button', { name: /Add group/ }).first().click()
@@ -148,12 +160,28 @@ try {
   assert.equal(await page.locator('.game-screen.dark-mode').count(), 1)
   assert.equal(await page.locator('.game-screen').evaluate((screen) => getComputedStyle(screen).backgroundColor), 'rgb(21, 20, 30)')
   assert.equal(await page.locator('.word-tile').count(), 16)
+  assert.equal(await page.getByText('Guesses Remaining:', { exact: true }).count(), 1)
+  assert.equal(await page.locator('.mistake-dots > span').count(), 4)
   assert.equal(await page.getByRole('button', { name: 'Library' }).count(), 0)
   assert.equal(await page.locator('.game-header, .game-instruction').count(), 0)
   assert.ok((await page.locator('.home-action svg').evaluate((icon) => icon.getBoundingClientRect().width)) >= 25)
   assert.ok(
     Number.parseFloat(await page.locator('.word-tile').first().evaluate((tile) => getComputedStyle(tile).fontSize)) >= 20,
   )
+  await page.waitForFunction(() =>
+    Boolean(document.querySelector<HTMLElement>('.game-board')?.style.getPropertyValue('--tile-word-font-size')),
+  )
+  const fittedTileFonts = await page.locator('.word-tile').evaluateAll((tiles) =>
+    tiles.map((tile) => getComputedStyle(tile).fontSize),
+  )
+  assert.equal(new Set(fittedTileFonts).size, 1)
+  assert.equal(
+    await page.locator('.word-tile').evaluateAll((tiles) =>
+      tiles.every((tile) => tile.scrollWidth <= tile.clientWidth && tile.scrollHeight <= tile.clientHeight),
+    ),
+    true,
+  )
+  const regularTileFontSize = Number.parseFloat(fittedTileFonts[0])
   assert.ok(
     Number.parseFloat(
       await page.getByRole('button', { name: 'Shuffle' }).evaluate((button) => getComputedStyle(button).fontSize),
@@ -183,6 +211,10 @@ try {
   assert.ok(wideLayout.shuffleWidth >= 450, JSON.stringify(wideLayout))
   assert.ok(wideLayout.homeLeft < wideLayout.shuffleLeft)
   assert.ok(Math.abs(wideLayout.homeTop - wideLayout.shuffleTop) <= 1)
+  assert.ok(
+    Number.parseFloat(await page.locator('.word-tile').first().evaluate((tile) => getComputedStyle(tile).fontSize)) >=
+      regularTileFontSize,
+  )
   await page.setViewportSize({ width: 1200, height: 900 })
   const hoveredTile = page.locator('.word-tile').first()
   await hoveredTile.click()
@@ -230,11 +262,61 @@ try {
   assert.equal(await page.locator('.word-tile.pending').count(), 4)
   await page.screenshot({ path: pendingShot, fullPage: false })
 
+  await page.getByText('Not quite', { exact: true }).waitFor()
   await page.locator('.word-tile.wrong').first().waitFor()
   assert.equal(await page.locator('.word-tile.wrong').count(), 4)
   await page.screenshot({ path: wrongShot, fullPage: false })
   await page.locator('.word-tile.wrong').first().waitFor({ state: 'detached' })
   assert.equal(await page.locator('.word-tile[aria-pressed="true"]').count(), 4)
+  assert.equal(await page.getByRole('button', { name: 'Hint', exact: true }).count(), 0)
+  await page.getByRole('button', { name: 'Deselect All' }).click()
+
+  for (const word of [...playableGroups[0].words.slice(0, 3), playableGroups[1].words[0]]) {
+    await page
+      .locator('.word-tile')
+      .filter({ hasText: new RegExp(`^${escapeRegExp(word)}$`, 'i') })
+      .click()
+  }
+  await page.getByRole('button', { name: 'Submit' }).click()
+  await page.getByText('Three match', { exact: true }).waitFor()
+  await page.locator('.word-tile.wrong').first().waitFor({ state: 'detached' })
+  const hintButton = page.getByRole('button', { name: 'Hint', exact: true })
+  await hintButton.waitFor()
+  await hintButton.click()
+  assert.equal(await page.locator('.word-tile.hinted').count(), 3)
+  assert.equal(await hintButton.count(), 0)
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll('.word-tile.hinted')].every(
+      (tile) => getComputedStyle(tile).backgroundColor === 'rgb(100, 169, 86)',
+    ),
+  )
+  const hintedTileStyle = await page.locator('.word-tile.hinted').first().evaluate((tile) => {
+    const style = getComputedStyle(tile)
+    return {
+      className: tile.className,
+      backgroundColor: style.backgroundColor,
+      animationName: style.animationName,
+      cssText: (tile as HTMLElement).style.cssText,
+    }
+  })
+  assert.equal(hintedTileStyle.backgroundColor, 'rgb(100, 169, 86)', JSON.stringify(hintedTileStyle))
+  await page.locator('.word-tile.hinted').first().click()
+  assert.equal(await page.locator('.word-tile.hinted').count(), 0)
+  assert.equal(await hintButton.count(), 0)
+  await page.getByRole('button', { name: 'Deselect All' }).click()
+
+  for (const word of [...playableGroups[0].words.slice(0, 2), ...playableGroups[1].words.slice(0, 2)]) {
+    await page
+      .locator('.word-tile')
+      .filter({ hasText: new RegExp(`^${escapeRegExp(word)}$`, 'i') })
+      .click()
+  }
+  await page.getByRole('button', { name: 'Submit' }).click()
+  await page.getByText('Two match', { exact: true }).waitFor()
+  await page.locator('.word-tile.wrong').first().waitFor({ state: 'detached' })
+  await hintButton.waitFor()
+  await page.locator('.word-tile[aria-pressed="true"]').first().click()
+  assert.equal(await hintButton.count(), 0)
   await page.getByRole('button', { name: 'Deselect All' }).click()
 
   const playableGroup = playableGroups[0]
@@ -347,7 +429,13 @@ try {
   const completionTime = page.locator('.completion-time')
   await completionTime.waitFor()
   assert.match(await completionTime.innerText(), /Time\s+\d+:\d{2}/i)
+  const scoreboard = page.getByRole('dialog', { name: 'Scoreboard' })
+  await scoreboard.waitFor()
+  assert.equal(await scoreboard.locator('tbody tr').count(), 1)
+  assert.match(await scoreboard.locator('tbody tr').first().innerText(), /4\s+0 \/ 4/)
+  assert.equal(await scoreboard.getByRole('button', { name: 'Clear History' }).count(), 1)
   await page.screenshot({ path: completionShot, fullPage: false })
+  await scoreboard.getByRole('button', { name: 'Close', exact: true }).click()
 
   const playedBeforeNextRound = await page.evaluate(() => {
     const raw = sessionStorage.getItem('classroom-connections:played-groups:v1')
@@ -380,6 +468,39 @@ try {
   await page.getByRole('button', { name: 'Return to home' }).click()
   await page.getByRole('button', { name: 'Exit game' }).click()
   await page.getByRole('heading', { name: 'Classroom Connections' }).waitFor()
+  assert.match(await page.getByRole('button', { name: /Group Library/ }).innerText(), /Easy/)
+  assert.doesNotMatch(await page.getByRole('button', { name: /Group Library/ }).innerText(), /Medium|Hard|Tricky/)
+
+  await page.getByRole('button', { name: 'Fewer groups' }).click()
+  await page.getByRole('button', { name: 'Fewer groups' }).click()
+  await page.getByRole('button', { name: 'Fewer guesses' }).click()
+  await page.getByRole('button', { name: 'Play', exact: true }).click()
+  assert.equal(await page.locator('.word-tile').count(), 8)
+  assert.equal(
+    await page.locator('.tile-grid').evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').length),
+    4,
+  )
+  assert.equal(
+    await page.locator('.tile-grid').evaluate((grid) => getComputedStyle(grid).gridTemplateRows.split(' ').length),
+    2,
+  )
+  assert.equal(await page.locator('.mistake-dots > span').count(), 3)
+  await page.getByRole('button', { name: 'Return to home' }).click()
+  await page.getByRole('button', { name: 'Exit game' }).click()
+
+  for (let increase = 0; increase < 4; increase += 1) {
+    await page.getByRole('button', { name: 'More groups' }).click()
+  }
+  await page.getByRole('button', { name: 'Play', exact: true }).click()
+  assert.equal(await page.locator('.word-tile').count(), 24)
+  assert.equal(
+    await page.locator('.tile-grid').evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').length),
+    4,
+  )
+  assert.equal(
+    await page.locator('.tile-grid').evaluate((grid) => getComputedStyle(grid).gridTemplateRows.split(' ').length),
+    6,
+  )
 
   console.log('Classroom Connections UI verification passed.')
   console.log(`Landing: ${landingShot}`)

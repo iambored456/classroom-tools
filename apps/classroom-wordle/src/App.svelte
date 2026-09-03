@@ -13,6 +13,15 @@
   import { createStarterLibrary, parseWordText } from './words'
 
   type Screen = 'home' | 'game'
+  type ScoreEntry = {
+    id: string
+    completedAt: number
+    durationMs: number
+    wordLength: number
+    guessesUsed: number
+    guessLimit: number
+    won: boolean
+  }
 
   const KEYBOARD_ROWS = [
     ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
@@ -20,6 +29,7 @@
     ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACKSPACE'],
   ]
   const stateRank: Record<LetterState, number> = { absent: 1, present: 2, correct: 3 }
+  const SCORE_HISTORY_KEY = 'classroom-wordle:score-history:v1'
   const logoUrl = `${import.meta.env.BASE_URL}logo.svg`
 
   let screen: Screen = 'home'
@@ -43,9 +53,12 @@
   let activeSet: WordSet | null = null
   let teacherWord = ''
   let roundSetupError = ''
-  let teacherWordInput: HTMLInputElement | null = null
+  let roundSetupDialog: HTMLDivElement | null = null
   let exitStayButton: HTMLButtonElement | null = null
   let messageTimer: ReturnType<typeof setTimeout> | null = null
+  let gameStartedAt: number | null = null
+  let scoreHistory: ScoreEntry[] = []
+  let scoreboardOpen = false
 
   const usedAnswerIds: Record<WordLength, Set<string>> = {
     3: new Set(),
@@ -102,7 +115,7 @@
     roundSetupError = ''
     roundSetupOpen = true
     await tick()
-    teacherWordInput?.focus()
+    roundSetupDialog?.focus()
   }
 
   const beginRound = (chosenWord: string) => {
@@ -115,6 +128,8 @@
     gameEnded = false
     gameWon = false
     gameMessage = ''
+    gameStartedAt = Date.now()
+    scoreboardOpen = false
     homeMessage = ''
     roundSetupOpen = false
     screen = 'game'
@@ -191,6 +206,45 @@
     }, 1500)
   }
 
+  const formatElapsedTime = (durationMs: number) => {
+    const totalSeconds = Math.max(0, Math.floor(durationMs / 1000))
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  }
+
+  const formatCompletedAt = (timestamp: number) =>
+    new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(timestamp))
+
+  const saveScoreHistory = (history: ScoreEntry[]) => {
+    scoreHistory = history
+    try {
+      localStorage.setItem(SCORE_HISTORY_KEY, JSON.stringify(history))
+    } catch {
+      // Score history remains available for this visit when storage is unavailable.
+    }
+  }
+
+  const recordScore = (guessesUsed: number, won: boolean) => {
+    const completedAt = Date.now()
+    const entry: ScoreEntry = {
+      id: `${completedAt}-${Math.random().toString(36).slice(2, 8)}`,
+      completedAt,
+      durationMs: gameStartedAt === null ? 0 : Math.max(0, completedAt - gameStartedAt),
+      wordLength: selectedLength,
+      guessesUsed,
+      guessLimit,
+      won,
+    }
+    saveScoreHistory([entry, ...scoreHistory].slice(0, 50))
+    scoreboardOpen = true
+  }
+
+  const clearScoreHistory = () => saveScoreHistory([])
+
   const submitGuess = () => {
     if (gameEnded) return
     if (currentGuess.length !== selectedLength) {
@@ -199,11 +253,13 @@
     }
 
     const scored = scoreGuess(currentGuess)
-    submittedGuesses = [...submittedGuesses, scored]
+    const nextGuesses = [...submittedGuesses, scored]
+    submittedGuesses = nextGuesses
     updateKeyboard(scored)
     gameWon = currentGuess === answer
     gameEnded = gameWon || submittedGuesses.length >= guessLimit
     currentGuess = ''
+    if (gameEnded) recordScore(nextGuesses.length, gameWon)
   }
 
   const enterLetter = (letter: string) => {
@@ -223,6 +279,10 @@
   }
 
   const handleKeydown = (event: KeyboardEvent) => {
+    if (scoreboardOpen) {
+      if (event.key === 'Escape') scoreboardOpen = false
+      return
+    }
     if (exitConfirmOpen) {
       if (event.key === 'Escape') exitConfirmOpen = false
       return
@@ -245,6 +305,7 @@
 
   const returnHome = () => {
     exitConfirmOpen = false
+    scoreboardOpen = false
     closeRoundSetup()
     if (screen === 'game' && history.state?.classroomWordleScreen === 'game') {
       returningHomeWithinApp = true
@@ -294,6 +355,25 @@
 
   onMount(() => {
     library = loadLibrary()
+    try {
+      const savedScores = JSON.parse(localStorage.getItem(SCORE_HISTORY_KEY) ?? '[]') as unknown
+      if (Array.isArray(savedScores)) {
+        scoreHistory = savedScores.filter(
+          (entry): entry is ScoreEntry =>
+            Boolean(entry) &&
+            typeof entry === 'object' &&
+            typeof (entry as ScoreEntry).id === 'string' &&
+            typeof (entry as ScoreEntry).completedAt === 'number' &&
+            typeof (entry as ScoreEntry).durationMs === 'number' &&
+            typeof (entry as ScoreEntry).wordLength === 'number' &&
+            typeof (entry as ScoreEntry).guessesUsed === 'number' &&
+            typeof (entry as ScoreEntry).guessLimit === 'number' &&
+            typeof (entry as ScoreEntry).won === 'boolean',
+        )
+      }
+    } catch {
+      scoreHistory = []
+    }
     const settings = loadSettings()
     selectedLength = settings.wordLength
     guessLimit = settings.guessLimit
@@ -375,10 +455,6 @@
           Play
         </button>
         <button type="button" class="landing-button secondary" on:click={() => (libraryOpen = true)}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22V5.5Z"></path>
-            <path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22V5.5Z"></path>
-          </svg>
           <span class="library-button-label">
             <strong>Word Library</strong>
             <small>{activeSet?.label ?? 'No set selected'}</small>
@@ -487,14 +563,57 @@
   </div>
 {/if}
 
+{#if scoreboardOpen}
+  <div class="scoreboard-backdrop" aria-hidden="true"></div>
+  <div class="scoreboard-dialog" role="dialog" aria-modal="true" aria-labelledby="scoreboard-title">
+    <div class="scoreboard-heading">
+      <div>
+        <p>Game history</p>
+        <h2 id="scoreboard-title">Scoreboard</h2>
+      </div>
+      <button type="button" aria-label="Close scoreboard" on:click={() => (scoreboardOpen = false)}>×</button>
+    </div>
+
+    {#if scoreHistory.length > 0}
+      <div class="scoreboard-table-wrap">
+        <table>
+          <thead>
+            <tr><th>Date and time</th><th>Solve time</th><th>Letters</th><th>Guesses</th><th>Result</th></tr>
+          </thead>
+          <tbody>
+            {#each scoreHistory as score (score.id)}
+              <tr>
+                <td>{formatCompletedAt(score.completedAt)}</td>
+                <td>{formatElapsedTime(score.durationMs)}</td>
+                <td>{score.wordLength}</td>
+                <td>{score.guessesUsed} / {score.guessLimit}</td>
+                <td>{score.won ? 'Solved' : 'Not solved'}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {:else}
+      <p class="empty-scoreboard">No saved games yet.</p>
+    {/if}
+
+    <div class="scoreboard-actions">
+      <button type="button" class="clear-history-button" disabled={scoreHistory.length === 0} on:click={clearScoreHistory}>Clear History</button>
+      <button type="button" class="close-scoreboard-button" on:click={() => (scoreboardOpen = false)}>Close</button>
+    </div>
+  </div>
+{/if}
+
 {#if roundSetupOpen}
   <div class="round-setup-backdrop" aria-hidden="true"></div>
   <div
     class="round-setup-dialog"
     class:colorblind-mode={colorblindMode}
+    bind:this={roundSetupDialog}
     role="dialog"
     aria-modal="true"
     aria-labelledby="round-setup-title"
+    tabindex="-1"
   >
     <button type="button" class="round-setup-close" aria-label="Close word chooser" on:click={closeRoundSetup}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
@@ -513,10 +632,9 @@
     <div class="choice-divider"><span>OR</span></div>
 
     <form class="teacher-word-form" on:submit|preventDefault={useTeacherWord}>
-      <label class="sr-only" for="teacher-word">Type in the word</label>
+      <label class="sr-only" for="teacher-word">Type in a word</label>
       <input
         id="teacher-word"
-        bind:this={teacherWordInput}
         bind:value={teacherWord}
         type="text"
         inputmode="text"
@@ -527,7 +645,7 @@
         spellcheck="false"
         data-1p-ignore
         data-lpignore="true"
-        placeholder="Type in the word"
+        placeholder="Type in a word"
         aria-invalid={roundSetupError ? 'true' : undefined}
         on:input={() => (roundSetupError = '')}
       />
