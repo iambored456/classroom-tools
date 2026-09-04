@@ -1,7 +1,8 @@
 import { createStarterLibrary } from './data'
 import type { Category, LibraryState, Question, QuestionSession } from './types'
 
-const LIBRARY_KEY = 'book-of-questions:library:v1'
+const LIBRARY_KEY = 'book-of-questions:library:v2'
+const LEGACY_LIBRARY_KEY = 'book-of-questions:library:v1'
 const SESSIONS_KEY = 'book-of-questions:sessions:v1'
 const THEME_KEY = 'book-of-questions:dark-mode:v1'
 
@@ -25,7 +26,7 @@ const isQuestion = (value: unknown): value is StoredQuestion => {
     typeof question.categoryId === 'string' &&
     typeof question.prompt === 'string' &&
     typeof question.followUp === 'string' &&
-    ['stock', 'poole', 'custom'].includes(question.source ?? '') &&
+    ['stock', 'kids-stock', 'poole', 'custom'].includes(question.source ?? '') &&
     (question.sourceNumber === null || typeof question.sourceNumber === 'number') &&
     (question.sourcePage === null || typeof question.sourcePage === 'number') &&
     (question.explicit === undefined || typeof question.explicit === 'boolean') &&
@@ -82,16 +83,22 @@ export const loadLibrary = (): LibraryState => {
   const starter = createStarterLibrary()
 
   try {
-    const raw = localStorage.getItem(LIBRARY_KEY)
+    const currentRaw = localStorage.getItem(LIBRARY_KEY)
+    const isLegacyLibrary = currentRaw === null
+    const raw = currentRaw ?? localStorage.getItem(LEGACY_LIBRARY_KEY)
     if (!raw) return starter
     const parsed: unknown = JSON.parse(raw)
     if (!isLibrary(parsed)) return starter
 
     const deletedCategories = new Set(parsed.deletedBuiltInCategoryIds)
     const deletedQuestions = new Set(parsed.deletedBuiltInQuestionIds)
+    const starterQuestionsById = new Map(starter.questions.map((question) => [question.id, question]))
     const storedQuestions: Question[] = parsed.questions.map((question) => ({
       ...question,
-      explicit: question.explicit ?? false,
+      explicit:
+        isLegacyLibrary && question.builtIn
+          ? starterQuestionsById.get(question.id)?.explicit ?? question.explicit ?? false
+          : question.explicit ?? starterQuestionsById.get(question.id)?.explicit ?? false,
     }))
     const savedCategoryIds = new Set(parsed.categories.map((category) => category.id))
     const categories = [
@@ -112,12 +119,14 @@ export const loadLibrary = (): LibraryState => {
       ),
     ]
 
-    return {
+    const loadedLibrary = {
       categories,
       questions,
       deletedBuiltInCategoryIds: [...deletedCategories],
       deletedBuiltInQuestionIds: [...deletedQuestions],
     }
+    if (isLegacyLibrary) localStorage.setItem(LIBRARY_KEY, JSON.stringify(loadedLibrary))
+    return loadedLibrary
   } catch {
     return starter
   }

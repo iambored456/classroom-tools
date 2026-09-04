@@ -1,4 +1,4 @@
-export type QuestionSource = 'stock' | 'poole' | 'custom'
+export type QuestionSource = 'stock' | 'kids-stock' | 'poole' | 'custom'
 
 export type Category = {
   id: string

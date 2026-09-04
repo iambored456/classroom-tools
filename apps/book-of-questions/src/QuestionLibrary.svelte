@@ -9,7 +9,6 @@
   const dispatch = createEventDispatcher<{ close: void; update: LibraryState }>()
 
   let selectedCategoryId = library.categories[0]?.id ?? ''
-  let searchQuery = ''
   let editingCategoryId: string | 'new' | null = null
   let categoryName = ''
   let categoryError = ''
@@ -26,13 +25,6 @@
 
   $: selectedCategory = library.categories.find((category) => category.id === selectedCategoryId) ?? null
   $: selectedQuestions = library.questions.filter((question) => question.categoryId === selectedCategoryId)
-  $: normalizedQuery = searchQuery.trim().toLocaleLowerCase()
-  $: visibleQuestions = selectedQuestions.filter(
-    (question) =>
-      !normalizedQuery ||
-      question.prompt.toLocaleLowerCase().includes(normalizedQuery) ||
-      question.followUp.toLocaleLowerCase().includes(normalizedQuery),
-  )
   $: enabledTotal = library.questions.filter((question) => question.enabled).length
   $: explicitQuestions = library.questions.filter((question) => question.explicit)
   $: enabledExplicitTotal = explicitQuestions.filter((question) => question.enabled).length
@@ -75,7 +67,6 @@
       const category: Category = { id: makeId('category'), name, builtIn: false }
       updateLibrary({ ...library, categories: [...library.categories, category] })
       selectedCategoryId = category.id
-      searchQuery = ''
     } else if (editingCategoryId) {
       updateLibrary({
         ...library,
@@ -246,7 +237,6 @@
 <div class="library-dialog" role="dialog" aria-modal="true" aria-labelledby="library-title">
   <header class="library-header">
     <div>
-      <p class="eyebrow">Question collection</p>
       <h2 id="library-title">Question Library</h2>
       <p>{enabledTotal.toLocaleString()} of {library.questions.length.toLocaleString()} questions enabled</p>
     </div>
@@ -286,7 +276,7 @@
         {#each library.categories as category (category.id)}
           {@const counts = categoryCounts(category.id)}
           <div class="category-row" class:active={category.id === selectedCategoryId}>
-            <button class="category-select" type="button" on:click={() => { selectedCategoryId = category.id; searchQuery = ''; editingQuestionId = null }}>
+            <button class="category-select" type="button" on:click={() => { selectedCategoryId = category.id; editingQuestionId = null }}>
               <span class="category-dot" style={`--category-colour: ${categoryColour(category.id, library.categories)}`}></span>
               <span><strong>{category.name}</strong><small>{counts.enabled.toLocaleString()} of {counts.total.toLocaleString()} enabled</small></span>
             </button>
@@ -317,10 +307,6 @@
         </div>
 
         <div class="question-toolbar">
-          <label class="search-field">
-            <span class="sr-only">Search this category</span>
-            <input bind:value={searchQuery} type="search" placeholder="Search questions and follow-ups" />
-          </label>
           <div class="bulk-actions">
             <button type="button" on:click={() => setCategoryEnabled(true)}>Enable all</button>
             <button type="button" on:click={() => setCategoryEnabled(false)}>Disable all</button>
@@ -379,12 +365,11 @@
         {/if}
 
         <div class="question-results-summary">
-          <span>{visibleQuestions.length.toLocaleString()} {visibleQuestions.length === 1 ? 'question' : 'questions'}</span>
-          {#if normalizedQuery}<button type="button" on:click={() => (searchQuery = '')}>Clear search</button>{/if}
+          <span>{selectedQuestions.length.toLocaleString()} {selectedQuestions.length === 1 ? 'question' : 'questions'}</span>
         </div>
 
         <div class="question-list">
-          {#each visibleQuestions as question (question.id)}
+          {#each selectedQuestions as question (question.id)}
             {@const followUps = splitFollowUpPrompts(question.followUp)}
             <article class="question-library-card" class:disabled={!question.enabled}>
               <label class="library-switch" aria-label={`${question.enabled ? 'Disable' : 'Enable'} question`}>
@@ -419,7 +404,7 @@
           {:else}
             <div class="empty-library-state">
               <strong>No questions found</strong>
-              <p>{normalizedQuery ? 'Try a different search.' : 'Add the first question to this category.'}</p>
+              <p>Add the first question to this category.</p>
             </div>
           {/each}
         </div>

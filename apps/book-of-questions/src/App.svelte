@@ -1,4 +1,6 @@
 <script lang="ts">
+  import settingsIconUrl from '../../city-navigator/public/assets/Settings_optimized.svg?url'
+
   import { onMount } from 'svelte'
   import QuestionLibrary from './QuestionLibrary.svelte'
   import SessionEditor from './SessionEditor.svelte'
@@ -7,6 +9,7 @@
     createStarterLibrary,
     formatQuestionForDisplay,
     makeId,
+    questionSizeClass,
     splitFollowUpPrompts,
   } from './data'
   import {
@@ -17,6 +20,7 @@
     saveLibrary,
     saveSessions,
   } from './storage'
+  import { fitQuestionText } from './text-fit'
   import type { LibraryState, Question, QuestionSession } from './types'
 
   type Screen = 'home' | 'session'
@@ -31,6 +35,10 @@
   let editingSessionId: string | null = null
   let libraryOpen = false
   let pendingAction: PendingAction | null = null
+  let expandedSessionIds: string[] = []
+  let questionCardElement: HTMLElement | null = null
+  let questionFitFrame: number | null = null
+  let questionFitVersion = 0
   let homeMessage = ''
   let activeSession: QuestionSession | null = null
   let currentQuestion: Question | null = null
@@ -96,16 +104,98 @@
     ? sessionStats(activeSession)
     : { total: 0, answered: 0, inDeck: 0 }
 
-  const categorySummary = (session: QuestionSession) => {
-    const names = session.categoryIds
-      .map((id) => library.categories.find((category) => category.id === id)?.name)
-      .filter((name): name is string => Boolean(name))
-    if (names.length <= 2) return names.join(' · ') || 'No categories selected'
-    return `${names.slice(0, 2).join(' · ')} +${names.length - 2}`
-  }
-
   const formatUpdatedAt = (timestamp: number) =>
     new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(new Date(timestamp))
+
+  const sessionCategorySummaries = (session: QuestionSession) =>
+    session.categoryIds.flatMap((categoryId) => {
+      const category = library.categories.find((item) => item.id === categoryId)
+      if (!category) return []
+      const enabledCount = library.questions.filter(
+        (question) =>
+          question.categoryId === categoryId &&
+          question.enabled &&
+          (session.includeExplicit || !question.explicit),
+      ).length
+      return [{ ...category, enabledCount }]
+    })
+
+  const toggleSessionDetails = (sessionId: string) => {
+    expandedSessionIds = expandedSessionIds.includes(sessionId)
+      ? expandedSessionIds.filter((id) => id !== sessionId)
+      : [...expandedSessionIds, sessionId]
+  }
+
+  const sessionDetailsId = (sessionId: string) => `session-details-${sessionId}`
+
+  const applyQuestionTextFit = async (questionId: string) => {
+    const card = questionCardElement
+    const question = currentQuestion
+    if (!card || !question || question.id !== questionId) return
+
+    const version = ++questionFitVersion
+    await document.fonts.load('400 100px "Atkinson Hyperlegible Next"')
+    if (version !== questionFitVersion || card !== questionCardElement || currentQuestion?.id !== questionId) return
+
+    const style = getComputedStyle(card)
+    const contentWidth = card.clientWidth - Number.parseFloat(style.paddingLeft) - Number.parseFloat(style.paddingRight)
+    const contentHeight = card.clientHeight - Number.parseFloat(style.paddingTop) - Number.parseFloat(style.paddingBottom)
+    if (contentWidth <= 0 || contentHeight <= 0) return
+
+    const fit = fitQuestionText({
+      prompt: formatQuestionForDisplay(question.prompt),
+      followUps: splitFollowUpPrompts(question.followUp).map(formatQuestionForDisplay),
+      contentWidth,
+      contentHeight,
+      rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize),
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      compact: window.matchMedia('(max-width: 620px)').matches,
+    })
+
+    card.style.setProperty('--question-fitted-font-size', `${fit.questionFontSize}px`)
+    card.style.setProperty('--follow-up-fitted-font-size', `${fit.followUpFontSize}px`)
+    card.classList.add('text-fitted')
+    card.classList.toggle('text-fit-overflow', !fit.fits)
+    card.dataset.textFitEngine = 'pretext'
+    card.dataset.textFitStatus = fit.fits ? 'fit' : 'minimum-size-overflow'
+    card.dataset.textFitRequiredHeight = fit.requiredHeight.toFixed(1)
+    card.dataset.textFitAvailableHeight = fit.availableHeight.toFixed(1)
+  }
+
+  const scheduleQuestionTextFit = () => {
+    if (!questionCardElement || !currentQuestion || typeof requestAnimationFrame === 'undefined') return
+    if (questionFitFrame !== null) cancelAnimationFrame(questionFitFrame)
+    const questionId = currentQuestion.id
+    questionFitFrame = requestAnimationFrame(() => {
+      questionFitFrame = null
+      void applyQuestionTextFit(questionId)
+    })
+  }
+
+  const observeQuestionCard = (card: HTMLElement) => {
+    questionCardElement = card
+    const observer = new ResizeObserver(scheduleQuestionTextFit)
+    observer.observe(card)
+    scheduleQuestionTextFit()
+
+    return {
+      destroy() {
+        observer.disconnect()
+        questionFitVersion += 1
+        if (questionFitFrame !== null) cancelAnimationFrame(questionFitFrame)
+        questionFitFrame = null
+        if (questionCardElement === card) questionCardElement = null
+      },
+    }
+  }
+
+  $: {
+    const fittingContent = currentQuestion
+      ? `${currentQuestion.id}\u0000${currentQuestion.prompt}\u0000${followUpPrompts.join('\u0000')}`
+      : ''
+    if (fittingContent) scheduleQuestionTextFit()
+  }
 
   const persistSessions = (nextSessions: QuestionSession[]) => {
     sessions = nextSessions
@@ -330,12 +420,34 @@
     saveDarkMode(darkMode)
   }
 
-  const questionSizeClass = (question: Question) => {
-    const length = question.prompt.length + revealedFollowUps.join(' ').length
-    if (length > 650) return 'very-long'
-    if (length > 400) return 'extra-long'
-    if (length > 240) return 'long'
-    return ''
+  const sessionMenuId = (sessionId: string) => `session-menu-${sessionId}`
+
+  const closeSessionMenu = (sessionId: string) => {
+    const menu = document.getElementById(sessionMenuId(sessionId))
+    if (menu?.matches(':popover-open')) menu.hidePopover()
+  }
+
+  const positionSessionMenu = (trigger: HTMLButtonElement, sessionId: string) => {
+    requestAnimationFrame(() => {
+      const menu = document.getElementById(sessionMenuId(sessionId))
+      if (!menu?.matches(':popover-open')) return
+
+      const triggerBounds = trigger.getBoundingClientRect()
+      const menuBounds = menu.getBoundingClientRect()
+      const viewportPadding = 8
+      const gap = 4
+      const left = Math.max(
+        viewportPadding,
+        Math.min(triggerBounds.right - menuBounds.width, window.innerWidth - menuBounds.width - viewportPadding),
+      )
+      const below = triggerBounds.bottom + gap
+      const top = below + menuBounds.height <= window.innerHeight - viewportPadding
+        ? below
+        : Math.max(viewportPadding, triggerBounds.top - menuBounds.height - gap)
+
+      menu.style.left = `${left}px`
+      menu.style.top = `${top}px`
+    })
   }
 
   const handleKeydown = (event: KeyboardEvent) => {
@@ -423,38 +535,74 @@
 
       <div class="session-panel">
         <div class="session-panel-heading">
-          <div>
-            <p class="eyebrow">Saved sessions</p>
-            <h2>{sessions.length > 0 ? 'Pick up where you left off' : 'Start a conversation'}</h2>
-          </div>
+          <h2>Sessions</h2>
         </div>
 
         {#if sessions.length > 0}
           <div class="session-list">
             {#each sortedSessions as session (session.id)}
               {@const stats = sessionStats(session)}
+              {@const categorySummaries = sessionCategorySummaries(session)}
+              {@const detailsExpanded = expandedSessionIds.includes(session.id)}
               <article class="session-card">
                 <button class="session-open" type="button" on:click={() => openSession(session.id)}>
                   <span class="session-card-copy">
                     <strong>{session.name}</strong>
-                    <small>{categorySummary(session)}</small>
                   </span>
-                  <span class="session-progress">
-                    <strong>{stats.answered.toLocaleString()}</strong>
-                    <small>answered · {stats.inDeck.toLocaleString()} in deck</small>
+                  <span
+                    class="session-progress"
+                    aria-label={`${stats.answered.toLocaleString()} of ${stats.total.toLocaleString()} questions completed`}
+                  >
+                    <strong>{stats.answered.toLocaleString()}/{stats.total.toLocaleString()}</strong>
+                    <small>questions completed</small>
                   </span>
                 </button>
                 <div class="session-card-footer">
-                  <span>Updated {formatUpdatedAt(session.updatedAt)}</span>
-                  <details class="session-menu">
-                    <summary aria-label={`More actions for ${session.name}`}>•••</summary>
-                    <div>
-                      <button type="button" on:click={() => openExistingSessionEditor(session.id)}>Edit name & categories</button>
-                      <button type="button" on:click={() => (pendingAction = { kind: 'restart', sessionId: session.id })}>Restart session</button>
-                      <button class="danger" type="button" on:click={() => (pendingAction = { kind: 'delete', sessionId: session.id })}>Delete session</button>
+                  <button
+                    class="session-footer-toggle"
+                    type="button"
+                    aria-expanded={detailsExpanded}
+                    aria-controls={sessionDetailsId(session.id)}
+                    aria-label={`${detailsExpanded ? 'Hide' : 'Show'} question sets for ${session.name}`}
+                    on:click={() => toggleSessionDetails(session.id)}
+                  >
+                    <span>Last played {formatUpdatedAt(session.updatedAt)}</span>
+                    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5"></path></svg>
+                  </button>
+                  <div class="session-menu">
+                    <button
+                      class="session-menu-trigger"
+                      type="button"
+                      aria-label={`More actions for ${session.name}`}
+                      popovertarget={sessionMenuId(session.id)}
+                      on:click={(event) => positionSessionMenu(event.currentTarget, session.id)}
+                    >•••</button>
+                    <div class="session-menu-popover" id={sessionMenuId(session.id)} popover="auto">
+                      <button type="button" on:click={() => { closeSessionMenu(session.id); openExistingSessionEditor(session.id) }}>Edit name & categories</button>
+                      <button type="button" on:click={() => { closeSessionMenu(session.id); pendingAction = { kind: 'restart', sessionId: session.id } }}>Restart session</button>
+                      <button class="danger" type="button" on:click={() => { closeSessionMenu(session.id); pendingAction = { kind: 'delete', sessionId: session.id } }}>Delete session</button>
                     </div>
-                  </details>
+                  </div>
                 </div>
+                {#if detailsExpanded}
+                  <section
+                    class="session-enabled-sets"
+                    id={sessionDetailsId(session.id)}
+                    aria-label={`Question sets enabled for ${session.name}`}
+                  >
+                    <p>Question sets enabled</p>
+                    <ul>
+                      {#each categorySummaries as category (category.id)}
+                        <li>
+                          <span class="session-set-marker" style={`--set-colour: ${categoryColour(category.id, library.categories)}`}></span>
+                          <strong>{category.name}</strong>
+                          <small>{category.enabledCount.toLocaleString()} enabled</small>
+                        </li>
+                      {/each}
+                    </ul>
+                    <small>{session.includeExplicit ? 'Explicit questions included' : 'Explicit questions excluded'}</small>
+                  </section>
+                {/if}
               </article>
             {/each}
           </div>
@@ -499,17 +647,21 @@
         title="Session Settings"
         on:click={() => openExistingSessionEditor(activeSession.id)}
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"></path>
-        </svg>
+        <img
+          class="settings-tool-icon"
+          src={settingsIconUrl}
+          alt=""
+          width="48"
+          height="48"
+          data-icon-source="music-learning-tools/packages/diatonic-compass-ui/public/assets/Settings_optimized.svg"
+        />
       </button>
     </header>
 
     <main class="question-stage">
       {#if currentQuestion}
         {@const category = library.categories.find((item) => item.id === currentQuestion.categoryId)}
-        <article class={`question-card ${questionSizeClass(currentQuestion)}`}>
+        <article class={`question-card ${questionSizeClass(currentQuestion)}`} use:observeQuestionCard>
           {#if category}
             <p class="question-category" style={`--category-colour: ${categoryColour(category.id, library.categories)}`}>
               <span></span>{category.name}
