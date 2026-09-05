@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title description">
+  <title id="title">Launchpad Finger Twister preview</title>
+  <desc id="description">Lime and violet targets glowing on an eight by eight Launchpad grid.</desc>
+  <defs>
+    <pattern id="pads" width="45" height="45" patternUnits="userSpaceOnUse">
+      <rect x="4" y="4" width="34" height="34" rx="5" fill="#0d1a16" stroke="#315247"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="500" fill="#06110f"/>
+  <path d="M0 398H800" stroke="#29483f"/>
+  <text x="52" y="72" fill="#c7ff4f" font-family="monospace" font-size="13" font-weight="700" letter-spacing="3">DON'T LET GO.</text>
+  <text x="50" y="150" fill="#effff8" font-family="Arial,sans-serif" font-size="61" font-weight="900" letter-spacing="-5">FINGER</text>
+  <text x="50" y="208" fill="#a77bff" font-family="Arial,sans-serif" font-size="61" font-weight="900" letter-spacing="-5">TWISTER</text>
+  <text x="53" y="250" fill="#87a59c" font-family="monospace" font-size="13">HOLD EVERY NEW LIGHT</text>
+  <rect x="52" y="290" width="223" height="48" fill="#c7ff4f"/>
+  <text x="70" y="320" fill="#07110d" font-family="monospace" font-size="13" font-weight="800">START HOLD CHALLENGE</text>
+  <rect x="354" y="54" width="394" height="394" rx="12" fill="#0b1915" stroke="#3b6255" stroke-width="2"/>
+  <rect x="371" y="71" width="360" height="360" fill="#030806"/>
+  <rect x="371" y="71" width="360" height="360" fill="url(#pads)"/>
+  <g fill="#c7ff4f" stroke="#f0ffc6" stroke-width="2">
+    <rect x="465" y="120" width="34" height="34" rx="5"/>
+    <rect x="600" y="210" width="34" height="34" rx="5"/>
+    <rect x="420" y="345" width="34" height="34" rx="5"/>
+    <rect x="645" y="390" width="34" height="34" rx="5"/>
+  </g>
+  <g fill="#a77bff" stroke="#dbcaff" stroke-width="2">
+    <rect x="645" y="75" width="34" height="34" rx="5"/>
+    <rect x="510" y="165" width="34" height="34" rx="5"/>
+    <rect x="690" y="300" width="34" height="34" rx="5"/>
+    <rect x="555" y="390" width="34" height="34" rx="5"/>
+  </g>
+  <rect x="375" y="255" width="34" height="34" rx="5" fill="#c7ff4f" stroke="#fff" stroke-width="4"/>
+  <circle cx="392" cy="272" r="7" fill="#20351d"/>
+  <text x="52" y="439" fill="#829f96" font-family="monospace" font-size="12">PLAYER 1  4 / 5</text>
+  <text x="214" y="439" fill="#829f96" font-family="monospace" font-size="12">PLAYER 2  4 / 5</text>
+</svg>

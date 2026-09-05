@@ -1,60 +1,71 @@
 <script lang="ts">
-  import { startGame, resetGame, setTimerDuration, gameState, formatTime } from '../lib/game.svelte.ts'
-  import { midiState } from '../lib/midi.svelte.ts'
+  import {
+    DIFFICULTIES,
+    type Difficulty,
+    gameState,
+    resetGame,
+    setDifficulty,
+    setTimerDuration,
+    startGame,
+  } from '../lib/game.svelte.ts'
 
-  const isConnected = $derived(midiState.status === 'connected')
-  const isPlaying = $derived(gameState.gamePhase === 'playing')
-  const isCountdown = $derived(gameState.gamePhase === 'countdown')
-  const canStart = $derived(isConnected && gameState.gamePhase === 'idle')
+  const settingsLocked = $derived(
+    gameState.gamePhase === 'playing' || gameState.gamePhase === 'countdown',
+  )
+  const canStart = $derived(!settingsLocked)
 
-  function handleTimerChange(event: Event) {
-    setTimerDuration(parseInt((event.target as HTMLSelectElement).value, 10))
+  function handleTimerChange(event: Event): void {
+    setTimerDuration(Number.parseInt((event.target as HTMLSelectElement).value, 10))
+  }
+
+  function handleDifficultyChange(event: Event): void {
+    setDifficulty((event.target as HTMLSelectElement).value as Difficulty)
   }
 </script>
 
 <div class="controls">
-  <select onchange={handleTimerChange} disabled={isPlaying || isCountdown} aria-label="Game duration">
-    <option value="15">15 Seconds</option>
-    <option value="30" selected>30 Seconds</option>
-    <option value="60">1 Minute</option>
-    <option value="120">2 Minutes</option>
-  </select>
-  <div class="buttons">
-    <button onclick={startGame} disabled={!canStart}>Start Game</button>
-    <button onclick={resetGame} disabled={gameState.gamePhase === 'idle'}>Reset Round</button>
+  <div class="settings-row">
+    <label>
+      <span>Round</span>
+      <select
+        value={gameState.timerDuration}
+        onchange={handleTimerChange}
+        disabled={settingsLocked}
+        aria-label="Round duration"
+      >
+        <option value="15">15 seconds</option>
+        <option value="30">30 seconds</option>
+        <option value="60">1 minute</option>
+        <option value="120">2 minutes</option>
+      </select>
+    </label>
+
+    <label>
+      <span>Pace</span>
+      <select
+        value={gameState.difficulty}
+        onchange={handleDifficultyChange}
+        disabled={settingsLocked}
+        aria-label="Game pace"
+      >
+        {#each Object.entries(DIFFICULTIES) as [value, settings]}
+          <option {value}>{settings.label}</option>
+        {/each}
+      </select>
+    </label>
   </div>
-  <div class="timer-display">
-    {#if isCountdown}
-      {gameState.countdownText}
-    {:else}
-      Time: {formatTime(gameState.timeLeft)}
-    {/if}
+
+  <div class="action-row">
+    <button class="primary-button" onclick={() => void startGame()} disabled={!canStart}>
+      {gameState.gamePhase === 'ended' ? 'Play again' : 'Start round'}
+      <span aria-hidden="true">→</span>
+    </button>
+    <button
+      class="secondary-button"
+      onclick={resetGame}
+      disabled={gameState.gamePhase === 'idle'}
+    >
+      {settingsLocked ? 'End round' : 'Reset'}
+    </button>
   </div>
 </div>
-
-<style>
-  .controls {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .buttons {
-    display: flex;
-    gap: 10px;
-  }
-
-  .timer-display {
-    font-size: 24px;
-    font-weight: bold;
-    color: #ffcc00;
-  }
-
-  @media (max-width: 600px) {
-    .timer-display {
-      font-size: 20px;
-    }
-  }
-</style>

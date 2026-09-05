@@ -1,0 +1,100 @@
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #effff8;
+  background: #06110f;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradient(circle at 68% 42%, #17372e 0, #091813 34%, #050d0b 68%); }
+button, select, input, a { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: default; }
+.shell { width: min(1210px, calc(100% - 36px)); margin: auto; padding: 22px 0 38px; }
+header { display: flex; justify-content: space-between; padding-bottom: 18px; border-bottom: 1px solid #28483f; color: #829f96; font: 700 11px "Courier New", monospace; letter-spacing: .13em; }
+header a { color: inherit; text-decoration: none; }
+header a:hover { color: #effff8; }
+header b { color: var(--player-one); }
+header b.danger { color: #ff5b55; }
+.layout { display: grid; grid-template-columns: minmax(320px, .82fr) minmax(470px, 1.18fr); align-items: center; gap: clamp(42px, 6vw, 78px); min-height: calc(100vh - 70px); }
+.eyebrow { margin: 0; color: var(--player-one); font: 700 10px "Courier New", monospace; letter-spacing: .2em; }
+h1 { margin: 11px 0 20px; font-size: clamp(66px, 7.2vw, 102px); line-height: .76; letter-spacing: -.085em; }
+h1 em { color: transparent; font-style: normal; -webkit-text-stroke: 2px var(--player-two); }
+.lede { max-width: 410px; margin: 0 0 19px; color: #a4bbb4; line-height: 1.52; }
+.segmented { display: grid; grid-template-columns: 1fr 1fr; max-width: 410px; margin-top: 9px; padding: 4px; border: 1px solid #28483f; border-radius: 4px; background: #07120f; }
+.segmented button { min-height: 37px; padding: 8px 5px; border: 0; border-radius: 2px; background: transparent; color: #78978d; font: 700 9px "Courier New", monospace; letter-spacing: .04em; }
+.segmented button.active { background: #eaffdf; color: #0a1712; }
+.segmented button:disabled:not(.active) { opacity: .45; }
+.hands button.active { background: color-mix(in srgb, var(--player-two) 82%, white); }
+.holds { display: grid; gap: 7px; max-width: 410px; margin-top: 12px; }
+.holds section { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; min-height: 53px; padding: 9px 12px; border: 1px solid #28483f; background: #081511cc; }
+.holds label { position: relative; display: grid; width: 30px; height: 30px; place-items: center; cursor: pointer; }
+.holds input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.holds i { width: 21px; height: 21px; border: 2px solid #ffffff44; border-radius: 50%; transition: transform .15s; }
+.holds label:hover i { transform: scale(1.14); }
+.one { background: var(--player-one); }
+.two { background: var(--player-two); }
+.holds div { display: grid; gap: 3px; }
+.holds small, .holds strong { font-family: "Courier New", monospace; }
+.holds small { color: #d7e8e1; font-size: 10px; font-weight: 800; }
+.holds strong { color: #6f8f84; font-size: 8px; letter-spacing: .08em; }
+.holds b { font: 800 15px "Courier New", monospace; }
+.warning { max-width: 410px; margin: 8px 0 0; color: #ffd48b; font: 700 9px/1.4 "Courier New", monospace; }
+.start { display: flex; justify-content: space-between; width: min(100%, 410px); margin-top: 13px; padding: 14px 16px; border: 0; border-radius: 3px; background: var(--player-one); color: #07110d; font: 900 10px "Courier New", monospace; letter-spacing: .08em; box-shadow: 0 8px 28px color-mix(in srgb, var(--player-one) 20%, transparent); }
+.start:hover { filter: brightness(1.08); }
+.instructions { max-width: 410px; margin: 10px 0 0; color: #69887e; font: 700 9px/1.45 "Courier New", monospace; }
+.device-panel { max-width: 410px; margin-top: 13px; padding: 11px 12px; border: 1px solid #203d34; background: #06110ee8; }
+.device-panel > div:first-child { display: flex; align-items: center; justify-content: space-between; color: #6e8b82; font: 800 9px "Courier New", monospace; letter-spacing: .12em; }
+.device-panel > div:first-child i { width: 7px; height: 7px; border-radius: 50%; background: #49655c; }
+.device-panel.connected > div:first-child i { background: var(--player-one); box-shadow: 0 0 9px var(--player-one); }
+.device-panel p { margin: 6px 0 8px; color: #87a59c; font: 9px/1.4 "Courier New", monospace; }
+.device-panel p.error { color: #ff8d87; }
+.device-panel select { width: 100%; margin-top: 8px; padding: 7px; border: 1px solid #294a40; background: #0b1a16; color: #b5cec5; font: 9px "Courier New", monospace; }
+.device-actions { display: flex; gap: 7px; }
+.device-actions button { flex: 1; padding: 8px 5px; border: 1px solid #34584c; background: #0d211b; color: #a8c1b8; font: 800 8px "Courier New", monospace; }
+.device-actions button:disabled { opacity: .56; }
+.board-card { position: relative; padding: 18px; border: 1px solid #34564c; border-radius: 10px; background: #0b1915; box-shadow: 0 32px 90px #0009; }
+.board-head, .board-foot { display: flex; justify-content: space-between; gap: 14px; color: #78968d; font: 700 9px "Courier New", monospace; letter-spacing: .09em; }
+.board-head { min-height: 26px; padding: 0 2px 13px; }
+.board-head span:first-child { color: #c0d9d0; }
+.launchpad-frame { position: relative; padding: clamp(23px, 3.5vw, 37px); border: 1px solid #34564c; border-radius: 5px; background: linear-gradient(145deg, #07100d, #020605); box-shadow: inset 0 0 34px #000c; }
+.grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: clamp(6px, .8vw, 10px); aspect-ratio: 1; touch-action: none; user-select: none; }
+.pad { position: relative; min-width: 0; border: 1px solid #2a433b; border-radius: 17%; background: #0e1815; box-shadow: inset 0 -3px 5px #020504, 0 1px 0 #45655b; touch-action: none; -webkit-tap-highlight-color: transparent; transition: background .1s, box-shadow .1s, transform .08s, opacity .2s; }
+.pad.one { border-color: color-mix(in srgb, var(--player-one) 64%, #1d332b); background: var(--player-one); box-shadow: 0 0 16px color-mix(in srgb, var(--player-one) 52%, transparent), inset 0 0 8px #fff5; }
+.pad.two { border-color: color-mix(in srgb, var(--player-two) 64%, #1d332b); background: var(--player-two); box-shadow: 0 0 16px color-mix(in srgb, var(--player-two) 52%, transparent), inset 0 0 8px #fff5; }
+.pad.held { transform: translateY(2px) scale(.96); box-shadow: inset 0 4px 9px #0009, 0 0 9px currentColor; }
+.pad.held::after { content: ""; position: absolute; inset: 27%; border: 2px solid #06110faa; border-radius: 50%; }
+.pad.pending { animation: target-pulse .86s steps(2, end) infinite; }
+.pad.failed { animation: fail-flash .48s steps(2, end) 3; background: #ff4f48; border-color: #ffb3b0; box-shadow: 0 0 24px #ff4433; }
+.pad:disabled { opacity: 1; }
+.countdown { position: absolute; inset: 0; display: grid; place-content: center; gap: 4px; text-align: center; background: #04100ddb; backdrop-filter: blur(5px); }
+.countdown span { color: var(--player-one); font: 900 10px "Courier New", monospace; letter-spacing: .18em; }
+.countdown b { font-size: clamp(80px, 12vw, 150px); line-height: .85; }
+.result { position: absolute; inset: 50% auto auto 50%; z-index: 3; display: grid; min-width: min(330px, 75%); padding: 22px; border: 1px solid #587c70; transform: translate(-50%, -50%); text-align: center; background: #07120ff2; box-shadow: 0 20px 70px #000; }
+.result span { color: #79988e; font: 900 9px "Courier New", monospace; letter-spacing: .15em; }
+.result strong { margin-top: 6px; color: #effff8; font-size: clamp(24px, 4vw, 42px); text-transform: uppercase; }
+.result b { margin-top: 7px; color: var(--player-one); font: 900 18px "Courier New", monospace; }
+.board-foot { padding: 13px 2px 0; }
+
+@keyframes target-pulse { 50% { opacity: .28; transform: scale(.9); } }
+@keyframes fail-flash { 50% { opacity: .12; } }
+
+@media (max-width: 850px) {
+  .layout { grid-template-columns: 1fr; gap: 34px; padding-top: 30px; }
+  aside { text-align: center; }
+  .lede, .segmented, .holds, .warning, .start, .instructions, .device-panel { margin-inline: auto; }
+  .board-card { width: min(100%, 650px); margin: auto; }
+}
+
+@media (max-width: 520px) {
+  .shell { width: min(100% - 20px, 1210px); padding-top: 13px; }
+  header > span, header a span { display: none; }
+  h1 { font-size: 59px; }
+  .launchpad-frame { padding: 17px; }
+  .grid { gap: 5px; }
+  .board-head, .board-foot { font-size: 7px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pad.pending, .pad.failed { animation-duration: 1.8s; }
+}

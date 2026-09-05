@@ -35,7 +35,7 @@ export interface MIDIConnectionEvent {
 
 // Domain types
 
-export type MIDIMode = 'live' | 'programmer'
+export type MIDIMode = 'programmer'
 
 export interface NoteMappingConfig {
   mode: MIDIMode
@@ -47,9 +47,4 @@ export interface NoteMappingConfig {
 export interface PadColor {
   hex: string
   velocity: number
-}
-
-export interface OscillatorEntry {
-  oscillator: OscillatorNode
-  gainNode: GainNode
 }

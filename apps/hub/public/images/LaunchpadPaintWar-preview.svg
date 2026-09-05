@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title description">
+  <title id="title">Launchpad Paint War preview</title>
+  <desc id="description">Pink and cyan pads competing across an eight by eight Launchpad grid.</desc>
+  <defs>
+    <pattern id="pads" width="45" height="45" patternUnits="userSpaceOnUse">
+      <rect x="4" y="4" width="34" height="34" rx="5" fill="#211925" stroke="#604865"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="500" fill="#100b14"/>
+  <path d="M0 398H800" stroke="#3a293f"/>
+  <text x="52" y="72" fill="#ff4f91" font-family="monospace" font-size="13" font-weight="700" letter-spacing="3">TWO COLOURS. ONE GRID.</text>
+  <text x="50" y="150" fill="#f8eef9" font-family="Arial,sans-serif" font-size="66" font-weight="900" letter-spacing="-5">PAINT</text>
+  <text x="50" y="210" fill="#42e8e0" font-family="Arial,sans-serif" font-size="66" font-weight="900" letter-spacing="-5">WAR</text>
+  <text x="53" y="252" fill="#a78fad" font-family="monospace" font-size="13">FLIP PADS · BEAT THE CLOCK</text>
+  <rect x="52" y="291" width="214" height="48" fill="#42e8e0"/>
+  <text x="70" y="321" fill="#071919" font-family="monospace" font-size="13" font-weight="800">START 60 SECOND ROUND</text>
+  <rect x="354" y="54" width="394" height="394" rx="12" fill="#1e1422" stroke="#67496c" stroke-width="2"/>
+  <rect x="371" y="71" width="360" height="360" fill="#08060a"/>
+  <rect x="371" y="71" width="360" height="360" fill="url(#pads)"/>
+  <g fill="#ff4f91">
+    <rect x="375" y="75" width="34" height="34" rx="5"/><rect x="420" y="75" width="34" height="34" rx="5"/><rect x="510" y="75" width="34" height="34" rx="5"/><rect x="600" y="75" width="34" height="34" rx="5"/><rect x="645" y="75" width="34" height="34" rx="5"/>
+    <rect x="375" y="120" width="34" height="34" rx="5"/><rect x="465" y="120" width="34" height="34" rx="5"/><rect x="555" y="120" width="34" height="34" rx="5"/><rect x="690" y="120" width="34" height="34" rx="5"/>
+    <rect x="420" y="165" width="34" height="34" rx="5"/><rect x="510" y="165" width="34" height="34" rx="5"/><rect x="645" y="165" width="34" height="34" rx="5"/>
+    <rect x="375" y="210" width="34" height="34" rx="5"/><rect x="465" y="210" width="34" height="34" rx="5"/><rect x="555" y="210" width="34" height="34" rx="5"/><rect x="600" y="210" width="34" height="34" rx="5"/><rect x="690" y="210" width="34" height="34" rx="5"/>
+    <rect x="420" y="300" width="34" height="34" rx="5"/><rect x="510" y="300" width="34" height="34" rx="5"/><rect x="645" y="300" width="34" height="34" rx="5"/>
+    <rect x="375" y="390" width="34" height="34" rx="5"/><rect x="465" y="390" width="34" height="34" rx="5"/><rect x="555" y="390" width="34" height="34" rx="5"/><rect x="690" y="390" width="34" height="34" rx="5"/>
+  </g>
+  <g fill="#42e8e0">
+    <rect x="465" y="75" width="34" height="34" rx="5"/><rect x="555" y="75" width="34" height="34" rx="5"/><rect x="690" y="75" width="34" height="34" rx="5"/>
+    <rect x="420" y="120" width="34" height="34" rx="5"/><rect x="510" y="120" width="34" height="34" rx="5"/><rect x="600" y="120" width="34" height="34" rx="5"/><rect x="645" y="120" width="34" height="34" rx="5"/>
+    <rect x="375" y="165" width="34" height="34" rx="5"/><rect x="465" y="165" width="34" height="34" rx="5"/><rect x="555" y="165" width="34" height="34" rx="5"/><rect x="600" y="165" width="34" height="34" rx="5"/><rect x="690" y="165" width="34" height="34" rx="5"/>
+    <rect x="420" y="255" width="34" height="34" rx="5"/><rect x="510" y="255" width="34" height="34" rx="5"/><rect x="600" y="255" width="34" height="34" rx="5"/><rect x="690" y="255" width="34" height="34" rx="5"/>
+    <rect x="375" y="345" width="34" height="34" rx="5"/><rect x="465" y="345" width="34" height="34" rx="5"/><rect x="555" y="345" width="34" height="34" rx="5"/><rect x="645" y="345" width="34" height="34" rx="5"/>
+  </g>
+  <text x="52" y="439" fill="#806d84" font-family="monospace" font-size="12">PLAYER 1  27</text>
+  <text x="222" y="439" fill="#806d84" font-family="monospace" font-size="12">PLAYER 2  24</text>
+</svg>

@@ -9,6 +9,9 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json"
   },
+  "dependencies": {
+    "@chenglou/pretext": "0.0.8"
+  },
   "devDependencies": {
     "@types/node": "^24.10.1",
     "typescript": "~5.9.3",

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
-  import { categoryColour } from './data'
-  import type { Category, Question, QuestionSession } from './types'
+  import { categoryColour, SENSITIVE_TOPIC_LABELS } from './data'
+  import type { Category, Question, QuestionSession, SensitiveTopic } from './types'
 
   export let categories: Category[]
   export let questions: Question[]
@@ -10,22 +10,35 @@
 
   const dispatch = createEventDispatcher<{
     close: void
-    save: { name: string; categoryIds: string[]; includeExplicit: boolean }
+    save: { name: string; categoryIds: string[]; includedSensitiveTopics: SensitiveTopic[] }
   }>()
 
   let name = session?.name ?? suggestedName
   let selectedCategoryIds = [...(session?.categoryIds ?? [])]
-  let includeExplicit = session?.includeExplicit ?? false
+  let includedSensitiveTopics = [...(session?.includedSensitiveTopics ?? [])]
   let error = ''
   let nameInput: HTMLInputElement | null = null
 
-  const enabledCount = (categoryId: string, allowExplicit: boolean) =>
+  const isQuestionAllowed = (question: Question, topics: SensitiveTopic[]) =>
+    question.sensitiveTopics.every((topic) => topics.includes(topic))
+
+  const enabledCount = (categoryId: string, topics: SensitiveTopic[]) =>
     questions.filter(
       (question) =>
         question.categoryId === categoryId &&
         question.enabled &&
-        (allowExplicit || !question.explicit),
+        isQuestionAllowed(question, topics),
     ).length
+
+  const sensitiveTopicCount = (topic: SensitiveTopic) =>
+    questions.filter((question) => question.enabled && question.sensitiveTopics.includes(topic)).length
+
+  const toggleSensitiveTopic = (topic: SensitiveTopic) => {
+    includedSensitiveTopics = includedSensitiveTopics.includes(topic)
+      ? includedSensitiveTopics.filter((item) => item !== topic)
+      : [...includedSensitiveTopics, topic]
+    error = ''
+  }
 
   const toggleCategory = (categoryId: string) => {
     selectedCategoryIds = selectedCategoryIds.includes(categoryId)
@@ -36,7 +49,7 @@
 
   const selectAll = () => {
     selectedCategoryIds = categories
-      .filter((category) => enabledCount(category.id, includeExplicit) > 0)
+      .filter((category) => enabledCount(category.id, includedSensitiveTopics) > 0)
       .map((category) => category.id)
     error = ''
   }
@@ -56,7 +69,7 @@
       error = 'Choose a category with at least one available question.'
       return
     }
-    dispatch('save', { name: trimmedName, categoryIds: selectedCategoryIds, includeExplicit })
+    dispatch('save', { name: trimmedName, categoryIds: selectedCategoryIds, includedSensitiveTopics })
   }
 
   const handleKeydown = (event: KeyboardEvent) => {
@@ -67,7 +80,7 @@
     (question) =>
       question.enabled &&
       selectedCategoryIds.includes(question.categoryId) &&
-      (includeExplicit || !question.explicit),
+      isQuestionAllowed(question, includedSensitiveTopics),
   ).length
 
   onMount(() => {
@@ -96,14 +109,35 @@
       <input bind:this={nameInput} bind:value={name} maxlength="80" placeholder="e.g. Period 2 check-in" />
     </label>
 
-    <label class="explicit-session-choice" class:selected={includeExplicit}>
-      <input type="checkbox" bind:checked={includeExplicit} />
-      <span>
-        <strong>Include Explicit Questions?</strong>
-        <small>Choose whether questions marked Explicit can appear in this session.</small>
-      </span>
-      <span class="explicit-session-state">{includeExplicit ? 'Included' : 'Excluded'}</span>
-    </label>
+    <section class="sensitive-topic-section" aria-labelledby="sensitive-topic-heading">
+      <div class="sensitive-topic-heading">
+        <div>
+          <span id="sensitive-topic-heading" class="field-title">Sensitive topics</span>
+          <small>Opt in only to the topics that are right for this group.</small>
+        </div>
+        <span class="optional-label">Optional</span>
+      </div>
+      <div class="sensitive-topic-grid">
+        {#each Object.entries(SENSITIVE_TOPIC_LABELS) as [topic, details]}
+          {@const typedTopic = topic as SensitiveTopic}
+          {@const count = sensitiveTopicCount(typedTopic)}
+          {#if count > 0}
+            <label class="sensitive-topic-choice" class:selected={includedSensitiveTopics.includes(typedTopic)}>
+              <input
+                type="checkbox"
+                checked={includedSensitiveTopics.includes(typedTopic)}
+                on:change={() => toggleSensitiveTopic(typedTopic)}
+              />
+              <span class="sensitive-topic-check" aria-hidden="true">✓</span>
+              <span>
+                <strong>{details.label}</strong>
+                <small>{details.description} {count.toLocaleString()} questions.</small>
+              </span>
+            </label>
+          {/if}
+        {/each}
+      </div>
+    </section>
 
     <div class="category-heading">
       <div>
@@ -118,7 +152,7 @@
 
     <div class="category-choice-grid">
       {#each categories as category (category.id)}
-        {@const count = enabledCount(category.id, includeExplicit)}
+        {@const count = enabledCount(category.id, includedSensitiveTopics)}
         <label class="category-choice" class:selected={selectedCategoryIds.includes(category.id)} class:empty={count === 0}>
           <input
             type="checkbox"

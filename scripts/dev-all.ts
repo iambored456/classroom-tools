@@ -24,8 +24,11 @@ const servers: DevServer[] = [
   { name: 'classroom-wordle', port: 5187, path: '/classroom-wordle/' },
   { name: 'read-along-highlighter', port: 5175, path: '/read-along-highlighter/' },
   { name: 'launchpad-whack-a-mole', port: 5176, path: '/launchpad-whack-a-mole/' },
+  { name: 'launchpad-snake', port: 5189, path: '/launchpad-snake/' },
+  { name: 'launchpad-reversi', port: 5190, path: '/launchpad-reversi/' },
+  { name: 'launchpad-paint-war', port: 5191, path: '/launchpad-paint-war/' },
+  { name: 'launchpad-finger-twister', port: 5192, path: '/launchpad-finger-twister/' },
   { name: 'fish-visualizer', port: 5177, path: '/fish-visualizer/' },
-  { name: 'launchpad-controller', port: 5178, path: '/launchpad-controller/' },
   { name: 'tax-brackets-marble-visual', port: 5179, path: '/tax-brackets-marble-visual/' },
   { name: 'coordinates', port: 5182, path: '/coordinates/' },
   { name: 'simple-compound-interest', port: 5183, path: '/simple-compound-interest/' },
@@ -139,6 +142,34 @@ async function requestPageTitle(server: DevServer): Promise<string | null> {
   } finally {
     clearTimeout(timeout)
   }
+}
+
+async function requestHubRouteTitle(server: DevServer): Promise<string | null> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 1_000)
+
+  try {
+    const response = await fetch(`http://localhost:5173${server.path}`, {
+      headers: { accept: 'text/html' },
+      signal: controller.signal,
+    })
+    if (!response.ok) return `HTTP ${response.status}`
+    const html = await response.text()
+    return html.match(/<title>([^<]+)<\/title>/i)?.[1]?.trim() ?? '(page without a title)'
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+async function findStaleHubRoute(): Promise<{ server: DevServer; actualTitle: string | null } | null> {
+  for (const server of servers) {
+    if (server.name === 'hub') continue
+    const actualTitle = await requestHubRouteTitle(server)
+    if (actualTitle !== expectedTitle(server)) return { server, actualTitle }
+  }
+  return null
 }
 
 async function probeServer(server: DevServer): Promise<ServerProbe> {
@@ -319,6 +350,17 @@ async function main(): Promise<void> {
 
   if (timedOut) {
     console.error(`Timed out waiting for ${timedOut.server.name} on port ${timedOut.server.port}.`)
+    shutdown(1)
+    return
+  }
+
+  const staleHubRoute = await findStaleHubRoute()
+  if (staleHubRoute) {
+    const { server, actualTitle } = staleHubRoute
+    console.error(
+      `The hub route ${server.path} is stale: expected "${expectedTitle(server)}" but received "${actualTitle ?? 'no response'}".`,
+    )
+    console.error('Restart the process using port 5173, then run pnpm dev again.')
     shutdown(1)
     return
   }

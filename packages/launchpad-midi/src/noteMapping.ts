@@ -5,7 +5,6 @@ import type { NoteMappingConfig } from './types.js'
  *
  * @param config  - Note mapping configuration (mode, startingNote, rowIncrement)
  * @param reverseRows - When true, row 7 is rendered first (top of grid = highest notes).
- *                     Used by Programmer Mode (WAM). Default false = row 0 first (Controller).
  */
 export function buildNoteMapping(config: NoteMappingConfig, reverseRows = false): number[] {
   const { startingNote, rowIncrement, gridSize } = config

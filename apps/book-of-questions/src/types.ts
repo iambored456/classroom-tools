@@ -1,4 +1,5 @@
-export type QuestionSource = 'stock' | 'kids-stock' | 'poole' | 'custom'
+export type QuestionSource = 'stock' | 'kids-stock' | 'poole' | 'would-you-rather' | 'custom'
+export type SensitiveTopic = 'substances' | 'intimacy' | 'religion' | 'violence' | 'other'
 
 export type Category = {
   id: string
@@ -10,11 +11,14 @@ export type Question = {
   id: string
   categoryId: string
   prompt: string
+  optionA: string | null
+  optionB: string | null
   followUp: string
   source: QuestionSource
   sourceNumber: number | null
   sourcePage: number | null
   explicit: boolean
+  sensitiveTopics: SensitiveTopic[]
   enabled: boolean
   builtIn: boolean
 }
@@ -33,7 +37,7 @@ export type QuestionSession = {
   askedQuestionIds: string[]
   currentQuestionId: string | null
   revealedFollowUpCount: number
-  includeExplicit: boolean
+  includedSensitiveTopics: SensitiveTopic[]
   createdAt: number
   updatedAt: number
 }

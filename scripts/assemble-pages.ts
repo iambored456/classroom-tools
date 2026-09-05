@@ -1,9 +1,10 @@
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const rootDir = join(__dirname, '..')
+const appsDir = join(rootDir, 'apps')
 
 const outputArgIndex = process.argv.findIndex((arg) => arg === '--out' || arg === '--output')
 const outputDirName =
@@ -17,83 +18,26 @@ if (!outputDirName || ['.', '..', '/', '\\'].includes(outputDirName)) {
 
 const outputDir = join(rootDir, outputDirName)
 
+const standaloneTargets = readdirSync(appsDir, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && entry.name !== 'hub')
+  .filter((entry) => {
+    try {
+      const pkg = JSON.parse(readFileSync(join(appsDir, entry.name, 'package.json'), 'utf8'))
+      return typeof pkg.scripts?.build === 'string'
+    } catch {
+      return false
+    }
+  })
+  .sort((a, b) => a.name.localeCompare(b.name))
+  .map((entry) => ({
+    name: entry.name,
+    distPath: join(appsDir, entry.name, 'dist'),
+    targetSubdir: entry.name,
+  }))
+
 const appDistTargets = [
-  { name: 'hub', distPath: join(rootDir, 'apps/hub/dist'), targetSubdir: '' },
-  {
-    name: 'class-clock',
-    distPath: join(rootDir, 'apps/class-clock/dist'),
-    targetSubdir: 'class-clock',
-  },
-  {
-    name: 'class-schedule-widget',
-    distPath: join(rootDir, 'apps/class-schedule-widget/dist'),
-    targetSubdir: 'class-schedule-widget',
-  },
-  {
-    name: 'classroom-connections',
-    distPath: join(rootDir, 'apps/classroom-connections/dist'),
-    targetSubdir: 'classroom-connections',
-  },
-  {
-    name: 'book-of-questions',
-    distPath: join(rootDir, 'apps/book-of-questions/dist'),
-    targetSubdir: 'book-of-questions',
-  },
-  {
-    name: 'classroom-wordle',
-    distPath: join(rootDir, 'apps/classroom-wordle/dist'),
-    targetSubdir: 'classroom-wordle',
-  },
-  {
-    name: 'read-along-highlighter',
-    distPath: join(rootDir, 'apps/read-along-highlighter/dist'),
-    targetSubdir: 'read-along-highlighter',
-  },
-  {
-    name: 'launchpad-whack-a-mole',
-    distPath: join(rootDir, 'apps/launchpad-whack-a-mole/dist'),
-    targetSubdir: 'launchpad-whack-a-mole',
-  },
-  {
-    name: 'fish-visualizer',
-    distPath: join(rootDir, 'apps/fish-visualizer/dist'),
-    targetSubdir: 'fish-visualizer',
-  },
-  {
-    name: 'launchpad-controller',
-    distPath: join(rootDir, 'apps/launchpad-controller/dist'),
-    targetSubdir: 'launchpad-controller',
-  },
-  {
-    name: 'tax-brackets-marble-visual',
-    distPath: join(rootDir, 'apps/tax-brackets-marble-visual/dist'),
-    targetSubdir: 'tax-brackets-marble-visual',
-  },
-  {
-    name: 'coordinates',
-    distPath: join(rootDir, 'apps/coordinates/dist'),
-    targetSubdir: 'coordinates',
-  },
-  {
-    name: 'simple-compound-interest',
-    distPath: join(rootDir, 'apps/simple-compound-interest/dist'),
-    targetSubdir: 'simple-compound-interest',
-  },
-  {
-    name: 'oklch-visualizer',
-    distPath: join(rootDir, 'apps/oklch-visualizer/dist'),
-    targetSubdir: 'oklch-visualizer',
-  },
-  {
-    name: 'rugby-play-visualizer',
-    distPath: join(rootDir, 'apps/rugby-play-visualizer/dist'),
-    targetSubdir: 'rugby-play-visualizer',
-  },
-  {
-    name: 'city-navigator',
-    distPath: join(rootDir, 'apps/city-navigator/dist'),
-    targetSubdir: 'city-navigator',
-  },
+  { name: 'hub', distPath: join(appsDir, 'hub', 'dist'), targetSubdir: '' },
+  ...standaloneTargets,
 ]
 
 console.log(`Assembling Pages output into ${outputDirName}/`)

@@ -91,8 +91,11 @@ function buildTargets(rootBase) {
   const classroomWordleBase = appendPath(rootBase, 'classroom-wordle')
   const readAlongBase = appendPath(rootBase, 'read-along-highlighter')
   const whackAMoleBase = appendPath(rootBase, 'launchpad-whack-a-mole')
+  const launchpadSnakeBase = appendPath(rootBase, 'launchpad-snake')
+  const launchpadReversiBase = appendPath(rootBase, 'launchpad-reversi')
+  const launchpadPaintWarBase = appendPath(rootBase, 'launchpad-paint-war')
+  const launchpadFingerTwisterBase = appendPath(rootBase, 'launchpad-finger-twister')
   const fishVisualizerBase = appendPath(rootBase, 'fish-visualizer')
-  const launchpadControllerBase = appendPath(rootBase, 'launchpad-controller')
   const taxBracketsMarbleVisualBase = appendPath(rootBase, 'tax-brackets-marble-visual')
   const coordinatesBase = appendPath(rootBase, 'coordinates')
   const simpleCompoundInterestBase = appendPath(rootBase, 'simple-compound-interest')
@@ -232,21 +235,41 @@ function buildTargets(rootBase) {
       distDir: 'apps/launchpad-whack-a-mole/dist',
       basePath: whackAMoleBase,
       route: whackAMoleBase,
-      waitFor: '.grid .pad',
+      waitFor: '.launchpad-frame .pad',
       delayMs: 300,
       postReadyScript: `
 (() => {
-  const pads = Array.from(document.querySelectorAll('.grid .pad'));
+  const pads = Array.from(document.querySelectorAll('.launchpad-frame .pad'));
   const middle = pads[Math.floor(pads.length / 2)];
   if (middle instanceof HTMLElement) {
     middle.classList.add('active');
-    middle.style.backgroundColor = '#62bbf7';
+    middle.style.setProperty('--pad-color', '#63e5ff');
   }
 })();
 `,
       injectCss: `
-.container > *:not(.scoreboard):not(.grid) {
+.home-link,
+.side-panel,
+.controls,
+.feedback,
+.play-card-topline {
   display: none !important;
+}
+.game-shell {
+  width: 820px !important;
+  padding: 42px 0 0 !important;
+}
+.hero {
+  margin-bottom: 16px !important;
+}
+.hero h1 {
+  font-size: 4.6rem !important;
+}
+.play-card {
+  padding: 18px !important;
+}
+.launchpad-frame {
+  width: 560px !important;
 }
 `,
     },
@@ -263,23 +286,6 @@ function buildTargets(rootBase) {
     display: none !important;
   }
   `,
-    },
-    {
-      id: 'launchpad-controller',
-      outputFile: 'LaunchpadController-screenshot.png',
-      distDir: 'apps/launchpad-controller/dist',
-      basePath: launchpadControllerBase,
-      route: launchpadControllerBase,
-      waitFor: '.grid-placeholder, .grid',
-      delayMs: 300,
-      injectCss: `
-button {
-  display: none !important;
-}
-.status-text {
-  display: none !important;
-}
-`,
     },
     {
       id: 'tax-brackets-marble-visual',
@@ -305,6 +311,115 @@ button {
   border: none !important;
   background: transparent !important;
 }
+`,
+    },
+    {
+      id: 'launchpad-snake',
+      outputFile: 'LaunchpadSnake-screenshot.png',
+      distDir: 'apps/launchpad-snake/dist',
+      basePath: launchpadSnakeBase,
+      route: launchpadSnakeBase,
+      waitFor: '.launchpad-frame .pad',
+      delayMs: 300,
+      injectCss: `
+.app-shell {
+  width: 1120px !important;
+}
+.game-layout {
+  min-height: 800px !important;
+}
+`,
+    },
+    {
+      id: 'launchpad-reversi',
+      outputFile: 'LaunchpadReversi-screenshot.png',
+      distDir: 'apps/launchpad-reversi/dist',
+      basePath: launchpadReversiBase,
+      route: launchpadReversiBase,
+      waitFor: '.launchpad-frame .pad',
+      delayMs: 300,
+      injectCss: `
+.app-shell {
+  width: 1120px !important;
+}
+.game-layout {
+  min-height: 800px !important;
+}
+`,
+    },
+    {
+      id: 'launchpad-paint-war',
+      outputFile: 'LaunchpadPaintWar-screenshot.png',
+      distDir: 'apps/launchpad-paint-war/dist',
+      basePath: launchpadPaintWarBase,
+      route: launchpadPaintWarBase,
+      waitFor: '.launchpad-frame .pad',
+      delayMs: 300,
+      postReadyScript: `
+(() => {
+  const pads = Array.from(document.querySelectorAll('.launchpad-frame .pad'));
+  const playerOne = [1, 4, 8, 11, 15, 18, 22, 25, 28, 33, 37, 42, 48, 53, 58];
+  const playerTwo = [2, 6, 9, 13, 17, 20, 24, 30, 35, 39, 44, 50, 55];
+  playerOne.forEach((index) => pads[index]?.classList.add('one'));
+  playerTwo.forEach((index) => pads[index]?.classList.add('two'));
+  pads[44]?.classList.add('last');
+
+  const timer = document.querySelector('header b');
+  if (timer) timer.textContent = '18.4';
+
+  const boardHead = document.querySelectorAll('.board-head span');
+  if (boardHead[0]) boardHead[0].textContent = 'PAINT NOW';
+  if (boardHead[1]) boardHead[1].textContent = '28 / 64 PAINTED';
+
+  const scores = document.querySelectorAll('.score section > b');
+  if (scores[0]) scores[0].textContent = '15';
+  if (scores[1]) scores[1].textContent = '13';
+
+  const coverage = document.querySelectorAll('.coverage i');
+  if (coverage[0] instanceof HTMLElement) coverage[0].style.width = '23.4375%';
+  if (coverage[1] instanceof HTMLElement) coverage[1].style.width = '20.3125%';
+
+  const boardFoot = document.querySelectorAll('.board-foot span');
+  if (boardFoot[1]) boardFoot[1].textContent = 'SCREEN INPUT · KEEP MOVING';
+})();
+`,
+    },
+    {
+      id: 'launchpad-finger-twister',
+      outputFile: 'LaunchpadFingerTwister-screenshot.png',
+      distDir: 'apps/launchpad-finger-twister/dist',
+      basePath: launchpadFingerTwisterBase,
+      route: launchpadFingerTwisterBase,
+      waitFor: '.launchpad-frame .pad',
+      delayMs: 300,
+      postReadyScript: `
+(() => {
+  const pads = Array.from(document.querySelectorAll('.launchpad-frame .pad'));
+  const playerOneHeld = [9, 27, 46];
+  const playerTwoHeld = [14, 36, 52];
+  const pending = 21;
+  playerOneHeld.forEach((index) => pads[index]?.classList.add('one', 'held'));
+  playerTwoHeld.forEach((index) => pads[index]?.classList.add('two', 'held'));
+  pads[pending]?.classList.add('one', 'pending');
+
+  const status = document.querySelector('header b');
+  if (status) status.textContent = 'HOLD';
+
+  const boardHead = document.querySelectorAll('.board-head span');
+  if (boardHead[0]) boardHead[0].textContent = 'PLAYER 1: PRESS THE NEW LIGHT';
+  if (boardHead[1]) boardHead[1].textContent = '6 HELD · 7 LIT';
+
+  const holdLabels = document.querySelectorAll('.holds section strong');
+  if (holdLabels[0]) holdLabels[0].textContent = 'NEW TARGET';
+  if (holdLabels[1]) holdLabels[1].textContent = 'KEEP HOLDING';
+
+  const holdScores = document.querySelectorAll('.holds section > b');
+  if (holdScores[0]) holdScores[0].textContent = '3 / 5';
+  if (holdScores[1]) holdScores[1].textContent = '3 / 5';
+
+  const boardFoot = document.querySelectorAll('.board-foot span');
+  if (boardFoot[1]) boardFoot[1].textContent = 'PULSING PAD = NEXT';
+})();
 `,
     },
     {

@@ -10,6 +10,24 @@ const resolveBuildBase = () =>
 export default defineConfig(({ command }) => ({
   base: command === 'serve' ? '/book-of-questions/' : resolveBuildBase(),
   plugins: [svelte()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          const normalizedId = id.replace(/\\/g, '/')
+          if (normalizedId.endsWith('/src/would-you-rather-questions.json')) {
+            return 'would-you-rather-bank'
+          }
+          if (
+            normalizedId.endsWith('/src/questions.json') ||
+            normalizedId.endsWith('/src/kids-questions.json')
+          ) {
+            return 'question-bank'
+          }
+        },
+      },
+    },
+  },
   server: {
     port: 5188,
     strictPort: true,

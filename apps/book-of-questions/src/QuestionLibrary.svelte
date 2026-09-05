@@ -131,11 +131,14 @@
         id: makeId('question'),
         categoryId: questionCategoryId,
         prompt,
+        optionA: null,
+        optionB: null,
         followUp: questionFollowUp.trim(),
         source: 'custom',
         sourceNumber: null,
         sourcePage: null,
         explicit: false,
+        sensitiveTopics: [],
         enabled: true,
         builtIn: false,
       }
@@ -149,6 +152,8 @@
                 ...question,
                 categoryId: questionCategoryId,
                 prompt,
+                optionA: null,
+                optionB: null,
                 followUp: questionFollowUp.trim(),
               }
             : question,
@@ -172,7 +177,13 @@
     updateLibrary({
       ...library,
       questions: library.questions.map((question) =>
-        question.id === questionId ? { ...question, explicit: !question.explicit } : question,
+        question.id === questionId
+          ? {
+              ...question,
+              explicit: !question.explicit,
+              sensitiveTopics: question.explicit ? [] : ['other'],
+            }
+          : question,
       ),
     })
   }

@@ -112,11 +112,55 @@ export const hubEntries: HubEntry[] = [
     id: 'launchpad-whack-a-mole',
     name: 'Launchpad Whack-a-Mole',
     description:
-      'A rhythm game played on a grid launchpad. Tap the beats as they light up and sharpen your timing instincts.',
+      'Chase glowing pads, build streaks, and beat the clock. Play on a Launchpad or directly on screen.',
     href: withBase('launchpad-whack-a-mole/'),
     preview: withBase('images/LaunchpadWhackaMole-screenshot.png'),
     tags: ['Dev. Ed.'],
     accent: '#e07d5a',
+  },
+  {
+    kind: 'app',
+    id: 'launchpad-snake',
+    name: 'Launchpad Snake',
+    description:
+      'Guide a glowing snake across all 64 pads. Steer from the edge zones on a Launchpad or directly on screen.',
+    href: withBase('launchpad-snake/'),
+    preview: withBase('images/LaunchpadSnake-screenshot.png'),
+    tags: ['Dev. Ed.'],
+    accent: '#cbf53c',
+  },
+  {
+    kind: 'app',
+    id: 'launchpad-reversi',
+    name: 'Launchpad Reversi',
+    description:
+      'Outflank and flip discs across all 64 pads. Play head-to-head or challenge a three-level computer opponent.',
+    href: withBase('launchpad-reversi/'),
+    preview: withBase('images/LaunchpadReversi-screenshot.png'),
+    tags: ['Dev. Ed.'],
+    accent: '#65f5bd',
+  },
+  {
+    kind: 'app',
+    id: 'launchpad-paint-war',
+    name: 'Launchpad Paint War',
+    description:
+      'Race to cover the 8 by 8 grid before time runs out. Play head-to-head or against a three-speed computer.',
+    href: withBase('launchpad-paint-war/'),
+    preview: withBase('images/LaunchpadPaintWar-screenshot.png'),
+    tags: ['Dev. Ed.'],
+    accent: '#ff4f91',
+  },
+  {
+    kind: 'app',
+    id: 'launchpad-finger-twister',
+    name: 'Launchpad Finger Twister',
+    description:
+      'Hold every new coloured pad without letting go. Play solo or face another player with one- and two-hand modes.',
+    href: withBase('launchpad-finger-twister/'),
+    preview: withBase('images/LaunchpadFingerTwister-screenshot.png'),
+    tags: ['Dev. Ed.'],
+    accent: '#c7ff4f',
   },
   {
     kind: 'app',
@@ -139,17 +183,6 @@ export const hubEntries: HubEntry[] = [
     preview: withBase('images/FishVisualizer-screenshot.png'),
     tags: ['Dev. Ed.'],
     accent: '#4ea6b9',
-  },
-  {
-    kind: 'app',
-    id: 'launchpad-controller',
-    name: 'Launchpad Controller',
-    description:
-      'Visualize Launchpad X pad presses in real time and hear each note played as a sine wave tone.',
-    href: withBase('launchpad-controller/'),
-    preview: withBase('images/LaunchpadController-screenshot.png'),
-    tags: ['Classroom'],
-    accent: '#9d65e0',
   },
   {
     kind: 'app',

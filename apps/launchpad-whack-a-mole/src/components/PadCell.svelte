@@ -1,39 +1,45 @@
 <script lang="ts">
   interface Props {
     note: number
+    row: number
+    column: number
     isActive: boolean
+    isExplosion: boolean
+    isCountdown: boolean
     color: string | null
+    targetProgress: number
+    interactive: boolean
+    onPress: (note: number) => void
   }
-  const { note, isActive, color }: Props = $props()
+
+  const {
+    note,
+    row,
+    column,
+    isActive,
+    isExplosion,
+    isCountdown,
+    color,
+    targetProgress,
+    interactive,
+    onPress,
+  }: Props = $props()
 </script>
 
-<div
+<button
   class="pad"
   class:active={isActive}
-  style={isActive && color ? `background-color: ${color};` : ''}
+  class:explosion={isExplosion}
+  class:countdown={isCountdown}
+  class:urgent={isActive && targetProgress < 0.35}
+  style:--pad-color={color ?? '#f6c453'}
+  style:--target-progress={targetProgress}
   data-note={note}
-  role="gridcell"
-  aria-label="Pad {note}"
-></div>
-
-<style>
-  .pad {
-    width: 60px;
-    height: 60px;
-    background-color: #333333;
-    border-radius: 10px;
-    transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
-  }
-
-  .pad.active {
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
-    transform: scale(1.05);
-  }
-
-  @media (max-width: 600px) {
-    .pad {
-      width: 40px;
-      height: 40px;
-    }
-  }
-</style>
+  aria-label="Row {row + 1}, column {column + 1}{isActive ? ', target' : ''}"
+  tabindex={interactive ? 0 : -1}
+  disabled={!interactive}
+  onclick={() => onPress(note)}
+>
+  <span class="pad-light"></span>
+  {#if isActive}<span class="target-ring" aria-hidden="true"></span>{/if}
+</button>

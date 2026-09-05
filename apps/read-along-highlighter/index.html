@@ -6,37 +6,143 @@
     <title>ReadAlong Highlighter</title>
   </head>
   <body>
-    <div id="text-container"></div>
-    <div id="chevron">❯</div>
-    <div id="sidebar">
-      <h2>Settings</h2>
-      <label for="text-input">Text:</label>
-      <textarea id="text-input" placeholder="Paste your text here..."></textarea>
-      <label for="text-color">Text Color:</label>
-      <input type="color" id="text-color" value="#ffffff" />
-      <label for="background-color">Background Color:</label>
-      <input type="color" id="background-color" value="#000000" />
-      <label for="highlight-bg-color">Highlight Background Color:</label>
-      <input type="color" id="highlight-bg-color" value="#003366" />
-      <label for="highlight-text-color">Highlight Text Color:</label>
-      <input type="color" id="highlight-text-color" value="#ffffff" />
-      <label for="text-size">Text Size:</label>
-      <div id="text-size-buttons">
-        <button class="text-size-btn" data-size="12">12</button>
-        <button class="text-size-btn" data-size="14">14</button>
-        <button class="text-size-btn" data-size="18">18</button>
-        <button class="text-size-btn" data-size="24">24</button>
-        <button class="text-size-btn" data-size="30">30</button>
-        <button class="text-size-btn" data-size="36">36</button>
-        <button class="text-size-btn" data-size="48">48</button>
-        <button class="text-size-btn" data-size="60">60</button>
-        <button class="text-size-btn" data-size="66">66</button>
-        <button class="text-size-btn" data-size="72">72</button>
-        <button class="text-size-btn" data-size="84">84</button>
-        <button class="text-size-btn" data-size="96">96</button>
+    <main id="text-container" aria-label="Read-along text"></main>
+
+    <aside id="minimap" class="right" aria-label="Document minimap" hidden>
+      <div id="minimap-content" aria-hidden="true"></div>
+      <div id="minimap-viewport" aria-hidden="true"></div>
+    </aside>
+
+    <button id="sidebar-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Open settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 6h16M7 12h10M10 18h4"></path>
+      </svg>
+    </button>
+
+    <aside id="sidebar" aria-label="ReadAlong settings" aria-hidden="true">
+      <header class="sidebar-header">
+        <p class="eyebrow">ReadAlong Highlighter</p>
+        <button id="sidebar-close" class="icon-button" type="button" aria-label="Close settings">&times;</button>
+      </header>
+
+      <section class="settings-section typography-controls">
+        <label class="field-label" for="text-input">Text</label>
+        <textarea id="text-input" placeholder="Paste your text here..." spellcheck="true"></textarea>
+      </section>
+
+      <section class="settings-section">
+        <div class="control-heading">
+          <label for="font-size-range">Font size</label>
+          <div class="number-unit"><input id="font-size-number" type="number" min="12" max="120" step="1" value="36" /><span>px</span></div>
+        </div>
+        <input id="font-size-range" class="range-input" type="range" min="12" max="120" step="1" value="36" />
+
+        <div class="control-heading">
+          <label for="word-spacing-range">Word spacing</label>
+          <output id="word-spacing-value" for="word-spacing-range">0</output>
+        </div>
+        <input id="word-spacing-range" class="range-input" type="range" min="0" max="2" step="0.25" value="0" list="word-spacing-steps" />
+        <datalist id="word-spacing-steps">
+          <option value="0"></option><option value="0.5"></option><option value="1"></option><option value="1.5"></option><option value="2"></option>
+        </datalist>
+
+        <div class="control-heading">
+          <label for="character-spacing-range">Character spacing</label>
+          <output id="character-spacing-value" for="character-spacing-range">0</output>
+        </div>
+        <input id="character-spacing-range" class="range-input" type="range" min="0" max="0.25" step="0.01" value="0" />
+
+        <div class="control-heading">
+          <label for="line-spacing-range">Line spacing</label>
+          <output id="line-spacing-value" for="line-spacing-range">1.6&times;</output>
+        </div>
+        <input id="line-spacing-range" class="range-input" type="range" min="1" max="3" step="0.1" value="1.6" />
+      </section>
+
+      <section class="settings-section">
+        <div class="colour-grid">
+          <div class="colour-control">
+            <span class="colour-control-label">Text</span>
+            <input type="hidden" id="text-color" value="#ffffff" />
+            <button class="colour-trigger" type="button" data-colour-for="text-color" data-colour-label="Text colour" aria-haspopup="dialog" aria-controls="colour-popover">
+              <span class="colour-trigger-swatch" style="--swatch-colour: #ffffff" aria-hidden="true"></span>
+              <output>#FFFFFF</output>
+            </button>
+          </div>
+          <div class="colour-control">
+            <span class="colour-control-label">Background</span>
+            <input type="hidden" id="background-color" value="#000000" />
+            <button class="colour-trigger" type="button" data-colour-for="background-color" data-colour-label="Background colour" aria-haspopup="dialog" aria-controls="colour-popover">
+              <span class="colour-trigger-swatch" style="--swatch-colour: #000000" aria-hidden="true"></span>
+              <output>#000000</output>
+            </button>
+          </div>
+          <div class="colour-control">
+            <span class="colour-control-label">Highlight</span>
+            <input type="hidden" id="highlight-bg-color" value="#003366" />
+            <button class="colour-trigger" type="button" data-colour-for="highlight-bg-color" data-colour-label="Highlight colour" aria-haspopup="dialog" aria-controls="colour-popover">
+              <span class="colour-trigger-swatch" style="--swatch-colour: #003366" aria-hidden="true"></span>
+              <output>#003366</output>
+            </button>
+          </div>
+          <div class="colour-control">
+            <span class="colour-control-label">Highlighted text</span>
+            <input type="hidden" id="highlight-text-color" value="#ffffff" />
+            <button class="colour-trigger" type="button" data-colour-for="highlight-text-color" data-colour-label="Highlighted text colour" aria-haspopup="dialog" aria-controls="colour-popover">
+              <span class="colour-trigger-swatch" style="--swatch-colour: #ffffff" aria-hidden="true"></span>
+              <output>#FFFFFF</output>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <label class="switch-row">
+          <span><strong>Show leading word</strong><small>Outline the next word in the reading sequence.</small></span>
+          <input id="show-leading-word" type="checkbox" checked />
+          <span class="switch" aria-hidden="true"><span></span></span>
+        </label>
+        <label class="switch-row switch-row-separated">
+          <span><strong>Show minimap</strong><small>Click or drag it to move through the text.</small></span>
+          <input id="minimap-visible" type="checkbox" checked />
+          <span class="switch" aria-hidden="true"><span></span></span>
+        </label>
+        <label class="select-row" for="minimap-side">
+          <span>Position</span>
+          <select id="minimap-side">
+            <option value="left" selected>Left</option>
+            <option value="right">Right</option>
+          </select>
+        </label>
+      </section>
+    </aside>
+
+    <div id="colour-popover" class="colour-popover" popover="auto" role="dialog" aria-labelledby="colour-popover-title">
+      <header class="colour-popover-header">
+        <strong id="colour-popover-title">Choose colour</strong>
+        <button id="colour-popover-done" class="colour-popover-done" type="button" aria-label="Done choosing colour" title="Done">&#10003;</button>
+      </header>
+      <div id="colour-field" class="colour-field" aria-hidden="true">
+        <span id="colour-field-cursor" aria-hidden="true"></span>
       </div>
-      <button id="apply-btn">Apply</button>
+      <label class="colour-popover-control" for="colour-hue">
+        <span>Hue</span>
+        <input id="colour-hue" class="colour-hue" type="range" min="0" max="359" step="1" value="0" />
+      </label>
+      <label class="colour-popover-control" for="colour-saturation">
+        <span>Saturation</span>
+        <input id="colour-saturation" class="colour-channel" type="range" min="0" max="100" step="1" value="100" />
+      </label>
+      <label class="colour-popover-control" for="colour-brightness">
+        <span>Brightness</span>
+        <input id="colour-brightness" class="colour-channel" type="range" min="0" max="100" step="1" value="100" />
+      </label>
+      <label class="colour-popover-control colour-hex-control" for="colour-hex">
+        <span>Hex</span>
+        <input id="colour-hex" type="text" value="#FFFFFF" inputmode="text" maxlength="7" spellcheck="false" autocomplete="off" />
+      </label>
     </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

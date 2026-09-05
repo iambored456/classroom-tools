@@ -1,38 +1,39 @@
 <script lang="ts">
-  import { gameState } from '../lib/game.svelte.ts'
+  import { formatTime, gameState, getAccuracy } from '../lib/game.svelte.ts'
+
+  const accuracy = $derived(getAccuracy())
 </script>
 
-<div class="scoreboard">
-  <h1>Whack-a-Mole</h1>
-  <div class="score-display">Score: {gameState.score}</div>
-</div>
+<section class="scoreboard">
+  <div class="score-header">
+    <div>
+      <p class="section-kicker">Current round</p>
+      <h2>Score</h2>
+    </div>
+    <div class="round-timer" class:ending={gameState.gamePhase === 'playing' && gameState.timeLeft <= 5}>
+      <span>Time</span>
+      <strong>{formatTime(gameState.timeLeft)}</strong>
+    </div>
+  </div>
 
-<style>
-  .scoreboard {
-    margin-bottom: 20px;
-  }
+  <div class="score-value">
+    {gameState.score.toLocaleString()}
+    {#if gameState.lastScoreGain > 0 && gameState.gamePhase === 'playing'}
+      <span>+{gameState.lastScoreGain}</span>
+    {/if}
+  </div>
 
-  h1 {
-    font-size: 48px;
-    margin-bottom: 10px;
-    color: #ffffff;
-  }
+  <div class="stat-grid">
+    <div><strong>{gameState.hits}</strong><span>Hits</span></div>
+    <div><strong>{accuracy}%</strong><span>Accuracy</span></div>
+    <div><strong>{gameState.streak}</strong><span>Streak</span></div>
+    <div><strong>{gameState.misses}</strong><span>Misses</span></div>
+  </div>
 
-  .score-display {
-    font-size: 36px;
-    font-weight: bold;
-    background-color: #222222;
-    padding: 10px 20px;
-    border-radius: 10px;
-    display: inline-block;
-  }
-
-  @media (max-width: 600px) {
-    h1 {
-      font-size: 36px;
-    }
-    .score-display {
-      font-size: 24px;
-    }
-  }
-</style>
+  {#if gameState.gamePhase === 'ended'}
+    <div class="result-banner" class:new-best={gameState.isNewBest}>
+      <span>{gameState.isNewBest ? 'New personal best' : 'Best streak'}</span>
+      <strong>{gameState.isNewBest ? gameState.score.toLocaleString() : gameState.bestStreak}</strong>
+    </div>
+  {/if}
+</section>

@@ -1,11 +1,12 @@
 import { execSync, spawnSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const rootDir = join(__dirname, '..')
+const appsDir = join(rootDir, 'apps')
 const isWindows = process.platform === 'win32'
 const comspec = process.env.ComSpec ?? 'cmd.exe'
 
@@ -103,6 +104,23 @@ const runBuild = (filter, baseUrl) => {
   }
 }
 
+const buildableApps = () =>
+  readdirSync(appsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name !== 'hub')
+    .map((entry) => {
+      const packagePath = join(appsDir, entry.name, 'package.json')
+      try {
+        const pkg = JSON.parse(readFileSync(packagePath, 'utf8'))
+        return typeof pkg.name === 'string' && typeof pkg.scripts?.build === 'string'
+          ? { directory: entry.name, packageName: pkg.name }
+          : null
+      } catch {
+        return null
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.directory.localeCompare(b.directory))
+
 const runNodeScript = (args, env = process.env) => {
   const result = spawnSync(process.execPath, args, {
     cwd: rootDir,
@@ -120,24 +138,16 @@ const runNodeScript = (args, env = process.env) => {
 const rootBase = resolveRootBase()
 console.log(`Using root BASE_URL=${rootBase}`)
 
-runBuild('class-clock', appendPath(rootBase, 'class-clock'))
-runBuild('class-schedule-widget', appendPath(rootBase, 'class-schedule-widget'))
-runBuild('classroom-connections', appendPath(rootBase, 'classroom-connections'))
-runBuild('book-of-questions', appendPath(rootBase, 'book-of-questions'))
-runBuild('classroom-wordle', appendPath(rootBase, 'classroom-wordle'))
-runBuild('read-along-highlighter', appendPath(rootBase, 'read-along-highlighter'))
-runBuild('launchpad-whack-a-mole', appendPath(rootBase, 'launchpad-whack-a-mole'))
-runBuild('fish-visualizer', appendPath(rootBase, 'fish-visualizer'))
-runBuild('launchpad-controller', appendPath(rootBase, 'launchpad-controller'))
-runBuild('tax-brackets-marble-visual', appendPath(rootBase, 'tax-brackets-marble-visual'))
-runBuild('coordinates', appendPath(rootBase, 'coordinates'))
-runBuild('simple-compound-interest', appendPath(rootBase, 'simple-compound-interest'))
-runBuild('oklch-visualizer', appendPath(rootBase, 'oklch-visualizer'))
-runBuild('rugby-play-visualizer', appendPath(rootBase, 'rugby-play-visualizer'))
-runBuild('city-navigator', appendPath(rootBase, 'city-navigator'))
+for (const app of buildableApps()) {
+  runBuild(app.packageName, appendPath(rootBase, app.directory))
+}
 runNodeScript(['scripts/capture-previews.ts'], {
   ...process.env,
   CAPTURE_ROOT_BASE: rootBase,
 })
 runBuild('hub', rootBase)
 runNodeScript(['scripts/assemble-pages.ts', '--out', 'docs'])
+runNodeScript(['scripts/verify-pages-links.ts'], {
+  ...process.env,
+  PAGES_ROOT_BASE: rootBase,
+})

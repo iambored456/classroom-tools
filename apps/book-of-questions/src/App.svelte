@@ -1,13 +1,12 @@
 <script lang="ts">
-  import settingsIconUrl from '../../city-navigator/public/assets/Settings_optimized.svg?url'
-
-  import { onMount } from 'svelte'
+  import { onMount, tick } from 'svelte'
   import QuestionLibrary from './QuestionLibrary.svelte'
   import SessionEditor from './SessionEditor.svelte'
   import {
     categoryColour,
     createStarterLibrary,
     formatQuestionForDisplay,
+    getWouldYouRatherOptions,
     makeId,
     questionSizeClass,
     splitFollowUpPrompts,
@@ -21,10 +20,11 @@
     saveSessions,
   } from './storage'
   import { fitQuestionText } from './text-fit'
-  import type { LibraryState, Question, QuestionSession } from './types'
+  import type { LibraryState, Question, QuestionSession, SensitiveTopic } from './types'
 
   type Screen = 'home' | 'session'
   type PendingAction = { kind: 'delete' | 'restart'; sessionId: string }
+  type CardTransition = 'idle' | 'flipping' | 'swiping'
 
   let screen: Screen = 'home'
   let darkMode = true
@@ -49,6 +49,9 @@
   let canChooseAnotherCard = false
   let sortedSessions: QuestionSession[] = []
   let activeStats = { total: 0, answered: 0, inDeck: 0 }
+  let wouldYouRatherOrientation: 'horizontal' | 'vertical' = 'horizontal'
+  let cardTransition: CardTransition = 'idle'
+  let queuedQuestion: Question | null = null
 
   $: activeSession = sessions.find((session) => session.id === activeSessionId) ?? null
   $: currentQuestion = activeSession?.currentQuestionId
@@ -62,6 +65,7 @@
   $: revealedFollowUps = followUpPrompts.slice(0, revealedFollowUpCount)
   $: hasMoreFollowUps = revealedFollowUpCount < followUpPrompts.length
   $: canChooseAnotherCard = Boolean(
+    cardTransition === 'idle' &&
     activeSession &&
       currentQuestion &&
       sessionQuestions(activeSession).some(
@@ -75,13 +79,17 @@
     ? sessions.find((session) => session.id === editingSessionId) ?? null
     : null
   $: enabledQuestionCount = library.questions.filter((question) => question.enabled).length
+  $: wouldYouRatherOptions = currentQuestion ? getWouldYouRatherOptions(currentQuestion) : null
+
+  const isQuestionAllowed = (session: QuestionSession, question: Question) =>
+    question.sensitiveTopics.every((topic) => session.includedSensitiveTopics.includes(topic))
 
   const sessionQuestions = (session: QuestionSession) =>
     library.questions.filter(
       (question) =>
         question.enabled &&
         session.categoryIds.includes(question.categoryId) &&
-        (session.includeExplicit || !question.explicit),
+        isQuestionAllowed(session, question),
     )
 
   const sessionStats = (session: QuestionSession) => {
@@ -115,7 +123,7 @@
         (question) =>
           question.categoryId === categoryId &&
           question.enabled &&
-          (session.includeExplicit || !question.explicit),
+          isQuestionAllowed(session, question),
       ).length
       return [{ ...category, enabledCount }]
     })
@@ -155,6 +163,10 @@
 
     card.style.setProperty('--question-fitted-font-size', `${fit.questionFontSize}px`)
     card.style.setProperty('--follow-up-fitted-font-size', `${fit.followUpFontSize}px`)
+    card.style.setProperty(
+      '--would-rather-fitted-font-size',
+      `${Math.max(20, fit.questionFontSize * (wouldYouRatherOrientation === 'vertical' ? 0.52 : 0.6))}px`,
+    )
     card.classList.add('text-fitted')
     card.classList.toggle('text-fit-overflow', !fit.fits)
     card.dataset.textFitEngine = 'pretext'
@@ -206,7 +218,7 @@
     persistSessions(sessions.map((session) => (session.id === nextSession.id ? nextSession : session)))
   }
 
-  const drawQuestion = (session: QuestionSession, excludedQuestionId: string | null = null) => {
+  const createDrawnSession = (session: QuestionSession, excludedQuestionId: string | null = null) => {
     const answeredIds = new Set(session.askedQuestionIds)
     const available = sessionQuestions(session).filter(
       (question) => !answeredIds.has(question.id) && question.id !== excludedQuestionId,
@@ -218,6 +230,11 @@
       revealedFollowUpCount: 0,
       updatedAt: Date.now(),
     }
+    return nextSession
+  }
+
+  const drawQuestion = (session: QuestionSession, excludedQuestionId: string | null = null) => {
+    const nextSession = createDrawnSession(session, excludedQuestionId)
     replaceSession(nextSession)
     return nextSession
   }
@@ -273,7 +290,7 @@
     homeMessage = ''
   }
 
-  const saveSessionEditor = (detail: { name: string; categoryIds: string[]; includeExplicit: boolean }) => {
+  const saveSessionEditor = (detail: { name: string; categoryIds: string[]; includedSensitiveTopics: SensitiveTopic[] }) => {
     const now = Date.now()
     if (editingSessionId) {
       const existing = sessions.find((session) => session.id === editingSessionId)
@@ -284,14 +301,14 @@
               question.id === existing.currentQuestionId &&
               question.enabled &&
               detail.categoryIds.includes(question.categoryId) &&
-              (detail.includeExplicit || !question.explicit),
+              question.sensitiveTopics.every((topic) => detail.includedSensitiveTopics.includes(topic)),
           )
         : false
       const updatedSession: QuestionSession = {
         ...existing,
         name: detail.name,
         categoryIds: detail.categoryIds,
-        includeExplicit: detail.includeExplicit,
+        includedSensitiveTopics: detail.includedSensitiveTopics,
         currentQuestionId: currentStillIncluded ? existing.currentQuestionId : null,
         askedQuestionIds: currentStillIncluded
           ? existing.askedQuestionIds.filter((id) => id !== existing.currentQuestionId)
@@ -315,7 +332,7 @@
       askedQuestionIds: [],
       currentQuestionId: null,
       revealedFollowUpCount: 0,
-      includeExplicit: detail.includeExplicit,
+      includedSensitiveTopics: detail.includedSensitiveTopics,
       createdAt: now,
       updatedAt: now,
     }
@@ -335,17 +352,118 @@
     })
   }
 
-  const chooseAnotherCard = () => {
-    if (!activeSession || !currentQuestion || !canChooseAnotherCard) return
-    drawQuestion(activeSession, currentQuestion.id)
+  const prefersReducedMotion = () =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  const waitForAnimations = async (animations: Animation[]) => {
+    await Promise.all(
+      animations.map(async (animation) => {
+        try {
+          await animation.finished
+        } catch {
+          // A cancelled animation is already finished for the purposes of this transition.
+        }
+      }),
+    )
   }
 
-  const nextCard = () => {
-    if (!activeSession || !currentQuestion || hasMoreFollowUps) return
+  const flipTargets = (card: HTMLElement, useOptionCards: boolean) => {
+    if (!useOptionCards) return [card]
+    const optionCards = Array.from(card.querySelectorAll<HTMLElement>('.would-you-rather-option'))
+    return optionCards.length > 0 ? optionCards : [card]
+  }
+
+  const animateFlipTo = async (nextSession: QuestionSession, outgoingUsesOptionCards: boolean) => {
+    const outgoingCard = questionCardElement
+    if (!outgoingCard || prefersReducedMotion()) {
+      replaceSession(nextSession)
+      return
+    }
+
+    cardTransition = 'flipping'
+    const outgoingAnimations = flipTargets(outgoingCard, outgoingUsesOptionCards).map((target) =>
+      target.animate(
+        [
+          { transform: 'rotateY(0deg)', opacity: 1 },
+          { transform: 'rotateY(88deg)', opacity: 0.42 },
+        ],
+        { duration: 240, easing: 'cubic-bezier(.45, 0, .75, .35)', fill: 'forwards' },
+      ),
+    )
+    let incomingAnimations: Animation[] = []
+
+    try {
+      await waitForAnimations(outgoingAnimations)
+      replaceSession(nextSession)
+      await tick()
+      outgoingAnimations.forEach((animation) => animation.cancel())
+
+      const incomingCard = questionCardElement
+      if (!incomingCard) return
+      const incomingUsesOptionCards = Boolean(
+        currentQuestion && getWouldYouRatherOptions(currentQuestion),
+      )
+      incomingAnimations = flipTargets(incomingCard, incomingUsesOptionCards).map((target) =>
+        target.animate(
+          [
+            { transform: 'rotateY(-88deg)', opacity: 0.42 },
+            { transform: 'rotateY(0deg)', opacity: 1 },
+          ],
+          { duration: 290, easing: 'cubic-bezier(.2, .7, .2, 1)', fill: 'forwards' },
+        ),
+      )
+      await waitForAnimations(incomingAnimations)
+    } finally {
+      outgoingAnimations.forEach((animation) => animation.cancel())
+      incomingAnimations.forEach((animation) => animation.cancel())
+      cardTransition = 'idle'
+      scheduleQuestionTextFit()
+    }
+  }
+
+  const chooseAnotherCard = async () => {
+    if (!activeSession || !currentQuestion || !canChooseAnotherCard || cardTransition !== 'idle') return
+    const nextSession = createDrawnSession(activeSession, currentQuestion.id)
+    const nextQuestion = nextSession.currentQuestionId
+      ? library.questions.find((question) => question.id === nextSession.currentQuestionId) ?? null
+      : null
+    const outgoingCard = questionCardElement
+    if (!nextQuestion || !outgoingCard || prefersReducedMotion()) {
+      replaceSession(nextSession)
+      return
+    }
+
+    cardTransition = 'swiping'
+    queuedQuestion = nextQuestion
+    await tick()
+    const swipeAnimation = outgoingCard.animate(
+      [
+        { transform: 'translateX(0) rotate(0deg)', opacity: 1 },
+        { transform: 'translateX(-118vw) rotate(-8deg)', opacity: 0 },
+      ],
+      { duration: 520, easing: 'cubic-bezier(.55, .05, .65, .2)', fill: 'forwards' },
+    )
+
+    try {
+      await waitForAnimations([swipeAnimation])
+      replaceSession(nextSession)
+      await tick()
+    } finally {
+      swipeAnimation.cancel()
+      queuedQuestion = null
+      cardTransition = 'idle'
+      scheduleQuestionTextFit()
+    }
+  }
+
+  const nextCard = async () => {
+    if (!activeSession || !currentQuestion || hasMoreFollowUps || cardTransition !== 'idle') return
+    const outgoingUsesOptionCards = Boolean(getWouldYouRatherOptions(currentQuestion))
     const answeredQuestionIds = activeSession.askedQuestionIds.includes(currentQuestion.id)
       ? activeSession.askedQuestionIds
       : [...activeSession.askedQuestionIds, currentQuestion.id]
-    drawQuestion({ ...activeSession, askedQuestionIds: answeredQuestionIds })
+    const nextSession = createDrawnSession({ ...activeSession, askedQuestionIds: answeredQuestionIds })
+    await animateFlipTo(nextSession, outgoingUsesOptionCards)
   }
 
   const returnHome = () => {
@@ -420,6 +538,16 @@
     saveDarkMode(darkMode)
   }
 
+  const toggleWouldYouRatherOrientation = () => {
+    wouldYouRatherOrientation = wouldYouRatherOrientation === 'horizontal' ? 'vertical' : 'horizontal'
+    try {
+      localStorage.setItem('book-of-questions:would-you-rather-orientation:v1', wouldYouRatherOrientation)
+    } catch {
+      // Keep the orientation for this visit when storage is unavailable.
+    }
+    scheduleQuestionTextFit()
+  }
+
   const sessionMenuId = (sessionId: string) => `session-menu-${sessionId}`
 
   const closeSessionMenu = (sessionId: string) => {
@@ -478,6 +606,13 @@
   onMount(() => {
     library = loadLibrary()
     darkMode = loadDarkMode()
+    try {
+      wouldYouRatherOrientation = localStorage.getItem('book-of-questions:would-you-rather-orientation:v1') === 'vertical'
+        ? 'vertical'
+        : 'horizontal'
+    } catch {
+      wouldYouRatherOrientation = 'horizontal'
+    }
     const validCategoryIds = new Set(library.categories.map((category) => category.id))
     sessions = loadSessions().map((session) => {
       const activeQuestionIds = new Set(sessionQuestions(session).map((question) => question.id))
@@ -600,7 +735,11 @@
                         </li>
                       {/each}
                     </ul>
-                    <small>{session.includeExplicit ? 'Explicit questions included' : 'Explicit questions excluded'}</small>
+                    <small>
+                      {session.includedSensitiveTopics.length > 0
+                        ? `${session.includedSensitiveTopics.length} sensitive topic ${session.includedSensitiveTopics.length === 1 ? 'opt-in' : 'opt-ins'}`
+                        : 'Sensitive topics excluded'}
+                    </small>
                   </section>
                 {/if}
               </article>
@@ -640,34 +779,98 @@
           {activeStats.answered.toLocaleString()}/{activeStats.total.toLocaleString()}
         </span>
       </div>
-      <button
-        class="header-icon-button"
-        type="button"
-        aria-label="Session Settings"
-        title="Session Settings"
-        on:click={() => openExistingSessionEditor(activeSession.id)}
-      >
-        <img
-          class="settings-tool-icon"
-          src={settingsIconUrl}
-          alt=""
-          width="48"
-          height="48"
-          data-icon-source="music-learning-tools/packages/diatonic-compass-ui/public/assets/Settings_optimized.svg"
-        />
-      </button>
+      <div class="question-header-actions">
+        {#if wouldYouRatherOptions}
+          <button
+            class="header-icon-button orientation-header-button"
+            class:vertical={wouldYouRatherOrientation === 'vertical'}
+            type="button"
+            disabled={cardTransition !== 'idle'}
+            aria-label={`Arrange cards ${wouldYouRatherOrientation === 'horizontal' ? 'vertically' : 'horizontally'}`}
+            title={`Arrange cards ${wouldYouRatherOrientation === 'horizontal' ? 'vertically' : 'horizontally'}`}
+            on:click={toggleWouldYouRatherOrientation}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 7h-9a4 4 0 0 0-4 4v1"></path>
+              <path d="m17 4 3 3-3 3"></path>
+              <path d="M4 17h9a4 4 0 0 0 4-4v-1"></path>
+              <path d="m7 20-3-3 3-3"></path>
+            </svg>
+          </button>
+        {/if}
+        <button
+          class="header-icon-button settings-header-button"
+          type="button"
+          aria-label="Session Settings"
+          title="Session Settings"
+          on:click={() => openExistingSessionEditor(activeSession.id)}
+        >
+          <svg class="settings-tool-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9.6 3.1h4.8l.5 2.1 1.3.8 2-.6 2.4 4.2-1.5 1.5v1.8l1.5 1.5-2.4 4.2-2-.6-1.3.8-.5 2.1H9.6l-.5-2.1-1.3-.8-2 .6-2.4-4.2 1.5-1.5v-1.8L3.4 9.6l2.4-4.2 2 .6 1.3-.8.5-2.1Z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
     </header>
 
     <main class="question-stage">
       {#if currentQuestion}
         {@const category = library.categories.find((item) => item.id === currentQuestion.categoryId)}
-        <article class={`question-card ${questionSizeClass(currentQuestion)}`} use:observeQuestionCard>
+        <div class="question-card-stack" aria-busy={cardTransition !== 'idle'}>
+          {#if queuedQuestion}
+            {@const queuedCategory = library.categories.find((item) => item.id === queuedQuestion?.categoryId)}
+            {@const queuedWouldYouRatherOptions = getWouldYouRatherOptions(queuedQuestion)}
+            <article
+              class={`question-card question-card-underlay ${questionSizeClass(queuedQuestion)}`}
+              class:would-you-rather-card={Boolean(queuedWouldYouRatherOptions)}
+              class:vertical={Boolean(queuedWouldYouRatherOptions) && wouldYouRatherOrientation === 'vertical'}
+              aria-hidden="true"
+            >
+              {#if queuedCategory}
+                <p class="question-category" style={`--category-colour: ${categoryColour(queuedCategory.id, library.categories)}`}>
+                  <span></span>{queuedCategory.name}
+                </p>
+              {/if}
+              {#if queuedWouldYouRatherOptions}
+                <div class="would-you-rather-heading"><h1>Would you rather</h1></div>
+                <div class={`would-you-rather-options ${wouldYouRatherOrientation}`}>
+                  <div class="would-you-rather-option"><p>{queuedWouldYouRatherOptions.first}</p></div>
+                  <span class="would-you-rather-or">or</span>
+                  <div class="would-you-rather-option"><p>{queuedWouldYouRatherOptions.second}</p></div>
+                </div>
+              {:else}
+                <h1>{formatQuestionForDisplay(queuedQuestion.prompt)}</h1>
+              {/if}
+            </article>
+          {/if}
+
+          <article
+            class={`question-card ${questionSizeClass(currentQuestion)}`}
+            class:would-you-rather-card={Boolean(wouldYouRatherOptions)}
+            class:vertical={Boolean(wouldYouRatherOptions) && wouldYouRatherOrientation === 'vertical'}
+            use:observeQuestionCard
+          >
           {#if category}
             <p class="question-category" style={`--category-colour: ${categoryColour(category.id, library.categories)}`}>
               <span></span>{category.name}
             </p>
           {/if}
-          <h1>{formatQuestionForDisplay(currentQuestion.prompt)}</h1>
+          {#if wouldYouRatherOptions}
+            <div class="would-you-rather-heading">
+              <h1>Would you rather</h1>
+            </div>
+            <div class={`would-you-rather-options ${wouldYouRatherOrientation}`}>
+              <button class="would-you-rather-option" type="button" disabled={cardTransition !== 'idle'} on:click={nextCard}>
+                <p>{wouldYouRatherOptions.first}</p>
+              </button>
+              <span class="would-you-rather-or">or</span>
+              <button class="would-you-rather-option" type="button" disabled={cardTransition !== 'idle'} on:click={nextCard}>
+                <p>{wouldYouRatherOptions.second}</p>
+              </button>
+            </div>
+          {:else}
+            <h1>{formatQuestionForDisplay(currentQuestion.prompt)}</h1>
+          {/if}
           {#if followUpPrompts.length > 0}
             <div class="follow-up-interaction">
               {#if revealedFollowUps.length === 0}
@@ -700,7 +903,8 @@
               {/if}
             </div>
           {/if}
-        </article>
+          </article>
+        </div>
 
         <div class="question-controls">
           <button
@@ -715,7 +919,7 @@
           <button
             class="next-button"
             type="button"
-            disabled={hasMoreFollowUps}
+            disabled={hasMoreFollowUps || cardTransition !== 'idle'}
             title={hasMoreFollowUps ? 'Reveal every follow-up question before continuing.' : 'Move this card to Answered and continue.'}
             on:click={nextCard}
           >

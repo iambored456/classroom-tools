@@ -43,12 +43,24 @@ export default defineConfig({
         target: 'http://localhost:5176',
         changeOrigin: true,
       },
-      '/fish-visualizer': {
-        target: 'http://localhost:5177',
+      '/launchpad-snake': {
+        target: 'http://localhost:5189',
         changeOrigin: true,
       },
-      '/launchpad-controller': {
-        target: 'http://localhost:5178',
+      '/launchpad-reversi': {
+        target: 'http://localhost:5190',
+        changeOrigin: true,
+      },
+      '/launchpad-paint-war': {
+        target: 'http://localhost:5191',
+        changeOrigin: true,
+      },
+      '/launchpad-finger-twister': {
+        target: 'http://localhost:5192',
+        changeOrigin: true,
+      },
+      '/fish-visualizer': {
+        target: 'http://localhost:5177',
         changeOrigin: true,
       },
       '/tax-brackets-marble-visual': {
