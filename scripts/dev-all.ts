@@ -17,6 +17,8 @@ type DevServer = {
 }
 
 const servers: DevServer[] = [
+  { name: 'open-middle', port: 5194, path: '/open-middle/' },
+  { name: 'face-to-name', port: 5193, path: '/face-to-name/' },
   { name: 'class-clock', port: 5174, path: '/class-clock/' },
   { name: 'class-schedule-widget', port: 5181, path: '/class-schedule-widget/' },
   { name: 'classroom-connections', port: 5186, path: '/classroom-connections/' },
@@ -235,8 +237,13 @@ function attachOutput(name: string, stream: NodeJS.ReadableStream | null): void 
 }
 
 function spawnServer(name: string): ChildProcess {
+  // The parent `pnpm dev` has already checked dependencies. Concurrent child
+  // checks can read .pnpm-workspace-state-v1.json while another pnpm process
+  // truncates and rewrites it, causing "Unexpected end of JSON input".
+  const args = ['--config.verify-deps-before-run=false', '--filter', name, 'run', 'dev']
+
   if (isWindows) {
-    return spawn(comspec, ['/d', '/s', '/c', 'pnpm', '--filter', name, 'run', 'dev'], {
+    return spawn(comspec, ['/d', '/s', '/c', 'pnpm', ...args], {
       cwd: rootDir,
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -244,7 +251,7 @@ function spawnServer(name: string): ChildProcess {
     })
   }
 
-  return spawn('pnpm', ['--filter', name, 'run', 'dev'], {
+  return spawn('pnpm', args, {
     cwd: rootDir,
     env: process.env,
     stdio: ['ignore', 'pipe', 'pipe'],

@@ -56,6 +56,40 @@ header {
   text-align: center;
 }
 
+.color-space-switch {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.color-space-switch .button-secondary {
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+}
+
+.color-space-switch [aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent-color);
+  color: var(--text-color);
+}
+
+.color-space-switch button:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 3px;
+}
+
+.experimental-badge {
+  margin-left: 0.35rem;
+  font-size: 0.7rem;
+  color: var(--muted-text);
+}
+
+.color-space-source {
+  color: var(--accent-color);
+  font-size: 0.82rem;
+}
+
 h1,
 h2,
 h3 {
@@ -105,6 +139,7 @@ p {
 .controls-panel,
 .vis-box,
 .results-panel {
+  min-width: 0;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 20px;
@@ -324,6 +359,7 @@ input[type='range']:disabled {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  max-width: 100%;
 }
 
 .value-input {
@@ -433,7 +469,7 @@ td {
   }
 
   .container {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       'controls'
       'visuals'

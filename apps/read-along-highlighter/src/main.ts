@@ -19,7 +19,7 @@ const STORAGE = {
 
 const DEFAULT_TEXT = `This is an example text.
 
-Use the arrow keys to move the highlight through the words, and adjust settings using the sidebar.
+Use the arrow keys to move the highlight through the words. Hold Shift with the left or right arrow to move letter by letter, and adjust settings using the sidebar.
 
 Click any word to jump to it. The active word remains centred as you progress.`
 
@@ -82,6 +82,7 @@ const colourTriggers = Array.from(document.querySelectorAll<HTMLButtonElement>('
 
 let words: HTMLSpanElement[] = []
 let currentWordIndex = 0
+let currentCharacterCount = 0
 let animationFrameId: number | null = null
 let minimapFrameId: number | null = null
 let minimapDragging = false
@@ -357,8 +358,10 @@ function processText(text: string): void {
           span.className = 'word'
           span.textContent = token
           span.dataset.index = String(words.length)
+          span.dataset.text = token
           span.addEventListener('click', () => {
             currentWordIndex = Number(span.dataset.index)
+            currentCharacterCount = wordCharacters(currentWordIndex).length
             updateHighlighting()
             centerActiveWord()
           })
@@ -372,20 +375,46 @@ function processText(text: string): void {
   }
 
   currentWordIndex = Math.min(previousIndex, Math.max(0, words.length - 1))
+  currentCharacterCount = wordCharacters(currentWordIndex).length
   updateHighlighting()
   scheduleMinimapRender()
+}
+
+function wordCharacters(index: number): string[] {
+  return Array.from(words[index]?.dataset.text ?? '')
+}
+
+function renderWordHighlight(span: HTMLSpanElement, index: number): void {
+  const characters = wordCharacters(index)
+  const isFullyHighlighted = index < currentWordIndex
+    || (index === currentWordIndex && currentCharacterCount >= characters.length)
+  span.classList.toggle('highlighted', isFullyHighlighted)
+
+  if (index !== currentWordIndex || currentCharacterCount <= 0 || isFullyHighlighted) {
+    span.replaceChildren(span.dataset.text ?? '')
+    return
+  }
+
+  const highlightedCharacters = document.createElement('span')
+  highlightedCharacters.className = 'character-highlighted'
+  highlightedCharacters.textContent = characters.slice(0, currentCharacterCount).join('')
+  span.replaceChildren(
+    highlightedCharacters,
+    characters.slice(currentCharacterCount).join(''),
+  )
 }
 
 function updateHighlighting(): void {
   let leadingWordIndex = -1
   if (showLeadingWordInput.checked) {
-    leadingWordIndex = currentWordIndex + 1
+    const currentWordIsPartial = currentCharacterCount < wordCharacters(currentWordIndex).length
+    leadingWordIndex = currentWordIsPartial ? currentWordIndex : currentWordIndex + 1
     while (leadingWordIndex < words.length && isPunctuation(words[leadingWordIndex].textContent?.trim() ?? '')) {
       leadingWordIndex += 1
     }
   }
   words.forEach((span, index) => {
-    span.classList.toggle('highlighted', index <= currentWordIndex)
+    renderWordHighlight(span, index)
     span.classList.toggle('leading-word', index === leadingWordIndex)
   })
   updateMinimapHighlight()
@@ -569,11 +598,13 @@ function updateMinimapHighlight(): void {
     const startWordIndex = Number(line.dataset.startWordIndex ?? 0)
     const endWordIndex = Number(line.dataset.endWordIndex ?? startWordIndex)
     const wordCount = Math.max(1, endWordIndex - startWordIndex + 1)
+    const activeWordLength = Math.max(1, wordCharacters(currentWordIndex).length)
+    const activeWordProgress = currentCharacterCount / activeWordLength
     const readProgress = currentWordIndex < startWordIndex
       ? 0
-      : currentWordIndex >= endWordIndex
+      : currentWordIndex > endWordIndex
         ? 1
-        : (currentWordIndex - startWordIndex + 1) / wordCount
+        : (currentWordIndex - startWordIndex + activeWordProgress) / wordCount
     line.style.setProperty('--read-progress', `${readProgress * 100}%`)
     line.classList.toggle('read', readProgress === 1)
     line.classList.toggle('reading', readProgress > 0 && readProgress < 1)
@@ -714,25 +745,61 @@ minimap.addEventListener('pointerup', (event) => {
   minimap.releasePointerCapture(event.pointerId)
 })
 
+function moveHighlightByCharacter(direction: -1 | 1): void {
+  const characterCount = wordCharacters(currentWordIndex).length
+
+  if (direction > 0) {
+    if (currentCharacterCount < characterCount) {
+      currentCharacterCount += 1
+    } else if (currentWordIndex < words.length - 1) {
+      currentWordIndex += 1
+      currentCharacterCount = Math.min(1, wordCharacters(currentWordIndex).length)
+    }
+    return
+  }
+
+  if (currentCharacterCount > 0) {
+    currentCharacterCount -= 1
+  } else if (currentWordIndex > 0) {
+    currentWordIndex -= 1
+    currentCharacterCount = Math.max(0, wordCharacters(currentWordIndex).length - 1)
+  }
+}
+
 document.addEventListener('keydown', (event) => {
   const target = event.target as HTMLElement
   if (target.matches('input, textarea, select, button')) return
   if (!words[currentWordIndex]) return
 
   if (event.key === 'ArrowRight') {
-    let next = currentWordIndex + 1
-    while (next < words.length && isPunctuation(words[next].textContent?.trim() ?? '')) next += 1
-    if (next < words.length) currentWordIndex = next
+    if (event.shiftKey) {
+      moveHighlightByCharacter(1)
+    } else {
+      let next = currentWordIndex + 1
+      while (next < words.length && isPunctuation(words[next].textContent?.trim() ?? '')) next += 1
+      if (next < words.length) {
+        currentWordIndex = next
+        currentCharacterCount = wordCharacters(currentWordIndex).length
+      }
+    }
   } else if (event.key === 'ArrowLeft') {
-    let previous = currentWordIndex - 1
-    while (previous >= 0 && isPunctuation(words[previous].textContent?.trim() ?? '')) previous -= 1
-    if (previous >= 0) currentWordIndex = previous
+    if (event.shiftKey) {
+      moveHighlightByCharacter(-1)
+    } else {
+      let previous = currentWordIndex - 1
+      while (previous >= 0 && isPunctuation(words[previous].textContent?.trim() ?? '')) previous -= 1
+      if (previous >= 0) {
+        currentWordIndex = previous
+        currentCharacterCount = wordCharacters(currentWordIndex).length
+      }
+    }
   } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
     const activeTop = words[currentWordIndex].offsetTop
     const direction = event.key === 'ArrowUp' ? -1 : 1
     for (let index = currentWordIndex + direction; index >= 0 && index < words.length; index += direction) {
       if ((direction < 0 && words[index].offsetTop < activeTop) || (direction > 0 && words[index].offsetTop > activeTop)) {
         currentWordIndex = index
+        currentCharacterCount = wordCharacters(currentWordIndex).length
         break
       }
     }

@@ -17,6 +17,16 @@ const withBase = (path: string) => `${baseUrl}${path.replace(/^\/+/, '')}`
 export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
+    id: 'open-middle',
+    name: 'Open Middle',
+    description: 'Make a true math sentence with draggable digits. See each number in words and base-ten blocks.',
+    href: withBase('open-middle/'),
+    preview: withBase('images/OpenMiddle-preview.svg'),
+    tags: ['Math'],
+    accent: '#222222',
+  },
+  {
+    kind: 'app',
     id: 'classroom-wordle',
     name: 'Classroom Wordle',
     description: 'Guess the hidden word.\nAdjust length, attempts, and answers.',
@@ -205,5 +215,15 @@ export const hubEntries: HubEntry[] = [
     preview: withBase('images/RugbyPlayVisualizer-screenshot.png'),
     tags: ['Sports'],
     accent: '#4c9855',
+  },
+  {
+    kind: 'app',
+    id: 'face-to-name',
+    name: 'Face to Name',
+    description: 'Learn the people on your team.\nMatch faces and names with private, repeat practice.',
+    href: withBase('face-to-name/'),
+    preview: withBase('images/FaceToName-screenshot.png'),
+    tags: ['Classroom', 'Teams'],
+    accent: '#006c70',
   },
 ]

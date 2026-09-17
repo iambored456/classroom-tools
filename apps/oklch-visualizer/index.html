@@ -12,6 +12,12 @@
         Explore equidistant palettes, trace the safe gamut edge, and map color progressions across
         pitch ranges.
       </p>
+      <div class="color-space-switch" role="group" aria-label="Colour space">
+        <button type="button" class="button-secondary" data-color-space="oklch" aria-pressed="true">OKLCH</button>
+        <button type="button" class="button-secondary" data-color-space="oklch-plus" aria-pressed="false" aria-describedby="color-space-note">Oklch+ <span class="experimental-badge">Experimental</span></button>
+      </div>
+      <p id="color-space-note" class="info" aria-live="polite">Using standard OKLCH. Switch spaces with the same L/C/H values to compare palettes.</p>
+      <a class="color-space-source" href="https://arxiv.org/abs/2606.05255" target="_blank" rel="noopener noreferrer">About Oklch+</a>
     </header>
 
     <main class="container">
@@ -208,7 +214,7 @@
                 <th>Color</th>
                 <th>Pitch</th>
                 <th>Hex</th>
-                <th>OKLCH (L, C, H)</th>
+                <th id="palette-space-heading">OKLCH (L, C, H)</th>
               </tr>
             </thead>
             <tbody id="palette-table-body"></tbody>

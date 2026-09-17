@@ -51,6 +51,7 @@ button, select, input[type='range'], input[type='color'], input[type='checkbox']
 .word { border-radius: .12em; cursor: pointer; transition: color 80ms ease, background-color 80ms ease, outline-color 80ms ease; }
 .word:hover, .word.leading-word { outline: .08em solid color-mix(in srgb, var(--highlight-bg-color) 72%, transparent); }
 .highlighted { background: var(--highlight-bg-color); color: var(--highlight-text-color); }
+.character-highlighted { border-radius: .12em 0 0 .12em; background: var(--highlight-bg-color); color: var(--highlight-text-color); }
 
 #sidebar-toggle {
   position: fixed;

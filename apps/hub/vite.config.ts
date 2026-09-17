@@ -15,6 +15,11 @@ export default defineConfig({
     // because all classroom-tool URLs are intentionally rooted at localhost:5173.
     strictPort: true,
     proxy: {
+      '/open-middle': { target: 'http://localhost:5194', changeOrigin: true },
+      '/face-to-name': {
+        target: 'http://localhost:5193',
+        changeOrigin: true,
+      },
       '/class-clock': {
         target: 'http://localhost:5174',
         changeOrigin: true,

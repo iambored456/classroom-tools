@@ -1,6 +1,7 @@
 import './styles.css'
 
 import * as culori from 'culori';
+import { COLOR_SPACES, toCartesian } from './color-spaces.js';
 
 // DOM Elements
 const lightnessSlider = document.getElementById('lightness-slider');
@@ -47,7 +48,8 @@ let sweetSpotPath = [];
 let currentPalette = [];
 let startHue = 0;
 
-const oklchConverter = culori.converter('oklab');
+let colorSpace = 'oklch';
+const activeSpace = () => COLOR_SPACES[colorSpace];
 const pitchLabels = [
     'A0','A#0','B0','C1','C#1','D1','D#1','E1','F1','F#1','G1','G#1',
     'A1','A#1','B1','C2','C#2','D2','D#2','E2','F2','F#2','G2','G#2',
@@ -91,7 +93,7 @@ async function init3D() {
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, containerWidth / containerHeight, 0.1, 1000);
-    camera.position.set(0, 0.5, 1.2);
+    camera.position.set(0, 0.5, 1.8);
     camera.lookAt(0, 0.5, 0);
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -134,7 +136,7 @@ async function init3D() {
 }
 
 function oklchToLab3D(l, c, h) {
-    const lab = oklchConverter({ mode: 'oklch', l, c, h });
+    const lab = toCartesian({ l, c, h });
     return new THREE.Vector3(lab.a * 2.0, lab.l, lab.b * 2.0);
 }
 
@@ -146,7 +148,7 @@ function createGamutShellMesh() {
         const l = i / l_steps;
         for (let j = 0; j <= h_steps; j++) {
             const h = (j / h_steps) * 360;
-            const colorAtCusp = culori.clampChroma({ mode: 'oklch', l, h, c: 0.5 }, 'oklch');
+            const colorAtCusp = { mode: colorSpace, l, h, c: findMaxChromaForLAndH(l, h) };
             positions.push(...oklchToLab3D(colorAtCusp.l, colorAtCusp.c, colorAtCusp.h).toArray());
             const rgb = culori.converter('rgb')(colorAtCusp);
             colors.push(rgb.r, rgb.g, rgb.b);
@@ -195,7 +197,13 @@ function createSafeGamutShellMesh() {
 
 function update3DVisualization() {
     if (!is3DInitialized) return;
-    while (paletteGroup.children.length > 0) paletteGroup.remove(paletteGroup.children[0]);
+    const oldGeometries = new Set();
+    for (const child of [...paletteGroup.children]) {
+        oldGeometries.add(child.geometry);
+        child.material.dispose();
+        paletteGroup.remove(child);
+    }
+    oldGeometries.forEach(geometry => geometry.dispose());
     const sphereGeometry = new THREE.SphereGeometry(0.03, 32, 16);
     
     currentPalette.forEach(color => {
@@ -214,7 +222,7 @@ function drawLCGraph(l, c) {
     const width = lcGraphCanvas.width;
     const height = lcGraphCanvas.height;
     const padding = 20;
-    const maxC = 0.4; // Corresponds to the chroma slider max
+    const maxC = activeSpace().maxChroma;
 
     ctx.clearRect(0, 0, width, height);
 
@@ -307,7 +315,7 @@ function updateApp() {
             const hUnwrapped = startHue + turnsValue * 360 * t;
             const h_i = ((hUnwrapped % 360) + 360) % 360;
             const c_i = perHueEdge ? findMaxChromaForLAndH(l_i, h_i) : getSafeChromaForL(l_i);
-            const colorOKLCH = { mode: 'oklch', l: l_i, c: c_i, h: h_i };
+            const colorOKLCH = { mode: colorSpace, l: l_i, c: c_i, h: h_i };
             currentPalette.push({
                 index: i,
                 oklch: colorOKLCH,
@@ -347,7 +355,7 @@ function updateApp() {
         const hueStep = 360 / count;
         for (let i = 0; i < count; i++) {
             const h = (startHue + i * hueStep) % 360;
-            currentPalette.push({ index: i, oklch: { mode: 'oklch', l, c, h }, hex: culori.formatHex({ mode: 'oklch', l, c, h }), inGamut: culori.displayable({ mode: 'oklch', l, c, h }) });
+            currentPalette.push({ index: i, oklch: { mode: colorSpace, l, c, h }, hex: culori.formatHex({ mode: colorSpace, l, c, h }), inGamut: culori.displayable({ mode: colorSpace, l, c, h }) });
         }
     }
     
@@ -416,7 +424,7 @@ function drawHueGradient(l, c) {
     const width = hueCanvas.width;
     for (let x = 0; x < width; x++) {
         const h = (x / width) * 360;
-        ctx.fillStyle = culori.displayable({ mode: 'oklch', l, c, h }) ? culori.formatHex({ mode: 'oklch', l, c, h }) : '#808080';
+        ctx.fillStyle = culori.displayable({ mode: colorSpace, l, c, h }) ? culori.formatHex({ mode: colorSpace, l, c, h }) : '#808080';
         ctx.fillRect(x, 0, 1, hueCanvas.height);
     }
     hueMarkersContainer.innerHTML = '';
@@ -431,16 +439,19 @@ function drawHueGradient(l, c) {
 function isChromaSafeForAllHues(l, c) {
     if (l <= 0.01 || l >= 0.99) return false;
     for (let h = 0; h < 360; h += 5) {
-        if (!culori.displayable({ mode: 'oklch', l, c, h })) return false;
+        if (!culori.displayable({ mode: colorSpace, l, c, h })) return false;
     }
     return true;
 }
 
 function findMaxSafeChromaForL(l) {
-    for (let c = 0.4; c >= 0; c -= 0.001) {
-        if (isChromaSafeForAllHues(l, c)) return c;
+    let low = 0, high = activeSpace().maxChroma;
+    for (let i = 0; i < 14; i++) {
+        const mid = (low + high) / 2;
+        if (isChromaSafeForAllHues(l, mid)) low = mid;
+        else high = mid;
     }
-    return 0;
+    return low;
 }
 
 // Interpolates the precomputed sweet spot path to fetch a safe chroma for any lightness.
@@ -453,18 +464,19 @@ function getSafeChromaForL(l) {
     const t = indexFloat - i0;
     const c0 = sweetSpotPath[i0].c;
     const c1 = sweetSpotPath[i1].c;
-    return c0 + (c1 - c0) * t;
+    // Interpolation may cross the curved boundary; keep the actual sample safe.
+    return Math.min(c0 + (c1 - c0) * t, findMaxSafeChromaForL(clampedL));
 }
 
 // Binary search for the maximum chroma that is displayable at a specific (L, H).
 // Per-hue edge checks cost extra work per color but are still fine for ~100 samples.
-function findMaxChromaForLAndH(l, h, maxC = 0.5) {
+function findMaxChromaForLAndH(l, h, maxC = activeSpace().maxChroma) {
     let low = 0;
     let high = maxC;
     let result = 0;
     for (let i = 0; i < 14; i++) {
         const mid = (low + high) / 2;
-        if (culori.displayable({ mode: 'oklch', l, c: mid, h })) {
+        if (culori.displayable({ mode: colorSpace, l, c: mid, h })) {
             result = mid;
             low = mid;
         } else {
@@ -489,7 +501,41 @@ function precalculateSweetSpotPath() {
     }
 }
 
+function changeColorSpace(mode) {
+    if (!COLOR_SPACES[mode] || mode === colorSpace) return;
+    colorSpace = mode;
+    const { label, maxChroma } = activeSpace();
+    chromaSlider.max = maxChroma;
+    document.querySelectorAll('[data-color-space]').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.colorSpace === mode));
+    });
+    document.querySelector('h1').textContent = `${label} Visualizer`;
+    document.title = `${label} Visualizer`;
+    document.getElementById('palette-space-heading').textContent = `${label} (L, C, H)`;
+    document.getElementById('color-space-note').textContent = mode === 'oklch-plus'
+        ? 'Using experimental Oklch+ lightness and chroma. The same L/C/H values produce different colours; HEX output stays sRGB.'
+        : 'Using standard OKLCH. Switch spaces with the same L/C/H values to compare palettes.';
+    copyHexBtn.title = `Copies HEX plus ${label} data`;
+    precalculateSweetSpotPath();
+    if (is3DInitialized) {
+        for (const mesh of [gamutMesh, safeGamutMesh]) {
+            scene.remove(mesh);
+            mesh.geometry.dispose();
+            mesh.material.dispose();
+        }
+        gamutMesh = createGamutShellMesh();
+        safeGamutMesh = createSafeGamutShellMesh();
+        gamutMesh.visible = toggleFullGamutCheckbox.checked;
+        safeGamutMesh.visible = toggleSafeGamutCheckbox.checked;
+        scene.add(gamutMesh, safeGamutMesh);
+    }
+    updateApp();
+}
+
 function init() {
+    document.querySelectorAll('[data-color-space]').forEach(button => {
+        button.addEventListener('click', () => changeColorSpace(button.dataset.colorSpace));
+    });
     precalculateSweetSpotPath();
     sweetSpotSlider.max = sweetSpotPath.length - 1;
 
@@ -573,6 +619,8 @@ function init() {
 
     document.querySelectorAll('.value-input').forEach(input => {
         if (input.id === 'sweet-spot-value-input') return;
+        const linkedSlider = document.getElementById(input.id.replace('-value-input', '-slider'));
+        if (!linkedSlider || linkedSlider.type !== 'range') return;
         input.addEventListener('change', (e) => {
             const sliderId = e.target.id.replace('-value-input', '-slider');
             document.getElementById(sliderId).value = e.target.value;
@@ -598,11 +646,11 @@ function init() {
         });
     });
 
-    copyHexBtn.title = 'Copies HEX plus OKLCH data';
+    copyHexBtn.title = `Copies HEX plus ${activeSpace().label} data`;
     copyHexBtn.addEventListener('click', () => {
-        const header = 'index\thex\tL\tC\tH';
+        const header = 'index\thex\tspace\tL\tC\tH';
         const rows = currentPalette.map((color, idx) =>
-            `${idx}\t${color.hex}\t${color.oklch.l.toFixed(3)}\t${color.oklch.c.toFixed(3)}\t${color.oklch.h.toFixed(1)}`
+            `${idx}\t${color.hex}\t${activeSpace().label}\t${color.oklch.l.toFixed(3)}\t${color.oklch.c.toFixed(3)}\t${color.oklch.h.toFixed(1)}`
         );
         const payload = [header, ...rows].join('\n');
         navigator.clipboard.writeText(payload).then(() => {
