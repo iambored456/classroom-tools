@@ -1,0 +1,13 @@
+{
+  "name": "@classroom-tools/open-middle-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/model.js",
+    "./blocks": "./src/blocks.js"
+  },
+  "scripts": {
+    "test": "node --test src/model.test.js"
+  }
+}

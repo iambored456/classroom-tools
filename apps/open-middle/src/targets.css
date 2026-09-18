@@ -6,17 +6,25 @@
   --block-thousands: #ef8aab;
 }
 .cube { background: var(--block-ones); }
+.ones { grid-auto-flow: column; grid-template-columns: none; grid-template-rows: repeat(5, 10px); grid-auto-columns: 10px; }
 .rod i { background: var(--block-tens); }
 .hundred-slat { background: var(--block-hundreds); }
 .thousand-cube { background: var(--block-thousands); }
 .help-copy { font-size: 1rem; line-height: 1.7; margin: 0; }
+.landing-heading { display: flex; align-items: center; gap: 18px; }
+.landing-heading h1 { margin: 0; }
+.landing-heading .icon { flex: none; color: #111; text-decoration: none; }
+.landing .problem-link { margin-top: 48px; }
 #home { position: fixed; top: 12px; left: 12px; z-index: 10; }
 .corner-tools { position: fixed; top: 12px; right: 12px; z-index: 10; display: flex; gap: 6px; }
 .bank { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); justify-items: center; gap: 12px; min-height: 100px; max-width: none; margin: 0; padding: 16px 154px 16px 44px; }
 .bank .digit { width: min(100%, 78px); height: auto; aspect-ratio: 1; font-size: clamp(1.3rem, 4vw, 3.8rem); }
+.bank[data-layout="two-digit-addition"] { grid-template-columns: repeat(7, minmax(0, 1fr)); max-width: 860px; min-height: 100px; margin: 0 auto; padding: 12px 60px; }
 .instructions { margin: 0; padding: 28px 12px 40px; cursor: auto; touch-action: auto; user-select: text; }
+.workspace:has(.bank[data-layout="two-digit-addition"]) .instructions { padding: 6px 12px 18px; }
 .instructions:hover { outline: none; }
 .equation { grid-template-rows: auto auto auto; row-gap: 0; }
+.equation[data-layout="two-digit-addition"] { grid-template-columns: minmax(0, 1fr) .28fr minmax(0, 1fr) .28fr minmax(0, 1fr); max-width: 1000px; margin: 54px auto 0; }
 .number { display: grid; grid-template-rows: subgrid; grid-row: 1 / span 3; align-self: stretch; }
 .number:nth-child(1) { grid-column: 1; }
 .number:nth-child(3) { grid-column: 3; }
@@ -26,10 +34,10 @@
 .operator:nth-child(2) { grid-column: 2; }
 .operator:nth-child(4) { grid-column: 4; }
 .operator:nth-child(6) { grid-column: 6; }
-.number-box { position: relative; border: 0; padding: 5px; gap: 5px; }
+.number-box { position: relative; border: 0; padding: 3px; gap: 0; }
 .number-outline { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
 .number-outline rect { fill: none; stroke: #444; stroke-width: 1.8; stroke-dasharray: 9 5; }
-.slot { position: relative; border: 0; width: calc((100% - 5px) / 2); height: auto; aspect-ratio: 1; background: transparent; }
+.slot { position: relative; border: 0; width: 50%; height: auto; aspect-ratio: 1; background: transparent; }
 .slot-outline { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .slot-outline circle { fill: none; stroke: #555; stroke-width: 1.8; stroke-dasharray: .5 5; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .slot.filled { border: 0; background: #fff; }
@@ -43,15 +51,16 @@
 .side-total { grid-row: 4; position: relative; display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; min-width: 0; min-height: 52px; text-align: center; }
 .side-total[data-side="0"] { grid-column: 1 / span 3; }
 .side-total[data-side="1"] { grid-column: 5 / span 3; }
+.side-total[data-side="1"] .scale-toggle { grid-column: 1; }
 .scale-toggle { grid-column: 3; grid-row: 2; align-self: start; justify-self: center; z-index: 2; display: inline-grid; place-items: center; width: 44px; height: 44px; margin-top: 8px; padding: 8px; border: 0; border-radius: 50%; color: #888; background: #f3f3f3; }
 .scale-toggle:hover { background: #f3f3f3; }
 .scale-toggle[aria-expanded="true"] { color: #555; background: #eee; }
 .scale-toggle svg { width: 30px; height: 32px; }
 .sum-visual { display: contents; }
 .sum-visual[hidden] { display: none; }
-.sum-arrows { position: absolute; z-index: 1; top: -52px; left: 0; width: 100%; height: 72px; overflow: visible; pointer-events: none; }
+.sum-arrows { position: absolute; z-index: 1; top: 0; left: 0; width: 100%; height: 60px; overflow: visible; pointer-events: none; }
 .sum-arrows path { fill: none; stroke: #111; stroke-width: 1.8; vector-effect: non-scaling-stroke; }
-.sum-words { grid-column: 1 / -1; grid-row: 1; font-size: clamp(1rem, 1.8vw, 1.4rem); line-height: 1.6; padding: 20px 5px 8px; }
+.sum-words { grid-column: 1 / -1; grid-row: 1; font-size: clamp(1rem, 1.8vw, 1.4rem); line-height: 1.6; padding: 62px 5px 8px; }
 .sum-visual .blocks { grid-column: 2; grid-row: 2; min-width: 0; min-height: 0; flex-wrap: wrap; padding-bottom: 12px; }
 .hundreds { display: flex; flex-wrap: wrap; gap: 5px; }
 .hundred-slat { display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); width: 100px; height: 100px; border: 1px solid #333; }
@@ -59,14 +68,18 @@
 .hundred-slat i:nth-child(10n) { border-right: 0; }
 .hundred-slat i:nth-last-child(-n+10) { border-bottom: 0; }
 @media (max-width: 650px) {
+  .ones { grid-template-rows: repeat(5, 8px); grid-auto-columns: 8px; }
   .corner-tools { flex-direction: column; gap: 4px; }
   .bank { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; min-height: 162px; padding: 12px 52px 12px; align-content: start; }
   .bank .digit { width: min(100%, 48px); font-size: clamp(1rem, 5vw, 2rem); }
+  .bank[data-layout="two-digit-addition"] { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 360px; min-height: 0; padding: 12px 52px; }
+  .workspace:has(.bank[data-layout="two-digit-addition"]) .instructions { padding: 156px 8px 12px; }
+  .equation[data-layout="two-digit-addition"] { margin-top: 32px; }
   .instructions { padding: 12px 4px 28px; }
   .side-total { grid-template-columns: 0 minmax(0, 1fr) 36px; }
+  .side-total[data-side="1"] { grid-template-columns: 36px minmax(0, 1fr) 0; }
   .scale-toggle { width: 36px; height: 36px; padding: 6px; }
   .scale-toggle svg { width: 24px; height: 26px; }
   .hundred-slat { width: 80px; height: 80px; }
-  .number-box { padding: 4px 2px; gap: 2px; }
-  .slot { width: calc((100% - 2px) / 2); height: auto; font-size: clamp(1rem, 4.6vw, 1.7rem); }
+  .slot { width: 50%; height: auto; font-size: clamp(1rem, 4.6vw, 1.7rem); }
 }

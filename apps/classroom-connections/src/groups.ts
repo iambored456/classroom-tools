@@ -284,6 +284,6 @@ export const createStarterGroups = (): WordGroup[] =>
     ...group,
     id: toId(group.title, index),
     words: [...group.words],
-    enabled: true,
+    enabled: group.difficulty === 'easy',
     custom: false,
   }))

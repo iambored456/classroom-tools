@@ -29,6 +29,7 @@
   const MAX_GUESSES = 10
   const SETTINGS_KEY = 'classroom-connections:settings:v1'
   const SCORE_HISTORY_KEY = 'classroom-connections:score-history:v1'
+  const ALL_CAPS_KEY = 'classroom-connections:all-caps:v1'
   const THEME_KEY = 'classroom-connections:dark-mode:v1'
   const groupCountWords: Record<number, string> = {
     2: 'two',
@@ -43,6 +44,9 @@
   let libraryOpen = false
   let exitConfirmOpen = false
   let darkMode = true
+  let allCaps = false
+  let settingsPopover: HTMLDivElement | null = null
+  let settingsButton: HTMLButtonElement | null = null
   let groups: WordGroup[] = createStarterGroups()
   let groupCount = 4
   let guessLimit = 4
@@ -208,7 +212,6 @@
       guessLimit,
     }
     saveScoreHistory([entry, ...scoreHistory].slice(0, 50))
-    scoreboardOpen = true
   }
 
   const clearScoreHistory = () => saveScoreHistory([])
@@ -280,7 +283,7 @@
       font-size: 100px;
       font-weight: ${tileStyle.fontWeight};
       letter-spacing: ${tileStyle.letterSpacing};
-      text-transform: uppercase;
+      text-transform: ${tileStyle.textTransform};
     `
     document.body.appendChild(measurement)
 
@@ -412,6 +415,7 @@
       clone.style.width = `${sourceRect.width}px`
       clone.style.height = `${sourceRect.height}px`
       clone.style.fontSize = sourceStyle.fontSize
+      clone.style.textTransform = sourceStyle.textTransform
       clone.style.backgroundColor = sourceStyle.getPropertyValue('--moving-tile').trim() || sourceStyle.backgroundColor
       clone.style.color = sourceStyle.getPropertyValue('--moving-tile-text').trim() || sourceStyle.color
       document.body.appendChild(clone)
@@ -572,8 +576,25 @@
     }
   }
 
+  const toggleAllCaps = async () => {
+    allCaps = !allCaps
+    try {
+      localStorage.setItem(ALL_CAPS_KEY, String(allCaps))
+    } catch {
+      // The display preference still works when storage is unavailable.
+    }
+    await tick()
+    scheduleTileFontSize()
+  }
+
   const handleKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape' && exitConfirmOpen) cancelExit()
+    if (event.key !== 'Escape') return
+    if (settingsPopover?.matches(':popover-open')) {
+      settingsPopover.hidePopover()
+      settingsButton?.focus()
+      return
+    }
+    if (exitConfirmOpen) cancelExit()
   }
 
   const updateGroups = (nextGroups: WordGroup[]) => {
@@ -605,6 +626,7 @@
     }
     try {
       darkMode = localStorage.getItem(THEME_KEY) !== 'false'
+      allCaps = localStorage.getItem(ALL_CAPS_KEY) === 'true'
       const rawSettings = localStorage.getItem(SETTINGS_KEY)
       if (rawSettings) {
         const settings = JSON.parse(rawSettings) as { groupCount?: unknown; guessLimit?: unknown }
@@ -710,7 +732,7 @@
     </label>
   </main>
 {:else}
-  <div class="game-screen" class:dark-mode={darkMode} style={`--group-count: ${groupCount};`}>
+  <div class="game-screen" class:completed={gameEnded} class:dark-mode={darkMode} style={`--group-count: ${groupCount}; --card-text-transform: ${allCaps ? 'uppercase' : 'none'};`}>
     <main class="game-main">
       <section
         class="game-board"
@@ -775,6 +797,7 @@
         {/if}
       </section>
 
+      {#if !gameEnded}
       <div class="mistakes" aria-label={`${guessesRemaining} guesses remaining`}>
         <span>Guesses Remaining:</span>
         <span class="mistake-dots" aria-hidden="true">
@@ -787,19 +810,9 @@
         {/if}
       </div>
 
-      {#if gameEnded}
-        <section class="completion-card" aria-live="polite">
-          <strong>{gameWon ? 'You found every connection!' : 'The board is complete.'}</strong>
-          {#if completedTimeMs !== null}
-            <p class="completion-time"><span>Time</span><strong>{formatElapsedTime(completedTimeMs)}</strong></p>
-          {/if}
-          <div>
-            <button type="button" class="control-button primary-control" on:click={startGame}>New Game</button>
-            <button type="button" class="control-button" on:click={requestExit}>Home</button>
-          </div>
-        </section>
-      {:else}
-        <div class="game-controls">
+      {/if}
+
+        <div class="game-controls" class:completed-controls={gameEnded}>
           <button
             type="button"
             class="header-action home-action"
@@ -812,6 +825,10 @@
               <path d="M6 9.5V20h12V9.5M9.5 20v-6h5v6"></path>
             </svg>
           </button>
+          {#if gameEnded}
+            <button type="button" class="control-button primary-control" on:click={startGame}>New Game</button>
+            <button type="button" class="control-button" on:click={() => (scoreboardOpen = true)}>Scoreboard</button>
+          {:else}
           <button type="button" class="control-button" disabled={isSubmitting} on:click={shuffleTiles}>Shuffle</button>
           <button
             type="button"
@@ -829,12 +846,49 @@
           >
             Submit
           </button>
+          {/if}
+          <button
+            type="button"
+            class="header-action home-action settings-action"
+            bind:this={settingsButton}
+            aria-label="Game settings"
+            popovertarget="game-settings"
+            disabled={isSubmitting}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 3-.6 2.4-2.1 1.2L4 6l-3 5 1.8 1.7v2.5L1 17l3 5 2.3-.6 2.1 1.2L9 25h6l.6-2.4 2.1-1.2 2.3.6 3-5-1.8-1.8v-2.5L23 11l-3-5-2.3.6-2.1-1.2L15 3Z" transform="translate(2 0) scale(.83)"></path>
+              <circle cx="12" cy="11.6" r="3"></circle>
+            </svg>
+          </button>
         </div>
-      {/if}
     </main>
 
-    <div class={`game-toast ${statusTone}`} class:visible={statusMessage} role="status" aria-live="polite">
-      {statusMessage}
+    <div bind:this={settingsPopover} id="game-settings" class="game-settings-popover" class:dark-mode={darkMode} popover="auto" role="dialog" aria-labelledby="game-settings-title">
+      <div class="settings-heading">
+        <h2 id="game-settings-title">Settings</h2>
+        <button type="button" class="icon-button" aria-label="Close settings" popovertarget="game-settings" popovertargetaction="hide">X</button>
+      </div>
+      <label class="settings-toggle switch-label">
+        <span>Dark mode</span>
+        <input type="checkbox" checked={darkMode} on:change={toggleDarkMode} />
+        <span class="switch-track" aria-hidden="true"><span></span></span>
+      </label>
+      <label class="settings-toggle switch-label">
+        <span>All Caps</span>
+        <input type="checkbox" checked={allCaps} on:change={toggleAllCaps} />
+        <span class="switch-track" aria-hidden="true"><span></span></span>
+      </label>
+    </div>
+
+    <div class={`game-toast ${gameEnded ? 'success' : statusTone}`} class:completion-toast={gameEnded} class:visible={gameEnded || statusMessage} role="status" aria-live="polite">
+      {#if gameEnded}
+        <strong>{gameWon ? 'You found every connection!' : 'The board is complete.'}</strong>
+        {#if completedTimeMs !== null}
+          <p class="completion-time"><span>Time</span><strong>{formatElapsedTime(completedTimeMs)}</strong></p>
+        {/if}
+      {:else}
+        {statusMessage}
+      {/if}
     </div>
   </div>
 {/if}
@@ -860,7 +914,7 @@
       <div class="scoreboard-table-wrap">
         <table>
           <thead>
-            <tr><th>Date and time</th><th>Solve time</th><th>Groups</th><th>Guesses</th></tr>
+            <tr><th>Date and time</th><th>Solve time</th><th>Groups</th><th>Guesses remaining</th></tr>
           </thead>
           <tbody>
             {#each scoreHistory as score (score.id)}
@@ -868,7 +922,7 @@
                 <td>{formatCompletedAt(score.completedAt)}</td>
                 <td>{formatElapsedTime(score.durationMs)}</td>
                 <td>{score.groupCount}</td>
-                <td>{score.guessesUsed} / {score.guessLimit}</td>
+                <td>{score.guessLimit - score.guessesUsed} / {score.guessLimit}</td>
               </tr>
             {/each}
           </tbody>

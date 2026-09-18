@@ -46,11 +46,11 @@
     }
   }
 
-  const openAddForm = () => {
+  const openAddForm = (difficulty: Difficulty) => {
     editingId = null
     title = ''
     words = ['', '', '', '']
-    formDifficulty = 'easy'
+    formDifficulty = difficulty
     formError = ''
     showForm = true
   }
@@ -225,7 +225,7 @@
   <header class="library-header">
     <div>
       <h2 id="library-title">Group Library</h2>
-      <p>Choose which groups can appear, or move them to a different difficulty.</p>
+      <p>Choose which groups can appear, or edit / add your own.</p>
     </div>
     <button type="button" class="icon-button close-button" aria-label="Close group library" on:click={close}>
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -240,13 +240,6 @@
       <span>of {groups.length} groups enabled</span>
     </div>
     <div class="library-top-actions">
-      <span class="saved-label">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>
-        Saved on this device
-      </span>
-      <button type="button" class="add-button" on:click={openAddForm}>
-        <span aria-hidden="true">+</span> Add group
-      </button>
       <button type="button" class="text-button" on:click={restoreStarterLibrary}>Reset library</button>
     </div>
   </div>
@@ -322,7 +315,24 @@
               </span>
               <span class="tier-chevron" aria-hidden="true">⌄</span>
             </button>
+            <label class="switch-label">
+              <input
+                type="checkbox"
+                checked={tierGroups.some((group) => group.enabled)}
+                disabled={tierGroups.length === 0}
+                on:change={(event) => setDifficultyEnabled(difficulty, event.currentTarget.checked)}
+              />
+              <span class="switch-track" aria-hidden="true"><span></span></span>
+              <span class="sr-only">Include {difficultyDetails[difficulty].label} groups</span>
+            </label>
+          </div>
+
+          {#if expandedDifficulties.has(difficulty)}
+            <div id={`tier-content-${difficulty}`} class="tier-content">
             <div class="tier-section-actions">
+              <button type="button" class="add-button" on:click={() => openAddForm(difficulty)}>
+                <span aria-hidden="true">+</span> Add group
+              </button>
               <button
                 type="button"
                 class="small-button copy-button"
@@ -333,10 +343,10 @@
                   copyFeedback?.difficulty === difficulty && copyFeedback.message === 'Copy failed'
                 }
                 disabled={tierGroups.length === 0}
-                aria-label={`Copy all ${difficultyDetails[difficulty].label} groups`}
+                aria-label={`Copy ${difficultyDetails[difficulty].label} groups in plain text`}
                 on:click={() => copyDifficultyGroups(difficulty)}
               >
-                {copyFeedback?.difficulty === difficulty ? copyFeedback.message : 'Copy all'}
+                {copyFeedback?.difficulty === difficulty ? copyFeedback.message : 'Copy in plain text'}
               </button>
               <button
                 type="button"
@@ -353,10 +363,6 @@
                 Disable all
               </button>
             </div>
-          </div>
-
-          {#if expandedDifficulties.has(difficulty)}
-            <div id={`tier-content-${difficulty}`} class="tier-content">
             {#if tierGroups.length > 0}
               <div class="group-list">
               {#each tierGroups as group (group.id)}

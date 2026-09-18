@@ -50,7 +50,7 @@ try {
   await page.getByText('Find four groups of four.', { exact: true }).waitFor()
   await page.getByText('Number of Groups', { exact: true }).waitFor()
   await page.getByText('Number of Guesses', { exact: true }).waitFor()
-  assert.match(await page.getByRole('button', { name: /Group Library/ }).innerText(), /Easy, Medium, Hard, Tricky/)
+  assert.match(await page.getByRole('button', { name: /Group Library/ }).innerText(), /Easy/)
   const themeToggle = page.getByRole('checkbox', { name: 'Dark mode' })
   assert.equal(await themeToggle.isChecked(), true)
   const darkLandingBackground = await page.locator('.landing-screen').evaluate((screen) =>
@@ -99,6 +99,20 @@ try {
   await page.getByRole('dialog', { name: 'Group Library' }).waitFor()
   assert.equal(await page.locator('.tier-section').count(), 4)
   assert.equal(await page.locator('.group-card').count(), 0)
+  assert.equal(await page.locator('.tier-section-actions').count(), 0)
+  assert.equal(await page.getByText('Saved on this device', { exact: true }).count(), 0)
+  assert.match(await page.locator('.enabled-summary').innerText(), /24\s+of 96 groups enabled/i)
+  for (const difficulty of ['Easy', 'Medium', 'Hard', 'Tricky']) {
+    const inclusion = page.getByRole('checkbox', { name: `Include ${difficulty} groups`, exact: true })
+    assert.equal(await inclusion.isChecked(), difficulty === 'Easy')
+  }
+  const mediumSwitch = page.getByRole('checkbox', { name: 'Include Medium groups', exact: true })
+  await mediumSwitch.focus()
+  await page.keyboard.press('Space')
+  assert.match(await page.locator('.enabled-summary').innerText(), /48\s+of 96 groups enabled/i)
+  await page.keyboard.press('Space')
+  assert.match(await page.locator('.enabled-summary').innerText(), /24\s+of 96 groups enabled/i)
+
   for (const difficulty of ['Easy', 'Medium', 'Hard', 'Tricky']) {
     const toggle = page.getByRole('button', { name: difficulty, exact: true })
     assert.equal(await toggle.getAttribute('aria-expanded'), 'false')
@@ -106,9 +120,16 @@ try {
     assert.equal(await toggle.getAttribute('aria-expanded'), 'true')
   }
   assert.equal(await page.locator('.group-card').count(), 96)
+  const mediumSection = page.locator('.tier-section').nth(1)
+  await mediumSection.getByRole('button', { name: /Add group/ }).click()
+  assert.equal(await page.locator('.difficulty-field select').inputValue(), 'medium')
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await page.getByRole('button', { name: 'Medium', exact: true }).click()
+  assert.equal(await mediumSection.locator('.tier-section-actions').count(), 0)
+
 
   const easySection = page.locator('.tier-section').first()
-  const copyEasyButton = easySection.getByRole('button', { name: 'Copy all Easy groups' })
+  const copyEasyButton = easySection.getByRole('button', { name: 'Copy Easy groups in plain text' })
   await copyEasyButton.click()
   await page.waitForFunction(() =>
     [...document.querySelectorAll('button')].some((button) => button.textContent?.trim() === 'Copied!'),
@@ -121,10 +142,10 @@ try {
   assert.ok(copiedEasyLines.includes('Vegetables:(Carrot,Peas,Corn,Broccoli)'))
 
   await easySection.getByRole('button', { name: 'Disable all' }).click()
-  assert.match(await page.locator('.enabled-summary').innerText(), /72\s+of 96 groups enabled/i)
+  assert.match(await page.locator('.enabled-summary').innerText(), /0\s+of 96 groups enabled/i)
   assert.equal(await easySection.locator('.switch-label input:checked').count(), 0)
   await easySection.getByRole('button', { name: 'Enable all' }).click()
-  assert.match(await page.locator('.enabled-summary').innerText(), /96\s+of 96 groups enabled/i)
+  assert.match(await page.locator('.enabled-summary').innerText(), /24\s+of 96 groups enabled/i)
 
   await page.getByRole('button', { name: 'Close group library' }).click()
   await page.evaluate(() => {
@@ -146,13 +167,13 @@ try {
   }
   await page.getByRole('button', { name: 'Add to library' }).click()
   await page.getByText('Things in a garden', { exact: true }).waitFor()
-  assert.match(await page.locator('.enabled-summary').innerText(), /97\s+of 97 groups enabled/i)
+  assert.match(await page.locator('.enabled-summary').innerText(), /25\s+of 97 groups enabled/i)
   await page.screenshot({ path: libraryShot, fullPage: false })
 
   await page.getByRole('button', { name: 'Close group library' }).click()
   await page.reload({ waitUntil: 'networkidle' })
   await page.getByRole('button', { name: 'Group Library' }).click()
-  assert.match(await page.locator('.enabled-summary').innerText(), /97\s+of 97 groups enabled/i)
+  assert.match(await page.locator('.enabled-summary').innerText(), /25\s+of 97 groups enabled/i)
   await page.getByRole('button', { name: 'Close group library' }).click()
 
   await page.getByRole('button', { name: 'Play', exact: true }).click()
@@ -160,11 +181,40 @@ try {
   assert.equal(await page.locator('.game-screen.dark-mode').count(), 1)
   assert.equal(await page.locator('.game-screen').evaluate((screen) => getComputedStyle(screen).backgroundColor), 'rgb(21, 20, 30)')
   assert.equal(await page.locator('.word-tile').count(), 16)
+  const settingsButton = page.getByRole('button', { name: 'Game settings', exact: true })
+  await settingsButton.click()
+  const settingsPopup = page.getByRole('dialog', { name: 'Settings', exact: true })
+  await settingsPopup.waitFor()
+  const capsToggle = settingsPopup.getByRole('checkbox', { name: 'All Caps', exact: true })
+  assert.equal(await settingsPopup.getByRole('button', { name: 'Close settings' }).innerText(), 'X')
+  const closeSettingsButton = settingsPopup.getByRole('button', { name: 'Close settings' })
+  assert.deepEqual(await closeSettingsButton.evaluate((button) => {
+    const style = getComputedStyle(button)
+    return { color: style.color, background: style.backgroundColor }
+  }), { color: 'rgb(245, 243, 255)', background: 'rgba(0, 0, 0, 0)' })
+  await closeSettingsButton.hover()
+  assert.equal(await closeSettingsButton.evaluate((button) => getComputedStyle(button).backgroundColor), 'rgb(66, 61, 83)')
+
+  await settingsPopup.getByRole('button', { name: 'Close settings' }).click()
+  await settingsPopup.waitFor({ state: 'hidden' })
+  await settingsButton.click()
+  assert.equal(await capsToggle.isChecked(), false)
+  assert.equal(await page.locator('.word-tile').first().evaluate((tile) => getComputedStyle(tile).textTransform), 'none')
+  assert.equal(await page.evaluate(() => localStorage.getItem('classroom-connections:all-caps:v1')), null)
+  await settingsPopup.locator('label').filter({ hasText: 'Dark mode' }).click()
+  assert.equal(await page.locator('.game-screen.dark-mode').count(), 0)
+  await settingsPopup.locator('label').filter({ hasText: 'Dark mode' }).click()
+  await settingsPopup.locator('label').filter({ hasText: 'All Caps' }).click()
+  assert.equal(await page.locator('.word-tile').first().evaluate((tile) => getComputedStyle(tile).textTransform), 'uppercase')
+  await page.keyboard.press('Escape')
+  await settingsPopup.waitFor({ state: 'hidden' })
+  assert.equal(await settingsButton.evaluate((button) => button === document.activeElement), true)
+
   assert.equal(await page.getByText('Guesses Remaining:', { exact: true }).count(), 1)
   assert.equal(await page.locator('.mistake-dots > span').count(), 4)
   assert.equal(await page.getByRole('button', { name: 'Library' }).count(), 0)
   assert.equal(await page.locator('.game-header, .game-instruction').count(), 0)
-  assert.ok((await page.locator('.home-action svg').evaluate((icon) => icon.getBoundingClientRect().width)) >= 25)
+  assert.ok((await page.getByRole('button', { name: 'Return to home', exact: true }).locator('svg').evaluate((icon) => icon.getBoundingClientRect().width)) >= 25)
   assert.ok(
     Number.parseFloat(await page.locator('.word-tile').first().evaluate((tile) => getComputedStyle(tile).fontSize)) >= 20,
   )
@@ -429,10 +479,25 @@ try {
   const completionTime = page.locator('.completion-time')
   await completionTime.waitFor()
   assert.match(await completionTime.innerText(), /Time\s+\d+:\d{2}/i)
+  assert.equal(await page.locator('.completion-card').count(), 0)
+  assert.deepEqual(await page.locator('.completion-toast').evaluate((bubble) => {
+    const style = getComputedStyle(bubble)
+    return { position: style.position, background: style.backgroundColor }
+  }), { position: 'fixed', background: 'rgb(17, 17, 17)' })
   const scoreboard = page.getByRole('dialog', { name: 'Scoreboard' })
+  assert.equal(await scoreboard.count(), 0)
+  for (const viewport of [{ width: 1200, height: 900 }, { width: 390, height: 844 }, { width: 667, height: 375 }]) {
+    await page.setViewportSize(viewport)
+    assert.equal(await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight), false, `Completed game should fit at ${viewport.width}x${viewport.height}`)
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false)
+    await page.getByRole('button', { name: 'Scoreboard', exact: true }).waitFor()
+  }
+  await page.setViewportSize({ width: 1200, height: 900 })
+  await page.getByRole('button', { name: 'Scoreboard', exact: true }).click()
   await scoreboard.waitFor()
+  assert.equal(await scoreboard.getByRole('columnheader', { name: 'Guesses remaining', exact: true }).count(), 1)
   assert.equal(await scoreboard.locator('tbody tr').count(), 1)
-  assert.match(await scoreboard.locator('tbody tr').first().innerText(), /4\s+0 \/ 4/)
+  assert.match(await scoreboard.locator('tbody tr').first().innerText(), /4\s+4 \/ 4/)
   assert.equal(await scoreboard.getByRole('button', { name: 'Clear History' }).count(), 1)
   await page.screenshot({ path: completionShot, fullPage: false })
   await scoreboard.getByRole('button', { name: 'Close', exact: true }).click()

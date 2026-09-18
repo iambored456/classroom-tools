@@ -482,14 +482,14 @@ select:focus-visible,
   margin: 0;
   font-size: clamp(1.25rem, 2.6vw, 2.5rem);
   line-height: 1.12;
-  text-transform: uppercase;
+  text-transform: var(--card-text-transform, uppercase);
 }
 
 .solved-group p {
   margin: 0;
   font-size: clamp(1rem, 2.2vw, 2rem);
   line-height: 1.2;
-  text-transform: uppercase;
+  text-transform: var(--card-text-transform, uppercase);
 }
 
 .solved-group.revealed {
@@ -513,7 +513,7 @@ select:focus-visible,
   font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.05em;
-  text-transform: uppercase;
+  text-transform: var(--card-text-transform, uppercase);
 }
 
 .solving-stage {
@@ -575,7 +575,7 @@ select:focus-visible,
   font-weight: 800;
   line-height: 1.08;
   text-align: center;
-  text-transform: uppercase;
+  text-transform: var(--card-text-transform, uppercase);
 }
 
 .solving-stage.illuminating .solving-cards {
@@ -609,14 +609,14 @@ select:focus-visible,
   margin: 0;
   font-size: clamp(1.25rem, 2.6vw, 2.5rem);
   line-height: 1.12;
-  text-transform: uppercase;
+  text-transform: var(--card-text-transform, uppercase);
 }
 
 .solving-answer p {
   margin: 0;
   font-size: clamp(1rem, 2.2vw, 2rem);
   line-height: 1.2;
-  text-transform: uppercase;
+  text-transform: var(--card-text-transform, uppercase);
 }
 
 .tile-grid {
@@ -638,7 +638,7 @@ select:focus-visible,
   font-size: var(--tile-word-font-size, clamp(0.9rem, 2.2vw, 2.5rem));
   font-weight: 800;
   line-height: 1.08;
-  text-transform: uppercase;
+  text-transform: var(--card-text-transform, uppercase);
   transition:
     transform 100ms ease,
     background-color 100ms ease,
@@ -745,7 +745,7 @@ select:focus-visible,
 
 .game-controls {
   display: grid;
-  grid-template-columns: auto repeat(3, minmax(0, 1fr));
+  grid-template-columns: auto repeat(3, minmax(0, 1fr)) auto;
   align-items: stretch;
   gap: 0.65rem;
   margin-top: 1.05rem;
@@ -1322,25 +1322,6 @@ select:focus-visible,
   gap: 0.45rem;
 }
 
-.saved-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: #4c7041;
-  font-size: 0.76rem;
-  font-weight: 700;
-}
-
-.saved-label svg {
-  width: 1rem;
-  height: 1rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
 .text-button,
 .edit-button,
 .delete-button {
@@ -1447,6 +1428,8 @@ select:focus-visible,
 
 .tier-section-actions {
   display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
   align-items: center;
   gap: 0.4rem;
 }
@@ -1979,12 +1962,12 @@ select:focus-visible,
   }
 
   .game-controls {
-    grid-template-columns: 3.3rem repeat(3, minmax(0, 1fr));
+    grid-template-columns: 2.6rem repeat(3, minmax(0, 1fr)) 2.6rem;
     gap: 0.36rem;
   }
 
   .game-controls .home-action {
-    width: 3.3rem;
+    width: 2.6rem;
     min-height: 3.3rem;
   }
 
@@ -1997,8 +1980,7 @@ select:focus-visible,
     padding-top: 1rem;
   }
 
-  .library-header p:last-child,
-  .saved-label {
+  .library-header p:last-child {
     display: none;
   }
 
@@ -2056,4 +2038,118 @@ select:focus-visible,
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.game-settings-popover {
+  inset: auto 1rem 7rem auto;
+  width: min(18rem, calc(100vw - 2rem));
+  box-sizing: border-box;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid #cfcdc5;
+  border-radius: 1rem;
+  background: #fff;
+  color: #222;
+  box-shadow: 0 12px 40px #0003;
+}
+
+.game-settings-popover.dark-mode {
+  background: #292634;
+  color: #f5f3ff;
+  border-color: #615b76;
+}
+
+.settings-heading,
+.settings-toggle.switch-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.settings-heading h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.settings-heading .icon-button {
+  color: inherit;
+  background: transparent;
+  border-color: transparent;
+  font-size: 1.4rem;
+}
+
+.settings-heading .icon-button:hover {
+  background: #efefe9;
+}
+
+.game-settings-popover.dark-mode .settings-heading .icon-button:hover {
+  background: #423d53;
+}
+
+.settings-toggle.switch-label {
+  padding-top: 1rem;
+  cursor: pointer;
+}
+
+.game-settings-popover.dark-mode input:checked + .switch-track {
+  background: #9185dc;
+}
+
+/* Keep the finished board, result, and toolbar within the viewport. */
+.game-screen.completed {
+  min-height: 100dvh;
+}
+
+.completed .game-main {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  padding-bottom: 0.65rem;
+}
+
+.completed .game-board,
+.completed .solved-list {
+  min-height: 0;
+  height: 100%;
+}
+
+.completed .solved-list {
+  grid-template-rows: repeat(var(--group-count), minmax(0, 1fr));
+}
+
+.completed .solved-group {
+  min-height: 0;
+  padding: 0.3rem 0.6rem;
+}
+
+.completed .solved-group h2 {
+  font-size: clamp(0.8rem, min(2.6vw, calc(28dvh / var(--group-count))), 2.5rem);
+}
+
+.completed .solved-group p {
+  font-size: clamp(0.7rem, min(2.2vw, calc(23dvh / var(--group-count))), 2rem);
+}
+
+.game-toast.completion-toast {
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  background: #111;
+}
+
+.game-screen .game-toast .completion-time {
+  justify-content: center;
+  margin: 0.4rem 0 0;
+  color: #fff;
+}
+
+.game-screen .game-toast .completion-time strong {
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.game-controls.completed-controls {
+  grid-template-columns: auto repeat(2, minmax(0, 1fr)) auto;
+  margin-top: 0;
 }

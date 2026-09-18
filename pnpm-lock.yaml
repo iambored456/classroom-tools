@@ -391,6 +391,10 @@ importers:
         version: 7.3.1(@types/node@24.10.13)(tsx@4.21.0)
 
   apps/open-middle:
+    dependencies:
+      '@classroom-tools/open-middle-core':
+        specifier: workspace:*
+        version: link:../../packages/open-middle-core
     devDependencies:
       vite:
         specifier: ^7.2.4
@@ -474,6 +478,8 @@ importers:
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
+
+  packages/open-middle-core: {}
 
 packages:
 
