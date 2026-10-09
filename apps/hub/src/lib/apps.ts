@@ -18,8 +18,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'open-middle',
-    name: 'Open Middle',
-    description: 'Make a true math sentence with draggable digits. See each number in words and base-ten blocks.',
+    name: 'Open Middle Math',
+    description: 'Open Middle Math problems',
     href: withBase('open-middle/'),
     preview: withBase('images/OpenMiddle-preview.svg'),
     tags: ['Math'],

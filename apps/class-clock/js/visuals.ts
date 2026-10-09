@@ -7,14 +7,17 @@ import { measureFillLayout } from './fillLayout.ts';
 
 type PhysicsModule = typeof import('./physics.ts');
 type WaterBarsModule = typeof import('./waterBars.ts');
+type WaterBars2Module = typeof import('./waterBars2.ts');
 type StageVisualizationModule = typeof import('./stageVisualization.ts');
 
 let physicsModulePromise: Promise<PhysicsModule> | null = null;
 let waterBarsModulePromise: Promise<WaterBarsModule> | null = null;
+let waterBars2ModulePromise: Promise<WaterBars2Module> | null = null;
 let stageVisualizationModulePromise: Promise<StageVisualizationModule> | null = null;
 
 let loadedPhysicsModule: PhysicsModule | null = null;
 let loadedWaterBarsModule: WaterBarsModule | null = null;
+let loadedWaterBars2Module: WaterBars2Module | null = null;
 let loadedStageVisualizationModule: StageVisualizationModule | null = null;
 
 function loadPhysicsModule() {
@@ -47,6 +50,26 @@ function loadWaterBarsModule() {
         );
     }
     return waterBarsModulePromise;
+}
+
+function loadWaterBars2Module() {
+    if (!waterBars2ModulePromise) {
+        waterBars2ModulePromise = import('./waterBars2.ts').then(
+            module => {
+                loadedWaterBars2Module = module;
+                return module;
+            },
+            error => {
+                waterBars2ModulePromise = null;
+                throw error;
+            }
+        );
+    }
+    return waterBars2ModulePromise;
+}
+
+function getWaterBars2() {
+    return loadedWaterBars2Module?.WaterBars2 ?? null;
 }
 
 function loadStageVisualizationModule() {
@@ -354,6 +377,7 @@ export const Visuals = {
         Visuals.stopPhysicsCheckInterval();
         WaterBars?.stop();
         WaterBars?.reset();
+        getWaterBars2()?.stop();
         Physics?.clearDynamicBodies();
         Physics?.stop();
     },
@@ -365,6 +389,7 @@ export const Visuals = {
     setupPhysicsSandBars: async function(periodInfo) {
         const requestId = Visuals.beginVisualSetup();
         Visuals.stopStageVisualization();
+        getWaterBars2()?.stop();
         Visuals.stopPhysicsCheckInterval();
         getWaterBars()?.stop();
         getWaterBars()?.reset();
@@ -436,6 +461,7 @@ export const Visuals = {
     setupPhysicsWaterFill: async function(periodInfo, options: any = {}) {
         const requestId = Visuals.beginVisualSetup();
         Visuals.stopStageVisualization();
+        getWaterBars2()?.stop();
         Visuals.stopPhysicsCheckInterval();
         getPhysics()?.clearDynamicBodies();
         getPhysics()?.stop();
@@ -508,8 +534,45 @@ export const Visuals = {
         }
     },
 
+    setupWaterBars2: async function(_periodInfo, options: any = {}) {
+        const requestId = Visuals.beginVisualSetup();
+        Visuals.stopStageVisualization();
+        Visuals.stopPhysicsCheckInterval();
+        getWaterBars()?.stop();
+        getWaterBars()?.reset();
+        getPhysics()?.clearDynamicBodies();
+        getPhysics()?.stop();
+        getWaterBars2()?.stop();
+
+        if (Settings.getVisualizationMode() !== 'water2' || !DOM.waterFill2Canvas) return;
+        try {
+            const { WaterBars2 } = await loadWaterBars2Module();
+            if (!Visuals.isVisualSetupCurrent(requestId, 'water2')) return;
+            await nextFrame();
+            if (!Visuals.isVisualSetupCurrent(requestId, 'water2')) return;
+            const layout = Visuals.getWaterFillLayout();
+            if (layout.width <= 0 || layout.height <= 0) return;
+            WaterBars2.init(DOM.waterFill2Canvas, layout.width, layout.height, {
+                measureLayout: Visuals.getWaterFillLayout,
+                getState: Visuals.getTimelineProgressState,
+                particleRadius: Settings.getAnimationDetailSizePx(layout.height) * 0.85,
+                backgroundColor: Settings.getActiveColourScheme().background
+            });
+            if (options.animateDrainReset) {
+                await WaterBars2.drainReset();
+                if (!Visuals.isVisualSetupCurrent(requestId, 'water2')) return;
+            }
+            WaterBars2.syncProgress();
+            WaterBars2.renderOnce();
+            WaterBars2.start();
+        } catch (error) {
+            console.error('Unable to initialize Water Bars 2.', error);
+        }
+    },
+
     setupStageVisualization: async function() {
         const requestId = Visuals.beginVisualSetup();
+        getWaterBars2()?.stop();
         Visuals.stopPhysicsCheckInterval();
         getWaterBars()?.stop();
         getWaterBars()?.reset();
@@ -725,6 +788,16 @@ export const Visuals = {
         const Physics = getPhysics();
         const WaterBars = getWaterBars();
         const StageVisualization = getStageVisualization();
+        const WaterBars2 = getWaterBars2();
+
+        if (mode === 'water2' && WaterBars2?.isInitialized) {
+            const layout = Visuals.getWaterFillLayout();
+            if (layout.width > 0 && layout.height > 0) {
+                WaterBars2.resize(layout.width, layout.height);
+                WaterBars2.syncProgress();
+                WaterBars2.renderOnce();
+            }
+        }
 
         if (mode === 'sand' && Physics?.isInitialized && DOM.sandBarsCanvas && DOM.sandBarsContainerEl) {
             const layout = Visuals.getSandFillLayout();
@@ -779,6 +852,10 @@ export const Visuals = {
 
     handlePeriodChange: function(periodInfo) {
         const mode = Settings.getVisualizationMode();
+        if (mode === 'water2') {
+            void Visuals.setupWaterBars2(periodInfo, { animateDrainReset: true });
+            return;
+        }
         if (mode === 'sand') {
             void Visuals.setupPhysicsSandBars(periodInfo);
             return;
@@ -800,6 +877,11 @@ export const Visuals = {
     handleDisplayToggle: function() {
         const periodInfo = Clock.getCurrentPeriodInfo();
         const mode = Settings.getVisualizationMode();
+
+        if (mode === 'water2') {
+            void Visuals.setupWaterBars2(periodInfo);
+            return;
+        }
 
         if (mode === 'sand') {
             void Visuals.setupPhysicsSandBars(periodInfo);
@@ -825,6 +907,7 @@ export const Visuals = {
              outline.style.borderColor = newColor;
          });
          getWaterBars()?.setBorderColor(newColor);
+         getWaterBars2()?.setBackgroundColor(Settings.getActiveColourScheme().background || '#000000');
 
          if (Visuals.hasRenderableScheduleCircles()) {
               Visuals.renderScheduleCircles();

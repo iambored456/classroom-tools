@@ -9,6 +9,7 @@
     getWouldYouRatherOptions,
     makeId,
     questionSizeClass,
+    questionMatchesSession,
     splitFollowUpPrompts,
   } from './data'
   import {
@@ -81,16 +82,8 @@
   $: enabledQuestionCount = library.questions.filter((question) => question.enabled).length
   $: wouldYouRatherOptions = currentQuestion ? getWouldYouRatherOptions(currentQuestion) : null
 
-  const isQuestionAllowed = (session: QuestionSession, question: Question) =>
-    question.sensitiveTopics.every((topic) => session.includedSensitiveTopics.includes(topic))
-
   const sessionQuestions = (session: QuestionSession) =>
-    library.questions.filter(
-      (question) =>
-        question.enabled &&
-        session.categoryIds.includes(question.categoryId) &&
-        isQuestionAllowed(session, question),
-    )
+    library.questions.filter((question) => questionMatchesSession(question, session))
 
   const sessionStats = (session: QuestionSession) => {
     const questions = sessionQuestions(session)
@@ -123,7 +116,7 @@
         (question) =>
           question.categoryId === categoryId &&
           question.enabled &&
-          isQuestionAllowed(session, question),
+          questionMatchesSession(question, session),
       ).length
       return [{ ...category, enabledCount }]
     })
@@ -242,16 +235,16 @@
   const openSession = (sessionId: string) => {
     const session = sessions.find((item) => item.id === sessionId)
     if (!session) return
-    if (session.categoryIds.length === 0) {
+    if (session.categoryIds.length === 0 && session.includedSensitiveTopics.length === 0) {
       editingSessionId = session.id
       sessionEditorOpen = true
-      homeMessage = 'Choose at least one category before continuing.'
+      homeMessage = 'Choose at least one category or sensitive topic before continuing.'
       return
     }
     if (sessionQuestions(session).length === 0) {
       editingSessionId = session.id
       sessionEditorOpen = true
-      homeMessage = 'Those categories do not contain any enabled questions.'
+      homeMessage = 'Those selections do not contain any enabled questions.'
       return
     }
 
@@ -299,9 +292,7 @@
         ? library.questions.some(
             (question) =>
               question.id === existing.currentQuestionId &&
-              question.enabled &&
-              detail.categoryIds.includes(question.categoryId) &&
-              question.sensitiveTopics.every((topic) => detail.includedSensitiveTopics.includes(topic)),
+              questionMatchesSession(question, detail),
           )
         : false
       const updatedSession: QuestionSession = {
@@ -310,9 +301,7 @@
         categoryIds: detail.categoryIds,
         includedSensitiveTopics: detail.includedSensitiveTopics,
         currentQuestionId: currentStillIncluded ? existing.currentQuestionId : null,
-        askedQuestionIds: currentStillIncluded
-          ? existing.askedQuestionIds.filter((id) => id !== existing.currentQuestionId)
-          : existing.askedQuestionIds,
+        askedQuestionIds: existing.askedQuestionIds,
         revealedFollowUpCount: currentStillIncluded ? existing.revealedFollowUpCount : 0,
         updatedAt: now,
       }
@@ -801,6 +790,7 @@
         <button
           class="header-icon-button settings-header-button"
           type="button"
+          disabled={cardTransition !== 'idle'}
           aria-label="Session Settings"
           title="Session Settings"
           on:click={() => openExistingSessionEditor(activeSession.id)}

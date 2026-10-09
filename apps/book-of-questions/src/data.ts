@@ -1,7 +1,7 @@
 import rawQuestionBank from './questions.json'
 import rawKidsQuestions from './kids-questions.json'
 import rawWouldYouRatherQuestions from './would-you-rather-questions.json'
-import type { Category, LibraryState, Question, SensitiveTopic } from './types'
+import type { Category, LibraryState, Question, QuestionSession, SensitiveTopic } from './types'
 
 type SeedCategory = Pick<Category, 'id' | 'name'>
 type SeedQuestion = Omit<
@@ -254,3 +254,13 @@ export const makeId = (prefix: string) => {
     `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
   return `${prefix}-${randomPart}`
 }
+
+// Sensitive topics are independent pools; every tag still requires an opt-in.
+export const questionMatchesSession = (
+  question: Question,
+  selection: Pick<QuestionSession, 'categoryIds' | 'includedSensitiveTopics'>,
+): boolean => question.enabled && (
+  question.sensitiveTopics.length > 0
+    ? question.sensitiveTopics.every((topic) => selection.includedSensitiveTopics.includes(topic))
+    : selection.categoryIds.includes(question.categoryId)
+)

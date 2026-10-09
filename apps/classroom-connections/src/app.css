@@ -87,7 +87,7 @@ select:focus-visible,
 
 .landing-screen {
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -378,7 +378,7 @@ select:focus-visible,
 
 .game-screen {
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
   background: #fff;
 }
 
@@ -2152,4 +2152,62 @@ select:focus-visible,
 .game-controls.completed-controls {
   grid-template-columns: auto repeat(2, minmax(0, 1fr)) auto;
   margin-top: 0;
+}
+
+/* Let the board share the actual viewport space left by the controls. */
+.game-main,
+.completed .game-main {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  gap: 0.65rem;
+  padding-block: 0.65rem;
+}
+
+.completed .game-main {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.game-main > .mistakes,
+.game-main > .game-controls {
+  margin-top: 0;
+}
+
+.game-board {
+  min-height: 0;
+  grid-template-rows: repeat(var(--group-count), minmax(0, 1fr));
+}
+
+.game-board > .solved-list {
+  grid-row: span var(--solved-rows);
+  grid-template-rows: subgrid;
+  min-height: 0;
+}
+
+.game-board > .tile-grid {
+  grid-row: span var(--remaining-rows);
+  grid-template-rows: subgrid;
+  min-height: 0;
+}
+
+.game-board .word-tile,
+.game-board .solved-group,
+.game-board .solving-stage {
+  min-height: 0;
+}
+
+.game-board .solved-group,
+.game-board .solving-answer {
+  overflow: hidden;
+  padding: 0.3rem 0.6rem;
+}
+
+.game-board .solved-group h2,
+.game-board .solving-answer h2 {
+  font-size: clamp(0.8rem, min(2.6vw, calc(20dvh / var(--group-count))), 2.5rem);
+}
+
+.game-board .solved-group p,
+.game-board .solving-answer p {
+  font-size: clamp(0.7rem, min(2.2vw, calc(16dvh / var(--group-count))), 2rem);
 }

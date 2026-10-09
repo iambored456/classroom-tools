@@ -6,7 +6,7 @@ import { chromium } from 'playwright'
 
 import { startStaticServer } from '../../../scripts/lib/static-server.ts'
 
-const ROOT_BASE = '/classroom-tools/classroom-connections/'
+const ROOT_BASE = process.env.BASE_URL ?? '/classroom-tools/classroom-connections/'
 const rootDir = resolve(import.meta.dirname, '..')
 const landingShot = join(tmpdir(), 'classroom-connections-landing.png')
 const lightLandingShot = join(tmpdir(), 'classroom-connections-landing-light.png')
@@ -546,7 +546,7 @@ try {
     4,
   )
   assert.equal(
-    await page.locator('.tile-grid').evaluate((grid) => getComputedStyle(grid).gridTemplateRows.split(' ').length),
+    await page.locator('.word-tile').evaluateAll((tiles) => new Set(tiles.map((tile) => Math.round(tile.getBoundingClientRect().top))).size),
     2,
   )
   assert.equal(await page.locator('.mistake-dots > span').count(), 3)
@@ -563,7 +563,7 @@ try {
     4,
   )
   assert.equal(
-    await page.locator('.tile-grid').evaluate((grid) => getComputedStyle(grid).gridTemplateRows.split(' ').length),
+    await page.locator('.word-tile').evaluateAll((tiles) => new Set(tiles.map((tile) => Math.round(tile.getBoundingClientRect().top))).size),
     6,
   )
 

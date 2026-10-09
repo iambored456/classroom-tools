@@ -1,14 +1,25 @@
 import './style.css'
 import './targets.css'
 import './sum-square.css'
+import './numeric.css'
+import './explorations.css'
+import './manipulatives.css'
+import './collection.css'
 import {emptySlots, placeDigit, numberAt, equationState, numberWords, sideSum} from '@classroom-tools/open-middle-core'
 import {baseTenBlocks as blocks} from '@classroom-tools/open-middle-core/blocks'
-import {findQuestion, questions} from './questions/index.js'
+import {findQuestion, questions, questionLabel} from './questions/index.js'
 import {renderSumSquare} from './sum-square.js'
+import {mountNumeric} from './numeric-view.js'
+import {mountExploration} from './explorations.js'
+import {mountManipulative} from './manipulatives.js'
 const app = document.querySelector('#app')
 let slots = emptySlots(), selected = null, drag = null, suppressClick = false
 let showSums = [false, false]
 let activeQuestionId = null
+let cleanupCustom = null
+let searchText = ''
+const customQuestion = problem => problem && (problem.layout === 'digit-task' || problem.layout === 'exploration' || problem.kind === 'manipulative')
+const escapeHtml = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
 let doubleSpace = false
 try { doubleSpace = localStorage.getItem('open-middle-double-space') === 'true' } catch {}
 const icons = {help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .7-1.5 1-1.5 3"/><path d="M12 17h.01"/>',home:'<path d="m3 11 9-8 9 8v10h-6v-7H9v7H3z"/>',refresh:'<path d="M20 7v5h-5M20 12a8 8 0 1 0-2 6"/>',settings:'<path d="m10 3-1 3-3 1-3 3 2 2-1 4 3 1 2 4h4l1-3 3-1 3-3-2-2 1-4-3-1-2-4z"/><circle cx="11.5" cy="12" r="3"/>'}
@@ -24,13 +35,30 @@ function twoDigitEquation(problem) {
 }
 function render() {
  const problem = findQuestion(location.hash)
+ cleanupCustom?.(); cleanupCustom=null
  if ((problem?.id ?? null) !== activeQuestionId) {
+   window.scrollTo({top:0,left:0})
    slots = emptySlots(problem); selected = null; showSums = [false, false]
    activeQuestionId = problem?.id ?? null
  }
  if (problem?.showSideSums) for (const side of [0,1]) if (sideSum(slots,side,problem) === null) showSums[side] = false
- app.className = doubleSpace ? 'double-space' : ''
- if (!problem) { app.innerHTML = `<main class="landing"><div class="landing-heading"><h1>Open Middle Math</h1>${landingHome}</div><div class="problem-list">${questions.map(question => `<a class="problem-link" href="#${question.id}">#${question.id} - ${question.title}</a>`).join('')}</div></main>`; return }
+ app.className = [doubleSpace ? 'double-space' : '', customQuestion(problem)?'custom-question':''].join(' ')
+ document.title = problem ? `${questionLabel(problem)} · Open Middle` : 'Open Middle · Classroom Tools'
+ if (!problem) {
+  app.innerHTML = `<main class="landing"><div class="landing-heading"><h1>Open Middle Math</h1>${landingHome}</div><label class="collection-search">Find a question <input id="question-search" type="search" placeholder="Number, title, or topic" value="${escapeHtml(searchText)}"></label><p id="question-count" class="collection-count" role="status"></p><div class="problem-list"></div></main>`
+  const filter=()=>{const terms=searchText.toLowerCase().trim().split(/\s+/).filter(Boolean),filtered=questions.filter(q=>terms.every(term=>`${q.id} ${q.title} ${q.category??q.topic??''}`.toLowerCase().includes(term)));document.querySelector('.problem-list').innerHTML=filtered.map(question=>`<a class="problem-link" href="#${question.id}">${escapeHtml(questionLabel(question))}</a>`).join('');document.querySelector('#question-count').textContent=`${filtered.length} of ${questions.length} activities`}
+  document.querySelector('#question-search').oninput=e=>{searchText=e.target.value;filter()};filter();return
+ }
+ if(customQuestion(problem)){
+  app.innerHTML=`${icon('home','Home')}<nav class="corner-tools" aria-label="Problem controls">${icon('help','Help')}${icon('settings','Settings')}</nav><main class="workspace collection-workspace"><h1 class="question-title">${escapeHtml(questionLabel(problem))}</h1><div id="interactive-question"></div></main><dialog id="help-dialog" aria-labelledby="help-title"><form method="dialog"><div class="dialog-heading"><h2 id="help-title">How to play</h2><button aria-label="Close help" class="close">×</button></div><p class="help-copy">Follow the question’s directions and explore different answers. Use the controls beside the activity to check or reset your work. Digit spaces support dragging, selecting, and typing. Work is saved in this browser as you go.</p></form></dialog><dialog id="settings-dialog" aria-labelledby="settings-title"><form method="dialog"><div class="dialog-heading"><h2 id="settings-title">Settings</h2><button aria-label="Close settings" class="close">×</button></div><label><input id="spacing" type="checkbox" ${doubleSpace?'checked':''}> Double-space between words</label></form></dialog>`
+  document.querySelector('#home').onclick=()=>{location.hash=''}
+  document.querySelector('#help').onclick=()=>document.querySelector('#help-dialog').showModal()
+  document.querySelector('#settings').onclick=()=>document.querySelector('#settings-dialog').showModal()
+  document.querySelector('#spacing').onchange=e=>{doubleSpace=e.target.checked;app.classList.toggle('double-space',doubleSpace);try{localStorage.setItem('open-middle-double-space',String(doubleSpace))}catch{}}
+  const target=document.querySelector('#interactive-question')
+  cleanupCustom=problem.layout==='digit-task'?mountNumeric(target,problem):problem.layout==='exploration'?mountExploration(target,problem):mountManipulative(target,problem)
+  return
+ }
  app.innerHTML = `${icon('home','Home')}<nav class="corner-tools" aria-label="Problem controls">${icon('refresh','Reset problem')}${icon('help','Help')}${icon('settings','Settings')}</nav><main class="workspace">${problem.layout === 'sum-square' ? bank(problem) + renderSumSquare(slots,problem) : twoDigitEquation(problem)}</main><dialog id="help-dialog" aria-labelledby="help-title"><form method="dialog"><div class="dialog-heading"><h2 id="help-title">How to play</h2><button aria-label="Close help" class="close">&times;</button></div><p class="help-copy">Drag a digit, or select a digit and then a space. Select a placed digit to return it.${problem.layout === 'sum-square' ? ' Each gray square shows its side’s total when all three digits are placed.' : ''}</p></form></dialog><dialog id="settings-dialog" aria-labelledby="settings-title"><form method="dialog"><div class="dialog-heading"><h2 id="settings-title">Settings</h2><button aria-label="Close settings" class="close">×</button></div><label><input id="spacing" type="checkbox" ${doubleSpace?'checked':''}> Double-space between words</label></form></dialog>`
  document.querySelector('#home').onclick = () => {location.hash=''}
  document.querySelector('#refresh').onclick = () => { slots=emptySlots(problem);selected=null;showSums=[false,false];render() }
@@ -45,6 +73,7 @@ function sumPanel(side, problem) {
  return `<div class="side-total" data-side="${side}"><button class="scale-toggle" data-toggle-sum="${side}" aria-label="${expanded?'Hide':'Show'} ${label} side sum" aria-expanded="${expanded}" aria-controls="sum-${side}" title="${expanded?'Hide':'Show'} ${label} side sum"><svg viewBox="0 0 40 44" aria-hidden="true"><circle cx="20" cy="4" r="2.5" fill="currentColor"/><path d="M20 6 3 36H37Z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M3 36Q20 46 37 36Z" fill="currentColor"/></svg></button><div id="sum-${side}" class="sum-visual" ${expanded?'':'hidden'}><svg class="sum-arrows" viewBox="0 0 400 60" preserveAspectRatio="none" aria-hidden="true"><defs><marker id="sum-arrow-${side}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="m1 1 7 4-7 4"/></marker></defs><path d="M140 0 178 52" marker-end="url(#sum-arrow-${side})"/><path d="M260 0 222 52" marker-end="url(#sum-arrow-${side})"/></svg><div class="sum-words" aria-live="polite">${numberWords(sum)}</div>${blocks(sum)}</div></div>`
 }
 app.addEventListener('click',e=>{
+ if(customQuestion(findQuestion(location.hash)))return
  if(suppressClick){suppressClick=false;return}
  const sumToggle=e.target.closest('[data-toggle-sum]')
  if(sumToggle){const side=Number(sumToggle.dataset.toggleSum);showSums[side]=!showSums[side];render();document.querySelector(`[data-toggle-sum="${side}"]`).focus();return}
@@ -53,12 +82,14 @@ app.addEventListener('click',e=>{
  else if(digit&&!digit.disabled){selected=selected===Number(digit.dataset.digit)?null:Number(digit.dataset.digit);render();document.querySelector(`.bank [data-digit="${digit.dataset.digit}"]`).focus()}
 })
 app.addEventListener('keydown',e=>{
+ if(customQuestion(findQuestion(location.hash)))return
  const slot=e.target.closest('[data-slot]');if(!slot)return
  const i=Number(slot.dataset.slot)
  if(/^\d$/.test(e.key) && findQuestion(location.hash)?.digits.includes(Number(e.key))){e.preventDefault();slots=placeDigit(slots,Number(e.key),i,findQuestion(location.hash));render();document.querySelector(`[data-slot="${Math.min(slots.length-1,i+1)}"]`).focus()}
  if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();slots[i]=null;render();document.querySelector(`[data-slot="${i}"]`).focus()}
 })
 app.addEventListener('pointerdown',e=>{
+ if(customQuestion(findQuestion(location.hash)))return
  const el=e.target.closest('[data-digit]');if(!el||el.disabled||e.button!==0)return
  suppressClick=false;drag={el,x:e.clientX,y:e.clientY,id:e.pointerId,digit:Number(el.dataset.digit),active:false}
  el.setPointerCapture(e.pointerId)

@@ -2,6 +2,7 @@ export const VISUALIZATION_MODE_OPTIONS = [
     { id: 'progress', label: 'Progress Bar', description: 'Minimal fill with a moving time marker.' },
     { id: 'sand', label: 'Sand Bars', description: 'Physics-based hex particles rising through the five stages.' },
     { id: 'water', label: 'Water Bars', description: 'Fluid columns with droplets and surface motion.' },
+    { id: 'water2', label: 'Water Bars 2', description: 'Glass-like water with forming drops, reflections, and merging ripples.' },
     { id: 'candle', label: 'Candles', description: 'Five candles burn down from left to right.' },
     { id: 'none', label: 'Label Only', description: 'Hide timeline visuals and keep only text.' }
 ];
@@ -20,7 +21,7 @@ export function isStageVisualizationMode(mode) {
 
 export function isLegacyFillMode(mode) {
     const normalized = normalizeVisualizationMode(mode);
-    return normalized === 'sand' || normalized === 'water';
+    return normalized === 'sand' || normalized === 'water' || normalized === 'water2';
 }
 
 export function isProgressVisualizationMode(mode) {

@@ -369,7 +369,7 @@ html, body {
       rgba(255,255,255,0.02);
 }
 
-#sand-bars-canvas, #water-fill-canvas, #stage-visualization-canvas {
+#sand-bars-canvas, #water-fill-canvas, #water-fill-2-canvas, .water2-fallback-canvas, #stage-visualization-canvas {
     position: absolute;
     top: 0;
     left: 0;
@@ -378,6 +378,10 @@ html, body {
     display: block;
     pointer-events: none;
 }
+
+.water2-fallback-canvas { display: none; }
+#water-fill-container.water2-mode .water2-fallback-canvas { display: block; }
+#water-fill-container.water2-mode .water-fill-outline-segment { background: transparent; }
 
 
 /* ====== Settings Menu & Components ====== */

@@ -1,0 +1,79 @@
+.ex-workspace { max-width: 1050px; margin: 20px auto 48px; line-height: 1.6; }
+.ex-workspace button, .ex-workspace input, .ex-workspace select, .ex-workspace textarea { font: inherit; }
+.ex-workspace button { min-height: 44px; padding: 10px 18px; border: 1px solid #aaa; border-radius: 12px; background: #fff; line-height: 1.3; }
+.ex-workspace button:hover { background: #f2f2f2; }
+.ex-workspace input:not([type="range"]), .ex-workspace select { width: 100%; height: 48px; min-width: 0; padding: 8px 12px; border: 1.5px solid #777; border-radius: 8px; background: #fff; color: #111; }
+.ex-workspace input:focus-visible, .ex-workspace select:focus-visible, .ex-workspace textarea:focus-visible { outline: 3px solid #477894; outline-offset: 3px; }
+.ex-prompt { font-size: clamp(1.06rem, 1.9vw, 1.3rem); margin: 12px 0 20px; }
+.ex-note, .ex-save-note { font-size: .94rem; color: #555; line-height: 1.6; }
+.ex-save-note { margin-top: 8px; }
+.ex-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 24px; }
+.ex-tabs button[aria-pressed="true"] { background: #172f3d; color: #fff; border-color: #172f3d; }
+.ex-workspace .ex-primary { background: #172f3d; border-color: #172f3d; color: #fff; }
+.ex-workspace .ex-primary:hover { background: #284b60; }
+.ex-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; }
+.ex-answer-grid { display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); margin: 26px 0; align-content: start; }
+.ex-field { display: grid; gap: 8px; align-content: start; max-width: 470px; margin: 12px 0; }
+.ex-field > span:first-child { font-weight: 600; }
+.ex-input-row { display: flex; align-items: center; gap: 10px; }
+.ex-input-row > span { white-space: nowrap; }
+.ex-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.ex-diagram { display: block; width: 100%; max-width: 470px; margin: 0 auto; overflow: visible; }
+.ex-diagram text { font-family: Arial, sans-serif; font-size: 15px; fill: #28313b; }
+.ex-field-land { fill: #f2f6ea; stroke: #444; stroke-width: 2; }
+.ex-grazed { fill: #aed6b3; stroke: #366a3a; stroke-width: 1.5; }
+.ex-rope { stroke: #654827; stroke-width: 3; stroke-dasharray: 5 3; }
+.ex-slider { display: grid; gap: 8px; margin: 18px 0; }
+.ex-slider span { font-weight: 600; }
+.ex-workspace input[type="range"] { width: 100%; height: 32px; accent-color: #284b60; }
+.ex-feedback { min-height: 32px; margin: 18px 0 0; padding: 0; }
+.ex-feedback:not(:empty) { border-radius: 10px; border-left: 4px solid #b57f16; padding: 16px; background: #fff6df; }
+.ex-feedback.ex-success { border-color: #24733d; background: #edf8ef; }
+.ex-feedback.ex-saved { border-color: #356887; background: #ecf5fa; }
+.ex-notes { display: grid; gap: 8px; margin-top: 30px; font-weight: 600; }
+.ex-notes textarea { width: 100%; border: 1px solid #aaa; border-radius: 10px; padding: 12px; resize: vertical; font-weight: normal; }
+.ex-attempts { margin-top: 24px; border-top: 1px solid #ddd; padding-top: 18px; }
+.ex-attempts summary { cursor: pointer; font-weight: 600; }
+.ex-attempts li { margin: 12px 0; overflow-wrap: anywhere; }
+.ex-table-wrap { max-width: 650px; margin: 18px auto 26px; overflow-x: auto; padding: 5px; }
+.ex-dice-table { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+.ex-dice-table caption { text-align: left; font-size: .9rem; color: #555; margin-bottom: 12px; }
+.ex-dice-table th { background: #e8eef2; border-radius: 7px; min-width: 42px; font-size: 1.3rem; height: 48px; }
+.ex-dice-table td { padding: 0; border-radius: 7px; }
+.ex-dice-table input { text-align: center; padding: 7px 1px!important; font-size: 1.2rem!important; appearance: textfield; }
+.ex-dice-table input::-webkit-inner-spin-button, .ex-dice-table input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.ex-dice-table .ex-current-roll { outline: 3px solid #b1851a; outline-offset: 0; }
+.ex-dice-table input[aria-invalid="true"] { border: 2px solid #ba3828; background: #fff0ef; }
+.ex-dice-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 20px 0; }
+.ex-dice-controls button:not(.ex-secondary) { width: 48px; height: 48px; padding: 0; font-size: 1.5rem; font-weight: 600; }
+.ex-pay-stubs { display: flex; flex-wrap: wrap; gap: 22px; margin: 26px 0; }
+.ex-pay-stubs > div { display: grid; gap: 14px; min-width: min(250px, 100%); border: 1px solid #aaa; border-radius: 12px; padding: 22px; background: #f9f9f8; }
+.ex-pay-stubs strong { font-size: 1.8rem; font-weight: 500; }
+.ex-rule { padding: 14px 18px; background: #f1f1f1; border-radius: 10px; font-weight: 600; }
+.ex-tray { fill: #f1f6f8; stroke: #222; stroke-width: 2; }
+.ex-coin { fill: #ead494; stroke: #8e6c20; stroke-width: 1; }
+.ex-coin-outside { fill: #efaeae; stroke: #a32121; stroke-width: 1.5; }
+.ex-arrangement-status { text-align: center; font-weight: 600; }
+.ex-story { border: 1px solid #bbb; border-radius: 14px; padding: 12px 24px 24px; margin: 24px 0; }
+.ex-story legend { font-size: 1.15rem; font-weight: 600; padding: 0 10px; }
+.ex-story p { font-size: 1.15rem; line-height: 2.5; margin: 8px 0; }
+.ex-story input, .ex-story select { display: inline-block; width: 125px!important; margin: 0 8px; }
+.ex-story select { width: 140px!important; }
+.ex-apple-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 18px; }
+.ex-apple-model { display: grid; gap: 8px; align-content: start; padding: 12px; background: #faf7f3; border-radius: 10px; }
+.ex-apple-model span, .ex-apple-model small { color: #555; }
+.ex-apple-dots { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 2px; max-width: 240px; }
+.ex-apple-dots span { color: #ac3d36; font-size: 1.25rem; line-height: 1; }
+@media (max-width: 680px) {
+  .ex-workspace { margin-top: 8px; }
+  .ex-split { grid-template-columns: 1fr; gap: 16px; }
+  .ex-answer-grid { gap: 12px; margin: 16px 0; }
+  .ex-dice-table { border-spacing: 3px; }
+  .ex-dice-table th { font-size: 1rem; }
+  .ex-dice-table input { height: 44px!important; }
+  .ex-story { padding: 12px 14px 18px; }
+  .ex-story input { width: 96px!important; margin: 0 4px; }
+  .ex-apple-pair { gap: 8px; }
+  .ex-apple-dots { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .ex-dice-controls { gap: 8px; }
+}

@@ -288,7 +288,7 @@ export const Settings = {
         preferences.visualizationMode = mode;
         preferences.showProgressBar = mode === 'progress';
         preferences.showSandBars = mode === 'sand';
-        preferences.showWaterFill = mode === 'water';
+        preferences.showWaterFill = mode === 'water' || mode === 'water2';
         return mode;
     },
 

@@ -741,7 +741,7 @@
         aria-busy={isSubmitting}
       >
         {#if solvedGroups.length > 0 || solvingGroup}
-          <div class="solved-list" aria-label="Found groups">
+          <div class="solved-list" style={`--solved-rows: ${solvedGroups.length + (solvingGroup ? 1 : 0)}`} aria-label="Found groups">
             {#each solvedGroups as group (group.id)}
               <article
                 class={`solved-group ${puzzleColour(group)}`}
@@ -774,7 +774,7 @@
         {/if}
 
         {#if tiles.length > 0}
-          <div class="tile-grid">
+          <div class="tile-grid" style={`--remaining-rows: ${tiles.length / 4}`}>
             {#each tiles as tile (tile.id)}
               <button
                 type="button"
