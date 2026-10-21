@@ -105,14 +105,6 @@ function buildTargets(rootBase) {
 
   return [
     {
-      id: 'face-to-name',
-      outputFile: 'FaceToName-screenshot.png',
-      distDir: 'apps/face-to-name/dist',
-      basePath: appendPath(rootBase, 'face-to-name'),
-      route: appendPath(rootBase, 'face-to-name'),
-      waitFor: '.organizer-start',
-    },
-    {
       id: 'classroom-wordle',
       outputFile: 'ClassroomWordle-screenshot.png',
       distDir: 'apps/classroom-wordle/dist',

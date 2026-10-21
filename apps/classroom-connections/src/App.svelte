@@ -3,6 +3,7 @@
   import { flip } from 'svelte/animate'
   import GroupLibrary from './GroupLibrary.svelte'
   import { createStarterGroups } from './groups'
+  import { fitAnswerText } from './fitAnswerText'
   import {
     loadGroups,
     loadSessionPlayedGroupIds,
@@ -58,6 +59,7 @@
   let guessesRemaining = guessLimit
   let statusMessage = ''
   let statusTone: StatusTone = 'neutral'
+  let matchFeedbackVisible = false
   let gameEnded = false
   let gameWon = false
   let submissionPhase: SubmissionPhase = 'idle'
@@ -235,15 +237,22 @@
   const puzzleColour = (group: WordGroup) =>
     puzzleColourByGroupId[group.id] ?? group.difficulty
 
-  const setStatus = (message: string, tone: StatusTone = 'neutral', duration = 1300) => {
+  const clearStatus = () => {
     if (statusTimer) clearTimeout(statusTimer)
+    statusTimer = null
+    statusMessage = ''
+    matchFeedbackVisible = false
+  }
+
+  const dismissMatchFeedback = () => {
+    if (matchFeedbackVisible) clearStatus()
+  }
+
+  const setStatus = (message: string, tone: StatusTone = 'neutral', duration = 1300) => {
+    clearStatus()
     statusMessage = message
     statusTone = tone
-    if (duration > 0) {
-      statusTimer = setTimeout(() => {
-        statusMessage = ''
-      }, duration)
-    }
+    if (duration > 0) statusTimer = setTimeout(clearStatus, duration)
   }
 
   const saveSettings = () => {
@@ -355,7 +364,7 @@
     hintedTileIds = []
     scoreboardOpen = false
     homeMessage = ''
-    statusMessage = ''
+    clearStatus()
     exitConfirmOpen = false
     screen = 'game'
     void tick().then(scheduleTileFontSize)
@@ -515,7 +524,12 @@
     guessesRemaining -= 1
     if (guessesRemaining <= 0) stopGameTimer()
     submissionPhase = 'wrong'
-    setStatus(matchingCount === 3 ? 'Three match' : matchingCount === 2 ? 'Two match' : 'Not quite', 'error')
+    setStatus(
+      matchingCount === 3 ? 'Three match' : matchingCount === 2 ? 'Two match' : 'Not quite',
+      'error',
+      5000,
+    )
+    matchFeedbackVisible = true
     if (matchingCount >= 2 && guessesRemaining > 0) {
       hintGroupId = bestMatch[0]
       hintAvailable = true
@@ -547,7 +561,7 @@
     exitConfirmOpen = false
     scoreboardOpen = false
     screen = 'home'
-    statusMessage = ''
+    clearStatus()
     selectedIds = []
   }
 
@@ -588,6 +602,7 @@
   }
 
   const handleKeydown = (event: KeyboardEvent) => {
+    dismissMatchFeedback()
     if (event.key !== 'Escape') return
     if (settingsPopover?.matches(':popover-open')) {
       settingsPopover.hidePopover()
@@ -646,12 +661,18 @@
 
     return () => {
       window.removeEventListener('resize', handleResize)
+      if (statusTimer) clearTimeout(statusTimer)
       if (tileFontMeasureFrame !== null) cancelAnimationFrame(tileFontMeasureFrame)
     }
   })
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window
+  on:keydown={handleKeydown}
+  on:pointerdown={dismissMatchFeedback}
+  on:click={dismissMatchFeedback}
+  on:wheel|passive={dismissMatchFeedback}
+/>
 
 {#if screen === 'home'}
   <main class="landing-screen" class:dark-mode={darkMode}>
@@ -714,7 +735,7 @@
         <button type="button" class="landing-button primary" on:click={startGame}>Play</button>
         <button type="button" class="landing-button secondary" on:click={() => (libraryOpen = true)}>
           <span class="library-button-label">
-            <strong>Group Library</strong>
+            <strong>Question Library</strong>
             <small>{enabledDifficultySummary}</small>
           </span>
         </button>
@@ -737,6 +758,7 @@
       <section
         class="game-board"
         bind:this={gameBoard}
+        use:fitAnswerText={{ groups: activeGroups, allCaps, revealed: revealedGroupIds.length > 0 }}
         aria-label="Classroom Connections game board"
         aria-busy={isSubmitting}
       >

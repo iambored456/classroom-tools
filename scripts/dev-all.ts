@@ -5,6 +5,8 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createInterface } from 'node:readline'
 
+import { requestPageTitle, waitForPageTitle } from './lib/dev-readiness.ts'
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const rootDir = join(__dirname, '..')
 const isWindows = process.platform === 'win32'
@@ -18,7 +20,6 @@ type DevServer = {
 
 const servers: DevServer[] = [
   { name: 'open-middle', port: 5194, path: '/open-middle/' },
-  { name: 'face-to-name', port: 5193, path: '/face-to-name/' },
   { name: 'class-clock', port: 5174, path: '/class-clock/' },
   { name: 'class-schedule-widget', port: 5181, path: '/class-schedule-widget/' },
   { name: 'classroom-connections', port: 5186, path: '/classroom-connections/' },
@@ -127,49 +128,13 @@ function isPortListening(port: number): Promise<boolean> {
   })
 }
 
-async function requestPageTitle(server: DevServer): Promise<string | null> {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 1_000)
-
-  try {
-    const response = await fetch(serverUrl(server), {
-      headers: { accept: 'text/html' },
-      signal: controller.signal,
-    })
-    if (!response.ok) return `HTTP ${response.status}`
-    const html = await response.text()
-    return html.match(/<title>([^<]+)<\/title>/i)?.[1]?.trim() ?? '(page without a title)'
-  } catch {
-    return null
-  } finally {
-    clearTimeout(timeout)
-  }
-}
-
-async function requestHubRouteTitle(server: DevServer): Promise<string | null> {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 1_000)
-
-  try {
-    const response = await fetch(`http://localhost:5173${server.path}`, {
-      headers: { accept: 'text/html' },
-      signal: controller.signal,
-    })
-    if (!response.ok) return `HTTP ${response.status}`
-    const html = await response.text()
-    return html.match(/<title>([^<]+)<\/title>/i)?.[1]?.trim() ?? '(page without a title)'
-  } catch {
-    return null
-  } finally {
-    clearTimeout(timeout)
-  }
-}
-
 async function findStaleHubRoute(): Promise<{ server: DevServer; actualTitle: string | null } | null> {
   for (const server of servers) {
     if (server.name === 'hub') continue
-    const actualTitle = await requestHubRouteTitle(server)
-    if (actualTitle !== expectedTitle(server)) return { server, actualTitle }
+    // Cold Vite transforms and proxy restarts can briefly time out. Give each
+    // route the same readiness window as its standalone server.
+    const result = await waitForPageTitle(`http://localhost:5173${server.path}`, expectedTitle(server))
+    if (!result.ready) return { server, actualTitle: result.actualTitle }
   }
   return null
 }
@@ -181,7 +146,7 @@ async function probeServer(server: DevServer): Promise<ServerProbe> {
 
   const wantedTitle = expectedTitle(server)
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    const actualTitle = await requestPageTitle(server)
+    const actualTitle = await requestPageTitle(serverUrl(server))
     if (actualTitle === wantedTitle) {
       return { server, status: 'reusable' }
     }
@@ -203,15 +168,7 @@ async function probeServer(server: DevServer): Promise<ServerProbe> {
 }
 
 async function waitForServer(server: DevServer, timeoutMs = 30_000): Promise<boolean> {
-  const deadline = Date.now() + timeoutMs
-  const wantedTitle = expectedTitle(server)
-
-  while (Date.now() < deadline) {
-    if ((await requestPageTitle(server)) === wantedTitle) return true
-    await new Promise((resolve) => setTimeout(resolve, 200))
-  }
-
-  return false
+  return (await waitForPageTitle(serverUrl(server), expectedTitle(server), timeoutMs)).ready
 }
 
 function handleOutput(name: string, line: string): void {

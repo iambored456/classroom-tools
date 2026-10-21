@@ -8,6 +8,10 @@ const resolveBuildBase = () =>
 
 export default defineConfig(({ command }) => ({
   base: command === 'serve' ? '/oklch-visualizer/' : resolveBuildBase(),
+  // Scan the app entry only; legacy and reference folders are separate projects.
+  optimizeDeps: {
+    entries: ['index.html'],
+  },
   build: {
     chunkSizeWarningLimit: 800,
   },

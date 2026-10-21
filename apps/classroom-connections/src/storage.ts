@@ -1,4 +1,4 @@
-import { createStarterGroups } from './groups'
+import { createStarterGroups, refreshStarterGroup } from './groups'
 import { DIFFICULTIES, type WordGroup } from './types'
 
 const STORAGE_KEY = 'classroom-connections:library:v1'
@@ -27,12 +27,14 @@ export const loadGroups = (): WordGroup[] => {
 
     const parsed: unknown = JSON.parse(raw)
     if (!Array.isArray(parsed) || !parsed.every(isWordGroup)) return createStarterGroups()
-    const savedGroups = parsed.map((group) => ({ ...group, words: [...group.words] }))
+    const refreshedGroups = parsed.map(refreshStarterGroup)
+    const hasStarterUpdates = refreshedGroups.some((group, index) => group !== parsed[index])
+    const savedGroups = refreshedGroups.map((group) => ({ ...group, words: [...group.words] }))
     const savedGroupIds = new Set(savedGroups.map((group) => group.id))
     const newStarterGroups = createStarterGroups().filter((group) => !savedGroupIds.has(group.id))
     const mergedGroups = [...savedGroups, ...newStarterGroups]
 
-    if (newStarterGroups.length > 0) saveGroups(mergedGroups)
+    if (newStarterGroups.length > 0 || hasStarterUpdates) saveGroups(mergedGroups)
     return mergedGroups
   } catch {
     return createStarterGroups()

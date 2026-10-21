@@ -46,6 +46,18 @@
 
 <main class="hub">
   <header class="hero">
+    <a
+      class="hub-switch"
+      href="https://iambored456.github.io/music-learning-tools/"
+      aria-label="Amateur Music Learning Tools"
+      title="Amateur Music Learning Tools"
+    >
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 18V5l12-2v13M9 9l12-2" />
+        <ellipse cx="6" cy="18" rx="3" ry="3" />
+        <ellipse cx="18" cy="16" rx="3" ry="3" />
+      </svg>
+    </a>
     <p class="eyebrow">Quinn Fleming's</p>
     <h1>Classroom Tools</h1>
   </header>

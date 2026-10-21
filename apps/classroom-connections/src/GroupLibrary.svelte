@@ -18,6 +18,7 @@
   }
 
   let dialog: HTMLDivElement | null = null
+  let libraryContent: HTMLElement | null = null
   let showForm = false
   let editingId: string | null = null
   let title = ''
@@ -46,13 +47,14 @@
     }
   }
 
-  const openAddForm = (difficulty: Difficulty) => {
+  const openAddForm = () => {
     editingId = null
     title = ''
     words = ['', '', '', '']
-    formDifficulty = difficulty
+    formDifficulty = 'easy'
     formError = ''
     showForm = true
+    libraryContent?.scrollTo({ top: 0 })
   }
 
   const openEditForm = (group: WordGroup) => {
@@ -224,10 +226,10 @@
 >
   <header class="library-header">
     <div>
-      <h2 id="library-title">Group Library</h2>
+      <h2 id="library-title">Question Library</h2>
       <p>Choose which groups can appear, or edit / add your own.</p>
     </div>
-    <button type="button" class="icon-button close-button" aria-label="Close group library" on:click={close}>
+    <button type="button" class="icon-button close-button" aria-label="Close question library" on:click={close}>
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="m6 6 12 12M18 6 6 18"></path>
       </svg>
@@ -235,22 +237,27 @@
   </header>
 
   <div class="library-summary">
-    <div class="enabled-summary">
-      <span class="summary-number">{enabledCount}</span>
-      <span>of {groups.length} groups enabled</span>
+    <div class="library-summary-main">
+      <button type="button" class="add-button" on:click={openAddForm}>
+        <span aria-hidden="true">+</span> Add group
+      </button>
+      <div class="enabled-summary">
+        <span class="summary-number">{enabledCount}</span>
+        <span>of {groups.length} groups enabled</span>
+      </div>
     </div>
     <div class="library-top-actions">
       <button type="button" class="text-button" on:click={restoreStarterLibrary}>Reset library</button>
     </div>
   </div>
 
-  <main class="library-content">
+  <main class="library-content" bind:this={libraryContent}>
     {#if showForm}
       <form class="group-form" on:submit|preventDefault={saveForm}>
         <div class="form-heading">
           <div>
             <p class="form-eyebrow">{editingId ? 'Edit group' : 'New group'}</p>
-            <h3>{editingId ? 'Update this connection' : 'Create a connection'}</h3>
+            {#if editingId}<h3>Update this connection</h3>{/if}
           </div>
           <button type="button" class="text-button" on:click={closeForm}>Cancel</button>
         </div>
@@ -291,7 +298,7 @@
         </div>
 
         <div class="form-footer">
-          <p class:error-visible={formError} aria-live="polite">{formError || 'Exactly four words are needed.'}</p>
+          <p class:error-visible={formError} aria-live="polite">{formError}</p>
           <button type="submit" class="save-button">{editingId ? 'Save changes' : 'Add to library'}</button>
         </div>
       </form>
@@ -302,6 +309,16 @@
         {@const tierGroups = groups.filter((group) => group.difficulty === difficulty)}
         <section class="tier-section" aria-labelledby={`tier-${difficulty}`}>
           <div class="tier-heading">
+            <label class="switch-label">
+              <input
+                type="checkbox"
+                checked={tierGroups.some((group) => group.enabled)}
+                disabled={tierGroups.length === 0}
+                on:change={(event) => setDifficultyEnabled(difficulty, event.currentTarget.checked)}
+              />
+              <span class="switch-track" aria-hidden="true"><span></span></span>
+              <span class="sr-only">Include {difficultyDetails[difficulty].label} groups</span>
+            </label>
             <button
               type="button"
               class="tier-toggle"
@@ -315,24 +332,11 @@
               </span>
               <span class="tier-chevron" aria-hidden="true">⌄</span>
             </button>
-            <label class="switch-label">
-              <input
-                type="checkbox"
-                checked={tierGroups.some((group) => group.enabled)}
-                disabled={tierGroups.length === 0}
-                on:change={(event) => setDifficultyEnabled(difficulty, event.currentTarget.checked)}
-              />
-              <span class="switch-track" aria-hidden="true"><span></span></span>
-              <span class="sr-only">Include {difficultyDetails[difficulty].label} groups</span>
-            </label>
           </div>
 
           {#if expandedDifficulties.has(difficulty)}
             <div id={`tier-content-${difficulty}`} class="tier-content">
             <div class="tier-section-actions">
-              <button type="button" class="add-button" on:click={() => openAddForm(difficulty)}>
-                <span aria-hidden="true">+</span> Add group
-              </button>
               <button
                 type="button"
                 class="small-button copy-button"
@@ -368,23 +372,41 @@
               {#each tierGroups as group (group.id)}
                 <article class="group-card" class:disabled={!group.enabled}>
                   <div class="group-toggle-row">
-                    <label class="switch-label">
-                      <input
-                        type="checkbox"
-                        checked={group.enabled}
-                        on:change={() => toggleGroup(group.id)}
-                      />
-                      <span class="switch-track" aria-hidden="true"><span></span></span>
-                      <span class="sr-only">{group.enabled ? 'Disable' : 'Enable'} {group.title}</span>
-                    </label>
-                    <div class="group-title-wrap">
-                      <h4>{group.title}</h4>
-                      {#if group.custom}<span class="custom-badge">Teacher-made</span>{/if}
+                    <div class="group-card-controls">
+                      <label class="switch-label">
+                        <input
+                          type="checkbox"
+                          checked={group.enabled}
+                          on:change={() => toggleGroup(group.id)}
+                        />
+                        <span class="switch-track" aria-hidden="true"><span></span></span>
+                        <span class="sr-only">{group.enabled ? 'Disable' : 'Enable'} {group.title}</span>
+                      </label>
+                      <button
+                        type="button"
+                        class="icon-button edit-button"
+                        aria-label={`Edit ${group.title}`}
+                        title={`Edit ${group.title}`}
+                        on:click={() => openEditForm(group)}
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="m16 3 5 5M4 15 16 3a2.1 2.1 0 0 1 5 5L9 20l-6 1 1-6Z"></path>
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="group-preview">
+                      <div class="group-title-wrap">
+                        <h4 class={`group-answer ${group.difficulty}`}>{group.title}</h4>
+                        {#if group.custom}<span class="custom-badge">Teacher-made</span>{/if}
+                      </div>
+                      {#each group.words as word}
+                        <span class="word-preview-card">{word}</span>
+                      {/each}
                     </div>
                     <div class="group-card-actions">
                       <label class="move-control">
-                        <span>Move to</span>
                         <select
+                          aria-label={`Difficulty for ${group.title}`}
                           value={group.difficulty}
                           on:change={(event) =>
                             moveGroup(
@@ -397,14 +419,11 @@
                           {/each}
                         </select>
                       </label>
-                      <button type="button" class="edit-button" on:click={() => openEditForm(group)}>Edit</button>
                       {#if group.custom}
                         <button type="button" class="delete-button" on:click={() => deleteGroup(group)}>Delete</button>
                       {/if}
                     </div>
                   </div>
-
-                  <p class="word-preview">{group.words.join(' · ')}</p>
                 </article>
               {/each}
               </div>

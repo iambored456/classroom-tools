@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte'
   import WordLibrary from './WordLibrary.svelte'
+  import WinCelebration from './WinCelebration.svelte'
+  import Fireworks from './Fireworks.svelte'
+  import { keepBoardClear } from './keepBoardClear'
   import { loadLibrary, loadSettings, saveLibrary, saveSettings } from './storage'
   import {
     WORD_LENGTHS,
@@ -59,6 +62,9 @@
   let gameStartedAt: number | null = null
   let scoreHistory: ScoreEntry[] = []
   let scoreboardOpen = false
+  let newGameButton: HTMLButtonElement | null = null
+  let scoreboardButton: HTMLButtonElement | null = null
+  let scoreboardDialog: HTMLDivElement | null = null
 
   const usedAnswerIds: Record<WordLength, Set<string>> = {
     3: new Set(),
@@ -240,12 +246,23 @@
       won,
     }
     saveScoreHistory([entry, ...scoreHistory].slice(0, 50))
+  }
+
+  const openScoreboard = async () => {
     scoreboardOpen = true
+    await tick()
+    scoreboardDialog?.focus()
+  }
+
+  const closeScoreboard = async () => {
+    scoreboardOpen = false
+    await tick()
+    scoreboardButton?.focus()
   }
 
   const clearScoreHistory = () => saveScoreHistory([])
 
-  const submitGuess = () => {
+  const submitGuess = async () => {
     if (gameEnded) return
     if (currentGuess.length !== selectedLength) {
       showGameMessage(`${selectedLength} letters are needed.`)
@@ -259,7 +276,11 @@
     gameWon = currentGuess === answer
     gameEnded = gameWon || submittedGuesses.length >= guessLimit
     currentGuess = ''
-    if (gameEnded) recordScore(nextGuesses.length, gameWon)
+    if (gameEnded) {
+      recordScore(nextGuesses.length, gameWon)
+      await tick()
+      newGameButton?.focus()
+    }
   }
 
   const enterLetter = (letter: string) => {
@@ -280,7 +301,7 @@
 
   const handleKeydown = (event: KeyboardEvent) => {
     if (scoreboardOpen) {
-      if (event.key === 'Escape') scoreboardOpen = false
+      if (event.key === 'Escape') closeScoreboard()
       return
     }
     if (exitConfirmOpen) {
@@ -291,7 +312,7 @@
       if (event.key === 'Escape') closeRoundSetup()
       return
     }
-    if (screen !== 'game' || libraryOpen || event.ctrlKey || event.metaKey || event.altKey) return
+    if (screen !== 'game' || gameEnded || libraryOpen || event.ctrlKey || event.metaKey || event.altKey) return
     if (event.key === 'Enter') {
       event.preventDefault()
       submitGuess()
@@ -332,6 +353,7 @@
   }
 
   const handlePopState = (event: PopStateEvent) => {
+    scoreboardOpen = false
     exitConfirmOpen = false
     closeRoundSetup()
     gameMessage = ''
@@ -477,15 +499,23 @@
     class:colorblind-mode={colorblindMode}
     style={`--word-length: ${selectedLength}; --guess-rows: ${guessLimit};`}
   >
-    <button type="button" class="game-home-action" aria-label="Return to home" on:click={requestExit}>
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="m3.5 11 8.5-7 8.5 7"></path>
-        <path d="M6 9.5V20h12V9.5M9.5 20v-6h5v6"></path>
-      </svg>
-    </button>
-    <main class="game-main">
-      <div class="game-board-area">
-        <div class="game-board-row" class:round-complete={gameEnded}>
+    <nav class="game-controls" aria-label="Game controls">
+      <button type="button" class="game-home-action" aria-label="Return to home" on:click={requestExit}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m3.5 11 8.5-7 8.5 7"></path>
+          <path d="M6 9.5V20h12V9.5M9.5 20v-6h5v6"></path>
+        </svg>
+      </button>
+      {#if gameEnded}
+        <div class="completion-actions">
+          <button type="button" class="new-game-button" bind:this={newGameButton} on:click={openRoundSetup}>New Game</button>
+          <button type="button" bind:this={scoreboardButton} on:click={openScoreboard}>View Scoreboard</button>
+        </div>
+      {/if}
+    </nav>
+    <main class="game-main" class:round-complete={gameEnded}>
+      <div class="game-board-area" use:keepBoardClear={gameEnded}>
+        <div class="game-board-row">
           <section class="word-grid" aria-label="Classroom Wordle game board">
         {#each Array(guessLimit) as _, rowIndex}
           {@const submitted = submittedGuesses[rowIndex]}
@@ -515,14 +545,9 @@
             {/each}
           </div>
         {/each}
+            {#if gameWon}<Fireworks scope="board" />{/if}
           </section>
 
-          {#if gameEnded}
-            <div class="completion-actions">
-              <button type="button" class="new-word-button" on:click={openRoundSetup}>New word</button>
-              <button type="button" on:click={requestExit}>Change setup</button>
-            </div>
-          {/if}
         </div>
       </div>
 
@@ -534,6 +559,9 @@
         {/if}
       </div>
 
+      {#if gameWon}
+        <WinCelebration guessesUsed={submittedGuesses.length} />
+      {:else}
       <section class="keyboard" aria-label="On-screen keyboard">
         {#each KEYBOARD_ROWS as row}
           <div class="keyboard-row">
@@ -559,19 +587,27 @@
           </div>
         {/each}
       </section>
+      {/if}
     </main>
   </div>
 {/if}
 
 {#if scoreboardOpen}
   <div class="scoreboard-backdrop" aria-hidden="true"></div>
-  <div class="scoreboard-dialog" role="dialog" aria-modal="true" aria-labelledby="scoreboard-title">
+  <div
+    class="scoreboard-dialog"
+    bind:this={scoreboardDialog}
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="scoreboard-title"
+    tabindex="-1"
+  >
     <div class="scoreboard-heading">
       <div>
         <p>Game history</p>
         <h2 id="scoreboard-title">Scoreboard</h2>
       </div>
-      <button type="button" aria-label="Close scoreboard" on:click={() => (scoreboardOpen = false)}>×</button>
+      <button type="button" aria-label="Close scoreboard" on:click={closeScoreboard}>×</button>
     </div>
 
     {#if scoreHistory.length > 0}
@@ -599,7 +635,7 @@
 
     <div class="scoreboard-actions">
       <button type="button" class="clear-history-button" disabled={scoreHistory.length === 0} on:click={clearScoreHistory}>Clear History</button>
-      <button type="button" class="close-scoreboard-button" on:click={() => (scoreboardOpen = false)}>Close</button>
+      <button type="button" class="close-scoreboard-button" on:click={closeScoreboard}>Close</button>
     </div>
   </div>
 {/if}
@@ -650,7 +686,7 @@
         on:input={() => (roundSetupError = '')}
       />
       {#if roundSetupError}<p class="round-setup-error" role="alert">{roundSetupError}</p>{/if}
-      <button type="submit" class="use-word-button">Use this word</button>
+      <button type="submit" class="use-word-button" disabled={!teacherWord.trim()}>Use this word</button>
     </form>
   </div>
 {/if}

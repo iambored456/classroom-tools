@@ -411,6 +411,8 @@ button:disabled {
 /* Game screen */
 
 .game-screen {
+  --controls-inset: clamp(0.7rem, 2vw, 1.25rem);
+  --controls-width: clamp(6rem, 16vw, 11rem);
   position: relative;
   min-height: 100vh;
   min-height: 100dvh;
@@ -418,11 +420,18 @@ button:disabled {
   background: var(--navy);
 }
 
-.game-home-action {
+.game-controls {
   position: fixed;
-  top: clamp(0.7rem, 2vw, 1.25rem);
-  left: clamp(0.7rem, 2vw, 1.25rem);
+  top: var(--controls-inset);
+  left: var(--controls-inset);
   z-index: 10;
+  width: var(--controls-width);
+  display: grid;
+  justify-items: start;
+  gap: 0.85rem;
+}
+
+.game-home-action {
   display: grid;
   place-items: center;
   width: clamp(3rem, 5vw, 3.8rem);
@@ -450,6 +459,9 @@ button:disabled {
 }
 
 .game-main {
+  --key-height: clamp(3rem, 7.8vh, 5.4rem);
+  --keyboard-gap: clamp(0.32rem, 0.8vh, 0.65rem);
+  --keyboard-height: calc(3 * var(--key-height) + 2 * var(--keyboard-gap) + 0.15rem);
   width: 100%;
   height: 100dvh;
   min-height: 100dvh;
@@ -467,6 +479,12 @@ button:disabled {
   display: grid;
   place-items: center;
   container-type: size;
+  padding-left: 0;
+  transition: padding-left 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.game-board-area.measuring-board {
+  transition: none;
 }
 
 .game-board-row {
@@ -477,27 +495,16 @@ button:disabled {
   gap: clamp(0.75rem, 2vw, 1.5rem);
 }
 
-.game-board-row.round-complete {
-  grid-template-columns: auto minmax(9rem, 11rem);
-}
-
 .word-grid {
+  position: relative;
   --tile-size: min(
     13rem,
-    calc((100vw - 4rem) / var(--word-length)),
+    calc((100cqw - 4rem) / var(--word-length)),
     calc(100cqh / var(--guess-rows) - 0.46rem)
   );
   display: grid;
   grid-template-rows: repeat(var(--guess-rows), var(--tile-size));
   gap: clamp(0.18rem, 0.7vh, 0.46rem);
-}
-
-.game-board-row.round-complete .word-grid {
-  --tile-size: min(
-    13rem,
-    calc((100vw - 16rem) / var(--word-length)),
-    calc(100cqh / var(--guess-rows) - 0.46rem)
-  );
 }
 
 .guess-row {
@@ -581,7 +588,7 @@ button:disabled {
 .keyboard {
   width: min(100%, 75rem);
   display: grid;
-  gap: clamp(0.32rem, 0.8vh, 0.65rem);
+  gap: var(--keyboard-gap);
   flex: 0 0 auto;
   padding-top: 0.15rem;
 }
@@ -594,7 +601,7 @@ button:disabled {
 
 .key {
   min-width: 0;
-  height: clamp(3rem, 7.8vh, 5.4rem);
+  height: var(--key-height);
   flex: 1 1 0;
   padding: 0.2rem;
   border: 0;
@@ -614,8 +621,10 @@ button:disabled {
   transform: translateY(2px);
 }
 
-.key:disabled {
-  opacity: 1;
+.game-screen .keyboard .key:disabled {
+  background: #454b55;
+  color: #aeb4be;
+  opacity: 0.75;
 }
 
 .key.wide {
@@ -624,7 +633,11 @@ button:disabled {
 }
 
 .key svg {
-  width: 1.45rem;
+  width: clamp(2rem, 5vw, 3rem);
+  max-width: 80%;
+  height: 70%;
+  max-height: 3rem;
+  vertical-align: middle;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -633,25 +646,32 @@ button:disabled {
 }
 
 .completion-actions {
+  width: 100%;
   display: grid;
   gap: 0.75rem;
+  animation: completion-enter 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .completion-actions button {
   width: 100%;
   min-height: 3.5rem;
-  padding: 0.65rem 1rem;
+  padding: 0.65rem clamp(0.35rem, 1.2vw, 1rem);
   border: 1px solid #8b9aae;
   border-radius: 999px;
   background: transparent;
   color: #fff;
-  font-size: 1.05rem;
+  font-size: clamp(0.8rem, 1.6vw, 1.05rem);
   font-weight: 900;
 }
 
-.completion-actions .new-word-button {
+.completion-actions .new-game-button {
   border-color: var(--green-light);
   background: var(--green);
+}
+
+@keyframes completion-enter {
+  from { opacity: 0; transform: translateX(-0.65rem); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes tile-pop {
@@ -662,6 +682,138 @@ button:disabled {
   0% { transform: rotateX(0); }
   50% { transform: rotateX(90deg); }
   100% { transform: rotateX(0); }
+}
+
+/* Win celebration */
+
+.success-panel {
+  width: 100%;
+  min-height: var(--keyboard-height);
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  background: transparent;
+  animation: success-enter 600ms ease-out both;
+}
+
+.success-panel h2 {
+  margin: 0;
+  color: #ffe59c;
+  font-size: clamp(3.6rem, 10vw, 7rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.055em;
+  text-shadow: 0 0 28px #ffd56855;
+}
+
+.success-panel p {
+  margin: 0;
+  color: #dce5f4;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+}
+
+.success-fireworks,
+.board-fireworks {
+  --burst-size: clamp(5rem, 15vw, 10rem);
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  overflow: hidden;
+  background: transparent;
+  pointer-events: none;
+}
+
+.board-fireworks {
+  --burst-size: clamp(3rem, 10vw, 7rem);
+  position: absolute;
+  inset: -1rem;
+  z-index: 9;
+}
+
+@keyframes success-enter {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.firework {
+  position: absolute;
+  color: var(--firework-color);
+}
+
+.firework::before {
+  content: '';
+  position: absolute;
+  width: 3px;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: linear-gradient(transparent, currentColor);
+  animation: firework-launch 3.6s ease-out infinite;
+  animation-delay: var(--firework-delay);
+  opacity: 0;
+}
+
+.firework-spark {
+  position: absolute;
+  width: clamp(4px, 0.65vw, 7px);
+  height: clamp(4px, 0.65vw, 7px);
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 9px currentColor, 0 0 18px currentColor;
+  animation: firework-burst 3.6s cubic-bezier(0.15, 0.6, 0.4, 1) infinite;
+  animation-delay: var(--firework-delay);
+  opacity: 0;
+}
+
+.celebration-star {
+  position: absolute;
+  color: #ffe59c;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  text-shadow: 0 0 12px #ffd568aa, 0 0 30px #ffd56866;
+  animation: star-twinkle 2.4s ease-in-out infinite alternate;
+}
+
+.star-one { left: 8%; top: 22%; }
+.star-two { right: 8%; top: 72%; animation-delay: 0.6s; }
+.star-three { left: 53%; top: 13%; animation-delay: 1.2s; }
+
+@keyframes firework-launch {
+  0% { opacity: 0; transform: translateY(10rem) scaleY(1); }
+  8% { opacity: 1; }
+  16% { opacity: 0; transform: translateY(0) scaleY(0.1); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+
+@keyframes firework-burst {
+  0%, 14% { opacity: 0; transform: translate(0, 0) scale(0.2); }
+  18% { opacity: 1; }
+  48% { opacity: 1; }
+  72%, 100% {
+    opacity: 0;
+    transform: translate(calc(var(--spark-x) * var(--burst-size)), calc(var(--spark-y) * var(--burst-size) + 1.8rem)) scale(0.25);
+  }
+}
+
+@keyframes star-twinkle {
+  from { opacity: 0.4; transform: scale(0.75) rotate(-12deg); }
+  to { opacity: 1; transform: scale(1.1) rotate(12deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .success-fireworks .firework::before,
+  .board-fireworks .firework::before { display: none; }
+  .success-fireworks .firework-spark,
+  .board-fireworks .firework-spark {
+    animation: none;
+    opacity: 0.85;
+    transform: translate(calc(var(--spark-x) * var(--burst-size)), calc(var(--spark-y) * var(--burst-size)));
+  }
+  .success-fireworks .celebration-star,
+  .board-fireworks .celebration-star { animation: none; }
 }
 
 /* Teacher round setup */
@@ -772,6 +924,12 @@ button:disabled {
   border: 1px solid #172235;
   background: #172235;
   color: #fff;
+}
+
+.use-word-button:disabled {
+  border-color: #c1cad6;
+  background: #d9dfe7;
+  color: #657184;
 }
 
 .choice-divider {
@@ -1649,13 +1807,6 @@ button:disabled {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .game-board-row.round-complete {
-    grid-template-columns: auto;
-  }
-
-  .completion-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 520px) {
@@ -1692,15 +1843,7 @@ button:disabled {
   .word-grid {
     --tile-size: min(
       8rem,
-      calc((100vw - 2.4rem) / var(--word-length)),
-      calc(100cqh / var(--guess-rows) - 0.3rem)
-    );
-  }
-
-  .game-board-row.round-complete .word-grid {
-    --tile-size: min(
-      8rem,
-      calc((100vw - 2.4rem) / var(--word-length)),
+      calc((100cqw - 2.4rem) / var(--word-length)),
       calc(100cqh / var(--guess-rows) - 0.3rem)
     );
   }
@@ -1760,16 +1903,7 @@ button:disabled {
   .word-grid {
     --tile-size: min(
       8rem,
-      calc((100vw - 2.8rem) / var(--word-length)),
-      calc(100cqh / var(--guess-rows) - 0.3rem)
-    );
-  }
-
-
-  .game-board-row.round-complete .word-grid {
-    --tile-size: min(
-      8rem,
-      calc((100vw - 16rem) / var(--word-length)),
+      calc((100cqw - 2.8rem) / var(--word-length)),
       calc(100cqh / var(--guess-rows) - 0.3rem)
     );
   }

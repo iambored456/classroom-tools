@@ -50,7 +50,7 @@ try {
   await page.getByText('Find four groups of four.', { exact: true }).waitFor()
   await page.getByText('Number of Groups', { exact: true }).waitFor()
   await page.getByText('Number of Guesses', { exact: true }).waitFor()
-  assert.match(await page.getByRole('button', { name: /Group Library/ }).innerText(), /Easy/)
+  assert.match(await page.getByRole('button', { name: /Question Library/ }).innerText(), /Easy/)
   const themeToggle = page.getByRole('checkbox', { name: 'Dark mode' })
   assert.equal(await themeToggle.isChecked(), true)
   const darkLandingBackground = await page.locator('.landing-screen').evaluate((screen) =>
@@ -95,8 +95,8 @@ try {
   )
   await page.screenshot({ path: landingShot, fullPage: false })
 
-  await page.getByRole('button', { name: 'Group Library' }).click()
-  await page.getByRole('dialog', { name: 'Group Library' }).waitFor()
+  await page.getByRole('button', { name: 'Question Library' }).click()
+  await page.getByRole('dialog', { name: 'Question Library' }).waitFor()
   assert.equal(await page.locator('.tier-section').count(), 4)
   assert.equal(await page.locator('.group-card').count(), 0)
   assert.equal(await page.locator('.tier-section-actions').count(), 0)
@@ -121,8 +121,8 @@ try {
   }
   assert.equal(await page.locator('.group-card').count(), 96)
   const mediumSection = page.locator('.tier-section').nth(1)
-  await mediumSection.getByRole('button', { name: /Add group/ }).click()
-  assert.equal(await page.locator('.difficulty-field select').inputValue(), 'medium')
+  await page.getByRole('button', { name: /Add group/ }).click()
+  assert.equal(await page.locator('.difficulty-field select').inputValue(), 'easy')
   await page.getByRole('button', { name: 'Cancel', exact: true }).click()
   await page.getByRole('button', { name: 'Medium', exact: true }).click()
   assert.equal(await mediumSection.locator('.tier-section-actions').count(), 0)
@@ -138,7 +138,7 @@ try {
   const copiedEasyLines = copiedEasyGroups.split(/\r?\n/)
   assert.equal(copiedEasyLines.length, 24)
   assert.equal(copiedEasyLines[0], 'Bugs:(Ladybug,Ant,Beetle,Firefly)')
-  assert.ok(copiedEasyLines.includes('Tools:(Hammer,Screwdriver,Drill,Saw)'))
+  assert.ok(copiedEasyLines.includes('Workshop tools:(Hammer,Screwdriver,Drill,Saw)'))
   assert.ok(copiedEasyLines.includes('Vegetables:(Carrot,Peas,Corn,Broccoli)'))
 
   await easySection.getByRole('button', { name: 'Disable all' }).click()
@@ -147,19 +147,19 @@ try {
   await easySection.getByRole('button', { name: 'Enable all' }).click()
   assert.match(await page.locator('.enabled-summary').innerText(), /24\s+of 96 groups enabled/i)
 
-  await page.getByRole('button', { name: 'Close group library' }).click()
+  await page.getByRole('button', { name: 'Close question library' }).click()
   await page.evaluate(() => {
     const raw = localStorage.getItem('classroom-connections:library:v1')
     const groups = raw ? JSON.parse(raw) : []
     localStorage.setItem('classroom-connections:library:v1', JSON.stringify(groups.slice(0, 48)))
   })
   await page.reload({ waitUntil: 'networkidle' })
-  await page.getByRole('button', { name: 'Group Library' }).click()
+  await page.getByRole('button', { name: 'Question Library' }).click()
   assert.equal(await page.locator('.group-card').count(), 0)
   await page.getByRole('button', { name: 'Easy', exact: true }).click()
   await page.getByText('Vegetables', { exact: true }).waitFor()
 
-  await page.getByRole('button', { name: /Add group/ }).first().click()
+  await page.getByRole('button', { name: /Add group/ }).click()
   await page.getByLabel('Category name').fill('Things in a garden')
   const words = ['Soil', 'Seeds', 'Hose', 'Shovel']
   for (let index = 0; index < words.length; index += 1) {
@@ -170,11 +170,11 @@ try {
   assert.match(await page.locator('.enabled-summary').innerText(), /25\s+of 97 groups enabled/i)
   await page.screenshot({ path: libraryShot, fullPage: false })
 
-  await page.getByRole('button', { name: 'Close group library' }).click()
+  await page.getByRole('button', { name: 'Close question library' }).click()
   await page.reload({ waitUntil: 'networkidle' })
-  await page.getByRole('button', { name: 'Group Library' }).click()
+  await page.getByRole('button', { name: 'Question Library' }).click()
   assert.match(await page.locator('.enabled-summary').innerText(), /25\s+of 97 groups enabled/i)
-  await page.getByRole('button', { name: 'Close group library' }).click()
+  await page.getByRole('button', { name: 'Close question library' }).click()
 
   await page.getByRole('button', { name: 'Play', exact: true }).click()
   await page.locator('.tile-grid').waitFor()
@@ -319,6 +319,10 @@ try {
   await page.locator('.word-tile.wrong').first().waitFor({ state: 'detached' })
   assert.equal(await page.locator('.word-tile[aria-pressed="true"]').count(), 4)
   assert.equal(await page.getByRole('button', { name: 'Hint', exact: true }).count(), 0)
+  await page.waitForTimeout(2000)
+  assert.equal(await page.getByText('Not quite', { exact: true }).isVisible(), true,
+    'Match feedback should remain visible beyond the previous short timeout')
+  await page.getByText('Not quite', { exact: true }).waitFor({ state: 'hidden', timeout: 4000 })
   await page.getByRole('button', { name: 'Deselect All' }).click()
 
   for (const word of [...playableGroups[0].words.slice(0, 3), playableGroups[1].words[0]]) {
@@ -333,6 +337,7 @@ try {
   const hintButton = page.getByRole('button', { name: 'Hint', exact: true })
   await hintButton.waitFor()
   await hintButton.click()
+  await page.getByText('Three match', { exact: true }).waitFor({ state: 'hidden' })
   assert.equal(await page.locator('.word-tile.hinted').count(), 3)
   assert.equal(await hintButton.count(), 0)
   await page.waitForFunction(() =>
@@ -365,6 +370,9 @@ try {
   await page.getByText('Two match', { exact: true }).waitFor()
   await page.locator('.word-tile.wrong').first().waitFor({ state: 'detached' })
   await hintButton.waitFor()
+  await page.keyboard.press('Tab')
+  await page.getByText('Two match', { exact: true }).waitFor({ state: 'hidden' })
+  assert.equal(await hintButton.isVisible(), true, 'Dismissing feedback should preserve the hint')
   await page.locator('.word-tile[aria-pressed="true"]').first().click()
   assert.equal(await hintButton.count(), 0)
   await page.getByRole('button', { name: 'Deselect All' }).click()
@@ -533,8 +541,8 @@ try {
   await page.getByRole('button', { name: 'Return to home' }).click()
   await page.getByRole('button', { name: 'Exit game' }).click()
   await page.getByRole('heading', { name: 'Classroom Connections' }).waitFor()
-  assert.match(await page.getByRole('button', { name: /Group Library/ }).innerText(), /Easy/)
-  assert.doesNotMatch(await page.getByRole('button', { name: /Group Library/ }).innerText(), /Medium|Hard|Tricky/)
+  assert.match(await page.getByRole('button', { name: /Question Library/ }).innerText(), /Easy/)
+  assert.doesNotMatch(await page.getByRole('button', { name: /Question Library/ }).innerText(), /Medium|Hard|Tricky/)
 
   await page.getByRole('button', { name: 'Fewer groups' }).click()
   await page.getByRole('button', { name: 'Fewer groups' }).click()

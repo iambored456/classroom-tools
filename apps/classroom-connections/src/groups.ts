@@ -276,14 +276,90 @@ const STARTER_GROUPS: StarterGroup[] = [
   },
 ]
 
+// Keep the original bank as the migration baseline so existing teacher edits are
+// preserved and renamed starter groups retain their IDs.
+const STARTER_REVISIONS: Record<string, Pick<StarterGroup, 'title' | 'words'>> = {
+  Tools: { title: 'Workshop tools', words: ['Hammer', 'Screwdriver', 'Drill', 'Saw'] },
+  Fruits: { title: 'Fruits', words: ['Apple', 'Banana', 'Grape', 'Pear'] },
+  Shapes: { title: 'Shapes', words: ['Circle', 'Square', 'Hexagon', 'Rectangle'] },
+  'School supplies': {
+    title: 'School supplies',
+    words: ['Pencil', 'Eraser', 'Crayon', 'Glue Stick'],
+  },
+  'Things in the sky': {
+    title: 'Space objects',
+    words: ['Sun', 'Moon', 'Planet', 'Asteroid'],
+  },
+  'Breakfast foods': {
+    title: 'Breakfast foods',
+    words: ['Cereal', 'Toast', 'Bagel', 'Oatmeal'],
+  },
+  'Things that fly': {
+    title: 'Aircraft',
+    words: ['Airplane', 'Glider', 'Helicopter', 'Seaplane'],
+  },
+  'Kitchen tools': {
+    title: 'Cooking utensils',
+    words: ['Whisk', 'Spatula', 'Ladle', 'Tongs'],
+  },
+  'Ways to travel': {
+    title: 'Rail transport',
+    words: ['Train', 'Subway', 'Tram', 'Monorail'],
+  },
+  Materials: { title: 'Materials', words: ['Wood', 'Metal', 'Concrete', 'Plastic'] },
+  'At the library': {
+    title: 'Library borrowing',
+    words: ['Library Card', 'Due Date', 'Renewal', 'Book Return'],
+  },
+  Clothing: { title: 'Summer clothing', words: ['T-shirt', 'Shorts', 'Sandals', 'Sunhat'] },
+  Vehicles: { title: 'Road vehicles', words: ['Car', 'Truck', 'Motorcycle', 'Van'] },
+  Reptiles: { title: 'Reptiles', words: ['Snake', 'Lizard', 'Tortoise', 'Crocodile'] },
+  'Types of homes': {
+    title: 'Types of homes',
+    words: ['Apartment', 'Cabin', 'Cottage', 'Bungalow'],
+  },
+  'At the airport': {
+    title: 'Airport facilities',
+    words: ['Runway', 'Terminal', 'Control Tower', 'Hangar'],
+  },
+  'Measuring tools': {
+    title: 'Measuring tools',
+    words: ['Thermometer', 'Scale', 'Rain Gauge', 'Stopwatch'],
+  },
+  'At the grocery store': {
+    title: 'Supermarket checkout',
+    words: ['Barcode', 'Receipt', 'Cash Register', 'Conveyor Belt'],
+  },
+}
+
 const toId = (title: string, index: number) =>
   `starter-${index + 1}-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
 
 export const createStarterGroups = (): WordGroup[] =>
   STARTER_GROUPS.map((group, index) => ({
     ...group,
+    ...STARTER_REVISIONS[group.title],
     id: toId(group.title, index),
-    words: [...group.words],
+    words: [...(STARTER_REVISIONS[group.title]?.words ?? group.words)],
     enabled: group.difficulty === 'easy',
     custom: false,
   }))
+
+const originalStarterGroups = new Map(
+  STARTER_GROUPS.map((group, index) => [toId(group.title, index), group]),
+)
+
+/** Refresh only untouched Easy/Medium starter content, preserving teacher settings. */
+export const refreshStarterGroup = (saved: WordGroup): WordGroup => {
+  const original = originalStarterGroups.get(saved.id)
+  const revision = original && STARTER_REVISIONS[original.title]
+  if (
+    !original || !revision || saved.custom ||
+    (original.difficulty !== 'easy' && original.difficulty !== 'medium') ||
+    saved.difficulty !== original.difficulty || saved.title !== original.title ||
+    saved.words.length !== original.words.length ||
+    saved.words.some((word, index) => word !== original.words[index])
+  ) return saved
+
+  return { ...saved, ...revision, words: [...revision.words] }
+}

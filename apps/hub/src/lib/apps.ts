@@ -216,14 +216,4 @@ export const hubEntries: HubEntry[] = [
     tags: ['Sports'],
     accent: '#4c9855',
   },
-  {
-    kind: 'app',
-    id: 'face-to-name',
-    name: 'Face to Name',
-    description: 'Learn the people on your team.\nMatch faces and names with private, repeat practice.',
-    href: withBase('face-to-name/'),
-    preview: withBase('images/FaceToName-screenshot.png'),
-    tags: ['Classroom', 'Teams'],
-    accent: '#006c70',
-  },
 ]

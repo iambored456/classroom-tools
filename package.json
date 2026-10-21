@@ -6,9 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx scripts/dev-all.ts",
-    "dev:face-to-name": "pnpm --filter face-to-name run dev",
-    "publish:face-set": "tsx scripts/publish-face-set.ts",
-    "dev:raw": "pnpm -r --parallel --filter hub --filter open-middle --filter face-to-name --filter class-clock --filter class-schedule-widget --filter classroom-connections --filter book-of-questions --filter classroom-wordle --filter read-along-highlighter --filter launchpad-whack-a-mole --filter launchpad-snake --filter launchpad-reversi --filter launchpad-paint-war --filter launchpad-finger-twister --filter fish-visualizer --filter tax-brackets-marble-visual --filter coordinates --filter simple-compound-interest --filter oklch-visualizer --filter rugby-play-visualizer --filter city-navigator run dev",
+    "test:dev": "tsx --test scripts/lib/dev-readiness.test.ts",
+    "dev:raw": "pnpm -r --parallel --filter hub --filter open-middle --filter class-clock --filter class-schedule-widget --filter classroom-connections --filter book-of-questions --filter classroom-wordle --filter read-along-highlighter --filter launchpad-whack-a-mole --filter launchpad-snake --filter launchpad-reversi --filter launchpad-paint-war --filter launchpad-finger-twister --filter fish-visualizer --filter tax-brackets-marble-visual --filter coordinates --filter simple-compound-interest --filter oklch-visualizer --filter rugby-play-visualizer --filter city-navigator run dev",
     "dev:hub": "pnpm --filter hub run dev",
     "dev:open-middle": "pnpm --filter open-middle run dev",
     "dev:class-clock": "pnpm --filter class-clock run dev",
