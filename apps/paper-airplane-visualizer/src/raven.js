@@ -1,4 +1,4 @@
-import { WIDTH, HEIGHT, HALF, rotate, clip, area, clamp, smooth } from './model.js'
+import { WIDTH, HEIGHT, HALF, rotate, clip, area, clamp, smooth, foldPhase } from './model.js'
 
 export const PAPER_THICKNESS = 0.004
 export const NOSE_Y = -5.5
@@ -11,13 +11,13 @@ const EPS = 1e-8
 
 export const steps = [
   { name: 'Centre crease', short: 'Crease' },
-  { name: 'Fold the corners', short: 'Corners' },
-  { name: 'Narrow the nose', short: 'Nose' },
+  { name: 'Fold the corners', short: 'Corners', text: 'Bring both top corners inward along 2V and 3V to meet the centre crease.' },
+  { name: 'Narrow the nose', short: 'Nose', text: 'Bring both sloping edges inward along 4M and 5M to meet the centre.' },
   { name: 'Fold the point down', short: 'Point down' },
-  { name: 'Fold the locking corners', short: 'Lock folds' },
+  { name: 'Fold the locking corners', short: 'Lock folds', text: 'Fold both upper corners inward along 7M and 8M to meet the centre.' },
   { name: 'Fold the locking tip up', short: 'Lock tip' },
   { name: 'Fold the body in half', short: 'Body' },
-  { name: 'Fold the wings', short: 'Wings' },
+  { name: 'Fold the wings', short: 'Wings', text: 'Lower both wings along 11M and 12M, leaving a narrow body beneath the swept wings.' },
 ]
 
 export const substeps = [
@@ -35,9 +35,8 @@ export const substeps = [
   { label: '12M', operation: 'wingL', step: 7, start: 7.5, end: 8, text: 'Keep 11M folded. Lower wing 12M to match and inspect your finished Raven.' },
 ]
 const byOperation = new Map(substeps.map(fold => [fold.operation, fold]))
-function progress(time, id) {
-  const { start, end } = byOperation.get(id)
-  return smooth((time - start) / (end - start))
+function progress(time, id, combinedStep) {
+  return foldPhase(time, byOperation.get(id), combinedStep)
 }
 
 function turn(p, origin, axis, angle, height = 0) {
@@ -95,17 +94,17 @@ export function createPanels() {
 export const panels = createPanels()
 export const paperArea = () => panels.reduce((sum, panel) => sum + area(panel.vertices), 0)
 
-function pose(uv, panel, time, thickness) {
+function pose(uv, panel, time, thickness, combinedStep) {
   let p = [...uv, 0]
   if (time < 1 && panel.initialSide > 0) p = turn(p, [0, 0], [0, 1, 0], -Math.PI * smooth(Math.sin(Math.PI * clamp(time))), thickness / 2)
-  for (const op of operations) if (panel.folds.includes(op.id)) p = turn(p, op.origin, op.axis, op.angle * progress(time, op.id), op.layer * thickness)
+  for (const op of operations) if (panel.folds.includes(op.id)) p = turn(p, op.origin, op.axis, op.angle * progress(time, op.id, combinedStep), op.layer * thickness)
   // Wings use each half's coordinates before its body rotation, so their
   // hinges remain attached to the moving body throughout the fold.
-  if (panel.wing) p = turn(p, [0, NOSE_Y], [panel.side * WING_X, -HEIGHT - NOSE_Y, 0], panel.side * (Math.PI / 2 - 0.035) * progress(time, panel.side > 0 ? 'wingR' : 'wingL'), thickness * 19.5)
-  return turn(p, [0, 0], [0, 1, 0], panel.side * Math.PI / 2 * progress(time, 'body'), -thickness / 2)
+  if (panel.wing) p = turn(p, [0, NOSE_Y], [panel.side * WING_X, -HEIGHT - NOSE_Y, 0], panel.side * (Math.PI / 2 - 0.035) * progress(time, panel.side > 0 ? 'wingR' : 'wingL', combinedStep), thickness * 19.5)
+  return turn(p, [0, 0], [0, 1, 0], panel.side * Math.PI / 2 * progress(time, 'body', combinedStep), -thickness / 2)
 }
-export const poseVertex = (uv, panel, time) => pose(uv, panel, time, 0)
-export const posePaperVertex = (uv, panel, time) => pose(uv, panel, time, PAPER_THICKNESS)
+export const poseVertex = (uv, panel, time, combinedStep = null) => pose(uv, panel, time, 0, combinedStep)
+export const posePaperVertex = (uv, panel, time, combinedStep = null) => pose(uv, panel, time, PAPER_THICKNESS, combinedStep)
 export const centerY = time => HEIGHT / 2 - NOSE_Y / 2 * smooth(time - 3)
 
 export function creaseFormedAt(a, b) {

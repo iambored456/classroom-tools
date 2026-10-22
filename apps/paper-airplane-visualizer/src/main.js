@@ -42,7 +42,7 @@ document.querySelector('#app').innerHTML = `
       <div><dt>Rotate</dt><dd>Drag the paper, or focus it and use the arrow keys.</dd></div>
       <div><dt>Zoom</dt><dd>Scroll, pinch, or use + / −.</dd></div>
       <div><dt>Pan</dt><dd>Right-drag or drag with two fingers.</dd></div>
-      <div><dt>Playback</dt><dd>Space plays or pauses. Select a coloured label to repeat its fold; Next fold advances.</dd></div>
+      <div><dt>Playback</dt><dd>Space plays or pauses. Select a step number to animate its folds together, or a coloured label to repeat one fold. Next advances the selected step or fold.</dd></div>
       <div><dt>Shortcuts</dt><dd>R resets the view. Number keys select a main step; 0 selects step 10.</dd></div>
       <div><dt>Printed guides</dt><dd>Blue V: valley fold. Red M: mountain fold.</dd></div>
     </dl>
@@ -65,6 +65,7 @@ document.querySelector('#app').innerHTML = `
 const $ = id => document.getElementById(id)
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
 let selected = screenshot ? substeps.length - 1 : 0
+let selectedStep = null, poseStep = null
 let time = screenshot ? design.endTime : 0
 let furthestFold = time
 let playing = !screenshot && !reducedMotion.matches
@@ -95,6 +96,7 @@ function chooseDesign(id) {
   design = next
   ;({ panels, posePaperVertex, creaseFormedAt, PAPER_THICKNESS, steps, substeps } = design)
   selected = time = furthestFold = 0
+  selectedStep = poseStep = null
   travel = null
   direction = 1
   hold = 0.65
@@ -134,25 +136,45 @@ window.addEventListener('resize', () => {
 })
 
 function chooseFold(next) {
-  if (next < 0 || next >= substeps.length || next === selected) return
+  if (next < 0 || next >= substeps.length || (next === selected && selectedStep === null)) return
   selected = next
-  // Travel through intermediate folds, preserving a continuous paper model.
-  const target = substeps[next].start
-  travel = { target, resume: playing }
-  if (reducedMotion.matches) { time = target; travel = null }
+  selectedStep = null
+  startTravel()
+}
+
+function chooseStep(step) {
+  if (step < 0 || step >= steps.length || selectedStep === step) return
+  selected = substeps.findIndex(fold => fold.step === step)
+  selectedStep = step
+  startTravel()
+}
+
+function selectionRange() {
+  if (selectedStep === null) return { ...substeps[selected], label: `fold ${substeps[selected].label}` }
+  const folds = substeps.filter(fold => fold.step === selectedStep)
+  return { start: folds[0].start, end: folds.at(-1).end, label: `step ${selectedStep + 1}` }
+}
+
+function startTravel() {
+  // Explicit fold navigation always shows the intermediate paper states.
+  // Reduced motion pauses autoplay, but must not skip the folding instructions.
+  const target = selectionRange().start
+  // Simultaneous and individual folds meet at the main step's boundaries.
+  // Reach a shared pose before changing modes so neither wing/corner snaps.
+  const via = poseStep === null ? null : (target > time ? poseStep + 1 : poseStep)
+  travel = { target, via, resume: playing }
   direction = 1
   hold = 0.65
   updateStep()
 }
 
-function chooseStep(step) {
-  chooseFold(substeps.findIndex(fold => fold.step === step))
-}
-
 function cancelTravel() {
   if (!travel) return
-  const index = substeps.findIndex(fold => time < fold.end)
-  selected = index < 0 ? substeps.length - 1 : index
+  selectedStep = poseStep
+  if (selectedStep === null) {
+    const index = substeps.findIndex(fold => time < fold.end)
+    selected = index < 0 ? substeps.length - 1 : index
+  } else selected = substeps.findIndex(fold => fold.step === selectedStep)
   travel = null
   updateStep()
 }
@@ -160,18 +182,24 @@ function cancelTravel() {
 function updateStep() {
   const fold = substeps[selected]
   const step = steps[fold.step]
+  const wholeStep = selectedStep !== null
   $('step-title').textContent = step.name
-  $('step-text').textContent = fold.text
-  $('previous').disabled = selected === 0
-  $('next').innerHTML = selected === substeps.length - 1 ? `Start again ${icon('reset')}` : `Next fold ${icon('next')}`
+  $('step-text').textContent = wholeStep ? (step.text || fold.text) : fold.text
+  $('previous').disabled = wholeStep ? selectedStep === 0 : selected === 0
+  $('previous').setAttribute('aria-label', wholeStep ? 'Previous step' : 'Previous fold')
+  $('previous').title = wholeStep ? 'Previous step' : 'Previous fold'
+  const atEnd = wholeStep ? selectedStep === steps.length - 1 : selected === substeps.length - 1
+  $('next').innerHTML = atEnd ? `Start again ${icon('reset')}` : `Next ${wholeStep ? 'step' : 'fold'} ${icon('next')}`
   document.querySelectorAll('[data-step]').forEach(button => {
     const active = Number(button.dataset.step) === fold.step
     button.setAttribute('aria-current', active ? 'step' : 'false')
+    button.setAttribute('aria-pressed', String(Number(button.dataset.step) === selectedStep))
+    button.title = 'Animate all folds in this step together'
   })
   document.querySelectorAll('[data-fold]').forEach(button => {
-    button.setAttribute('aria-current', Number(button.dataset.fold) === selected ? 'step' : 'false')
+    button.setAttribute('aria-current', !wholeStep && Number(button.dataset.fold) === selected ? 'step' : 'false')
   })
-  document.querySelector(`[data-fold="${selected}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reducedMotion.matches ? 'instant' : 'smooth' })
+  document.querySelector(wholeStep ? `[data-step="${selectedStep}"]` : `[data-fold="${selected}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reducedMotion.matches ? 'instant' : 'smooth' })
   dirty = true
 }
 
@@ -194,8 +222,8 @@ function setupScene() {
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
-  renderer.toneMappingExposure = 0.9
-  renderer.setClearColor(0xf5f5f0, 0)
+  renderer.toneMappingExposure = 1.1
+  renderer.setClearColor(0xd8e8f4, 0)
   $('viewport').append(renderer.domElement)
   renderer.domElement.setAttribute('aria-hidden', 'true')
   scene = new THREE.Scene()
@@ -250,7 +278,7 @@ function buildPaper() {
   const front = new THREE.MeshStandardMaterial({ color: 0xfffdf3, map: printedGuides.front, roughness: 0.95, side: THREE.FrontSide })
   const back = new THREE.MeshStandardMaterial({ color: 0xf3f6f4, map: printedGuides.back, roughness: 0.95, side: THREE.BackSide })
   const rim = new THREE.MeshStandardMaterial({ color: 0xe2e5de, roughness: 0.95, side: THREE.DoubleSide })
-  edgeMaterial = new THREE.LineBasicMaterial({ color: 0x536b65, transparent: true, opacity: 0.42, depthWrite: false })
+  edgeMaterial = new THREE.LineBasicMaterial({ color: 0x536b65, transparent: true, opacity: 0.68, depthWrite: false })
   creaseMaterial = new THREE.LineBasicMaterial({ color: 0x9a9e9a, transparent: true, opacity: 0.55, depthWrite: false })
   meshRecords = panels.map(panel => {
     const indices = []
@@ -341,7 +369,7 @@ function drawPaper() {
   if (!model) return
   model.position.y = design.centerY?.(time) ?? HEIGHT / 2
   furthestFold = Math.max(furthestFold, time)
-  poseCache = panels.map(panel => panel.vertices.map(v => new THREE.Vector3(...posePaperVertex(v.uv, panel, time))))
+  poseCache = panels.map(panel => panel.vertices.map(v => new THREE.Vector3(...posePaperVertex(v.uv, panel, time, poseStep))))
   normals = poseCache.map(points => {
     for (let i = 1; i < points.length - 1; i++) {
       const n = new THREE.Vector3().crossVectors(points[i].clone().sub(points[0]), points[i + 1].clone().sub(points[0]))
@@ -394,13 +422,23 @@ function frame(now) {
   last = now
   if (!document.hidden) {
     const speed = Number($('speed').value)
-    const fold = substeps[selected]
+    const fold = selectionRange()
     const span = fold.end - fold.start
     if (travel) {
-      const gap = travel.target - time
+      const target = travel.via ?? travel.target
+      const gap = target - time
       const change = Math.sign(gap) * Math.min(Math.abs(gap), delta * 1.5 * speed)
       time += change
-      if (Math.abs(gap) < 0.001) { time = travel.target; playing = travel.resume; travel = null; updatePlayback() }
+      if (Math.abs(gap) < 0.001) {
+        time = target
+        if (travel.via !== null) { poseStep = null; travel.via = null }
+        if (time === travel.target) {
+          poseStep = selectedStep
+          playing = travel.resume
+          travel = null
+          updatePlayback()
+        }
+      }
       dirty = true
     } else if (playing) {
       if (hold > 0) hold -= delta * speed
@@ -416,7 +454,7 @@ function frame(now) {
       const fraction = clamp((time - fold.start) / span)
       $('progress').value = String(Math.round(fraction * 1000))
       $('progress').style.setProperty('--progress', `${fraction * 100}%`)
-      $('progress').setAttribute('aria-valuetext', `${Math.round(fraction * 100)} percent of fold ${fold.label}`)
+      $('progress').setAttribute('aria-valuetext', `${Math.round(fraction * 100)} percent of ${fold.label}`)
       $('progress-value').textContent = `${Math.round(fraction * 100)}%`
       drawPaper()
       renderer?.render(scene, camera)
@@ -426,8 +464,8 @@ function frame(now) {
   requestAnimationFrame(frame)
 }
 
-$('previous').onclick = () => chooseFold(selected - 1)
-$('next').onclick = () => chooseFold((selected + 1) % substeps.length)
+$('previous').onclick = () => selectedStep === null ? chooseFold(selected - 1) : chooseStep(selectedStep - 1)
+$('next').onclick = () => selectedStep === null ? chooseFold((selected + 1) % substeps.length) : chooseStep((selectedStep + 1) % steps.length)
 $('play').onclick = () => {
   if (travel) {
     cancelTravel()
@@ -436,15 +474,17 @@ $('play').onclick = () => {
     return
   }
   playing = !playing
-  if (time >= substeps[selected].end) direction = -1
-  if (time <= substeps[selected].start) direction = 1
+  const range = selectionRange()
+  if (time >= range.end) direction = -1
+  if (time <= range.start) direction = 1
   updatePlayback()
   dirty = true
 }
 $('progress').oninput = event => {
   travel = null
   playing = false
-  const fold = substeps[selected]
+  poseStep = selectedStep
+  const fold = selectionRange()
   time = fold.start + Number(event.target.value) / 1000 * (fold.end - fold.start)
   hold = 0
   updatePlayback()
@@ -455,7 +495,7 @@ $('zoom-out').onclick = () => zoom(1 / 0.85)
 $('reset-view').onclick = resetView
 $('flip-view').onclick = () => {
   if (!camera || viewTurn) return
-  if (reducedMotion.matches) { rotateView(Math.PI); controls.update(); return }
+  // Explicit camera turns remain animated on classroom devices with reduced motion.
   viewTurn = { elapsed: 0, angle: 0 }
   $('flip-view').disabled = true
 }
@@ -472,7 +512,6 @@ reducedMotion.addEventListener('change', event => {
   if (!event.matches) return
   playing = false
   cancelTravel()
-  if (viewTurn) { rotateView(Math.PI - viewTurn.angle); cancelViewTurn() }
   updatePlayback()
   dirty = true
 })

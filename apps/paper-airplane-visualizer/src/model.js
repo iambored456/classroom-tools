@@ -12,6 +12,14 @@ const EPS = 1e-8
 export const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
 export const smooth = x => { const t = clamp(x); return t * t * (3 - 2 * t) }
 
+// Numbered steps share one phase across their folds; labelled folds keep their
+// individual intervals. Main steps occupy consecutive unit intervals.
+export function foldPhase(time, fold, combinedStep = null) {
+  return smooth(combinedStep === fold.step
+    ? time - fold.step
+    : (time - fold.start) / (fold.end - fold.start))
+}
+
 export const steps = [
   { name: 'Centre crease', short: 'Crease', text: 'Bring the long edges together, crease the centre, then open the sheet again.', tip: 'This first fold opens again so the centre line can guide the next folds.', lines: '1V · fold & unfold' },
   { name: 'Fold the corners', short: 'Corners', text: 'Bring both top corners inward until their top edges meet at the centre.', tip: 'Match the two corners to the same centre line.', lines: '2V + 3V' },
@@ -33,9 +41,8 @@ export const substeps = [
   { label: '8V', operation: 'wingR', step: 4, start: 4.5, end: 5, text: 'Keep 7V folded. Lower wing 8V to match, then pause to inspect your finished plane.' },
 ]
 const substepByOperation = new Map(substeps.map(fold => [fold.operation, fold]))
-function foldProgress(time, operation) {
-  const { start, end } = substepByOperation.get(operation)
-  return smooth((time - start) / (end - start))
+function foldProgress(time, operation, combinedStep) {
+  return foldPhase(time, substepByOperation.get(operation), combinedStep)
 }
 
 export function rotate(p, axis, angle) {
@@ -109,7 +116,7 @@ function rotateAtHeight(p, axis, angle, height) {
   return [rotated[0], rotated[1], rotated[2] + height]
 }
 
-function pose(uv, panel, time, thickness) {
+function pose(uv, panel, time, thickness, combinedStep) {
   let p = [...uv, 0]
   // A complete first stage includes both making and opening the centre crease.
   if (time < 1 && panel.side > 0) {
@@ -118,7 +125,7 @@ function pose(uv, panel, time, thickness) {
   for (const op of foldOps) {
     if (panel.folds.includes(op.id)) {
       const corner = op.id.startsWith('corner')
-      const progress = foldProgress(time, op.id)
+      const progress = foldProgress(time, op.id, combinedStep)
       // A one-sheet fold closes above z=0; the next two-layer fold closes
       // above the existing stack. This must not depend on a panel's normal/id.
       p = rotateAtHeight(p, op.axis, op.sign * Math.PI * progress, thickness * (corner ? 0.5 : 1.5))
@@ -126,15 +133,15 @@ function pose(uv, panel, time, thickness) {
   }
   // Applying the wing rotation before the body rotation is the conjugated hinge
   // transform: its world-space axis follows that half of the folded body.
-  if (panel.wing) p = rotateAtHeight(p, [panel.side * WING_X, -HEIGHT, 0], -panel.side * Math.PI / 2 * foldProgress(time, panel.side < 0 ? 'wingL' : 'wingR'), -thickness / 2)
+  if (panel.wing) p = rotateAtHeight(p, [panel.side * WING_X, -HEIGHT, 0], -panel.side * Math.PI / 2 * foldProgress(time, panel.side < 0 ? 'wingL' : 'wingR', combinedStep), -thickness / 2)
   p = rotateAtHeight(p, [0, 1, 0], -panel.side * Math.PI / 2 * smooth(time - 3), thickness * 3.5)
   return p
 }
 
 // Keep the ideal, attached-sheet model available for geometry validation.
-export const poseVertex = (uv, panel, time) => pose(uv, panel, time, 0)
+export const poseVertex = (uv, panel, time, combinedStep = null) => pose(uv, panel, time, 0, combinedStep)
 // Rendering uses the same rotations with hinges at the surface of each stack.
-export const posePaperVertex = (uv, panel, time) => pose(uv, panel, time, PAPER_THICKNESS)
+export const posePaperVertex = (uv, panel, time, combinedStep = null) => pose(uv, panel, time, PAPER_THICKNESS, combinedStep)
 
 // Internal subdivisions are not creases. Only a boundary separating different
 // fold histories gets a mark, after that fold has been made at least once.

@@ -1,4 +1,4 @@
-import { WIDTH, HEIGHT, HALF, rotate, clip, area, clamp, smooth } from './model.js'
+import { WIDTH, HEIGHT, HALF, rotate, clip, area, clamp, smooth, foldPhase } from './model.js'
 
 // Letter-sized Arrowhead pattern: the hem is 1 inch, the first point is 4.25
 // inches below it, and the return fold bisects that triangular point.
@@ -13,14 +13,14 @@ const EPS = 1e-8
 export const steps = [
   { name: 'Centre crease', short: 'Crease', tip: 'Make the long centre crease, then open the paper again.' },
   { name: 'Fold the top edge', short: 'Top edge', tip: 'Turn the sheet over to fold the small strip along 2M.' },
-  { name: 'Fold the corners', short: 'Corners', tip: 'Turn back to the front and bring each corner to the centre.' },
+  { name: 'Fold the corners', short: 'Corners', text: 'Turn back to the front. Bring both corners inward along 3V and 4V to meet the centre.', tip: 'Turn back to the front and bring each corner to the centre.' },
   { name: 'Fold the point down', short: 'Point down', tip: 'The red 5M line is printed on the reverse.' },
   { name: 'Fold the point back up', short: 'Point up', tip: 'The point returns to the top edge of the folded paper.' },
-  { name: 'Fold the sides inward', short: 'Sides', tip: 'Turn the paper over and fold the sides one at a time.' },
-  { name: 'Shape the arrowhead', short: 'Nose', tip: 'These folds bring the sides over the point to form the nose pocket.' },
+  { name: 'Fold the sides inward', short: 'Sides', text: 'Turn the paper over. Fold both sides inward along 7M and 8M.', tip: 'Turn the paper over and fold the sides one at a time.' },
+  { name: 'Shape the arrowhead', short: 'Nose', text: 'Bring both sides inward along 9M and 10M to form the pointed nose pocket.', tip: 'These folds bring the sides over the point to form the nose pocket.' },
   { name: 'Tuck the nose into the pocket', short: 'Tuck', tip: 'Separate the two nose layers gently, insert the loose point and press flat.' },
   { name: 'Fold the body in half', short: 'Body', tip: 'Keep the tucked nose secure as you close the centre crease.' },
-  { name: 'Fold the wings', short: 'Wings', tip: 'Match both wings. A slight upward angle helps the finished Arrowhead stay level.' },
+  { name: 'Fold the wings', short: 'Wings', text: 'Lower both wings along 12M and 13M, leaving a narrow body and a slight upward wing angle.', tip: 'Match both wings. A slight upward angle helps the finished Arrowhead stay level.' },
 ]
 
 export const substeps = [
@@ -40,10 +40,7 @@ export const substeps = [
   { label: '13M', operation: 'wingR', step: 9, start: 9.5, end: 10, text: 'Keep 12M folded. Lower wing 13M to match and leave a slight upward angle on both wings.' },
 ]
 const byOperation = new Map(substeps.map(f => [f.operation, f]))
-const progress = (time, id) => {
-  const fold = byOperation.get(id)
-  return smooth((time - fold.start) / (fold.end - fold.start))
-}
+const progress = (time, id, combinedStep) => foldPhase(time, byOperation.get(id), combinedStep)
 
 function turn(p, a, axis, angle, height = 0) {
   const q = rotate([p[0] - a[0], p[1] - a[1], p[2] - height], axis, angle)
@@ -99,14 +96,14 @@ export function createPanels() {
 export const panels = createPanels()
 export const paperArea = () => panels.reduce((sum, p) => sum + area(p.vertices), 0)
 
-function pose(uv, panel, time, thickness) {
+function pose(uv, panel, time, thickness, combinedStep) {
   let p = [...uv, 0]
   if (time < 1 && panel.initialSide > 0) p = turn(p, [0, 0], [0, 1, 0], -Math.PI * smooth(Math.sin(Math.PI * clamp(time))), thickness / 2)
   const tuck = clamp(time - 7)
   const pocketOpen = Math.sin(Math.PI * tuck) * 0.22
   for (const op of operations) if (panel.folds.includes(op.id)) {
     const opening = op.id.startsWith('nose') ? pocketOpen : 0
-    const angle = op.angle * progress(time, op.id) - Math.sign(op.angle) * opening
+    const angle = op.angle * progress(time, op.id, combinedStep) - Math.sign(op.angle) * opening
     p = turn(p, op.a, op.axis, angle, op.layer * thickness)
   }
   // The tuck gently flexes the loose point through the open nose layers.
@@ -117,11 +114,11 @@ function pose(uv, panel, time, thickness) {
     p[1] += Math.sin(Math.PI * inserted) * 0.18 * weight
     p[2] -= inserted * thickness * 18 * weight
   }
-  if (panel.wing) p = turn(p, [0, NOSE_Y], [panel.side * WING_X, -HEIGHT - NOSE_Y, 0], -panel.side * (Math.PI / 2 - 0.045) * progress(time, panel.side < 0 ? 'wingL' : 'wingR'), -thickness * 10.5)
-  return turn(p, [0, 0], [0, 1, 0], -panel.side * Math.PI / 2 * progress(time, 'body'), thickness * 6.5)
+  if (panel.wing) p = turn(p, [0, NOSE_Y], [panel.side * WING_X, -HEIGHT - NOSE_Y, 0], -panel.side * (Math.PI / 2 - 0.045) * progress(time, panel.side < 0 ? 'wingL' : 'wingR', combinedStep), -thickness * 10.5)
+  return turn(p, [0, 0], [0, 1, 0], -panel.side * Math.PI / 2 * progress(time, 'body', combinedStep), thickness * 6.5)
 }
-export const poseVertex = (uv, panel, time) => pose(uv, panel, time, 0)
-export const posePaperVertex = (uv, panel, time) => pose(uv, panel, time, PAPER_THICKNESS)
+export const poseVertex = (uv, panel, time, combinedStep = null) => pose(uv, panel, time, 0, combinedStep)
+export const posePaperVertex = (uv, panel, time, combinedStep = null) => pose(uv, panel, time, PAPER_THICKNESS, combinedStep)
 export const centerY = time => HEIGHT / 2 + 0.5 * smooth(time - 1) + (HALF / 2) * smooth(time - 3)
 
 export function creaseFormedAt(a, b) {
