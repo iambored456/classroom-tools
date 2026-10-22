@@ -904,7 +904,7 @@
             title={canChooseAnotherCard ? 'Return this card to the deck and draw a different one.' : 'No other cards are available in this deck.'}
             on:click={chooseAnotherCard}
           >
-            Choose another card
+            Reshuffle
           </button>
           <button
             class="next-button"
@@ -913,7 +913,7 @@
             title={hasMoreFollowUps ? 'Reveal every follow-up question before continuing.' : 'Move this card to Answered and continue.'}
             on:click={nextCard}
           >
-            Next Card <span>→</span>
+            Next
           </button>
         </div>
       {:else}

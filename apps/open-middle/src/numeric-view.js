@@ -1,9 +1,13 @@
 import {evaluateNumeric,isUnique,placeNumeric} from './numeric-catalog.js'
+import {numberAt} from '@classroom-tools/open-middle-core'
+import {baseTenBlocks} from '@classroom-tools/open-middle-core/blocks'
 
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
-export function mountNumeric(container,q) {
+export function mountNumeric(container,q,{secondaryContainer}={}) {
+ container.innerHTML='<div class="nm-view"></div><p class="nm-feedback" role="status" aria-live="polite" aria-atomic="true"></p>'
+ const view=container.querySelector('.nm-view'),status=container.querySelector('.nm-feedback')
  const storageKey=`open-middle-work-v1-${q.id}`
- let slots=Array(q.slotCount).fill(null),mode=q.modes?.[0][0],attempts=[],selected=null,checked=false,drag=null,ignoreClick=false
+ let slots=Array(q.slotCount).fill(null),mode=q.modes?.[0][0],attempts=[],selected=null,drag=null,ignoreClick=false
  try {const saved=JSON.parse(localStorage.getItem(storageKey));if(saved){
   if(Array.isArray(saved.slots)&&saved.slots.length===q.slotCount&&saved.slots.every(x=>x===null||q.digits.includes(x)))slots=saved.slots
   if(q.modes?.some(x=>x[0]===saved.mode))mode=saved.mode
@@ -14,10 +18,11 @@ export function mountNumeric(container,q) {
  function token(t,result,values=slots,readOnly=false) {
   if(typeof t==='string')return `<span class="nm-symbol">${esc(t)}</span>`
   if(t.type==='label')return `<span class="nm-label">${esc(t.text)}</span>`
-  if(t.type==='output')return `<output class="nm-output" aria-label="Calculated result">${esc(result.value??'?')}</output>`
+  if(t.type==='output')return `<output class="nm-output" aria-label="Calculated result">${esc(result.value??'')}</output>`
   if(t.type==='group')return `<span class="nm-group">${t.parts.map(v=>token(v,result,values,readOnly)).join('')}</span>`
   if(t.type==='fraction')return `<span class="nm-fraction"><span>${token(t.top,result,values,readOnly)}</span><span>${token(t.bottom,result,values,readOnly)}</span></span>`
-  return `<span class="nm-number">${t.indices.map(i=>readOnly?`<span class="nm-history-digit">${values[i]}</span>`:`<button class="nm-slot ${values[i]!==null?'filled':''}" data-nslot="${i}" aria-label="Space ${i+1}: ${values[i]??'empty'}">${values[i]??''}</button>`).join('')}</span>`
+  const digits=`<span class="nm-number ${t.indices.length>1?'nm-multi':''}">${t.indices.map(i=>readOnly?`<span class="nm-history-digit">${values[i]}</span>`:`<button class="nm-slot ${values[i]!==null?'filled':''}" data-nslot="${i}" aria-label="Space ${i+1}: ${values[i]??'empty'}"><svg class="nm-slot-outline" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47"/></svg><span>${values[i]??''}</span></button>`).join('')}</span>`
+  return q.baseTen&&!readOnly&&t.indices.length===2?`<div class="nm-amount">${digits}${baseTenBlocks(numberAt(t.indices.map(i=>values[i]),0))}</div>`:digits
  }
  function visuals(){
   if(!q.visual)return ''
@@ -31,16 +36,18 @@ export function mountNumeric(container,q) {
  }
  function render(restore){
   const result=evaluateNumeric(q,slots,mode)
-  container.innerHTML=`<section class="nm-task"><p class="nm-instruction">${esc(q.instruction)}</p>${q.modes?`<label class="nm-mode">Challenge <select data-nmode>${q.modes.map(([value,label])=>`<option value="${value}" ${mode===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>`:''}
+  const positive=result.state==='success'||(q.encourageAttempts&&result.state==='progress')
+  view.innerHTML=`<section class="nm-task"><p class="nm-instruction">${esc(q.instruction)}</p>${q.modes?`<label class="nm-mode">Challenge <select data-nmode>${q.modes.map(([value,label])=>`<option value="${value}" ${mode===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>`:''}
   <div class="nm-bank" aria-label="Digit bank; drop a digit here to return it">${q.digits.map(d=>`<button data-nbank="${d}" class="nm-digit ${selected===d?'selected':''}" ${isUnique(q,mode)&&slots.includes(d)?'disabled':''} aria-label="Digit ${d}" aria-pressed="${selected===d}">${d}</button>`).join('')}</div>
-  <p class="nm-guidance">Drag a digit, or select a digit and a space. You can also type in a space. Click a filled space to clear it.</p>
-  <div class="nm-equations ${q.rule==='equal-sums'?'nm-chain':''}">${q.rows.map(row=>`<div class="nm-row">${row.map(t=>token(t,result)).join('')}</div>`).join('')}</div>${visuals()}
-  <div class="nm-actions"><button data-naction="check">Check</button><button data-naction="save" ${slots.includes(null)?'disabled':''}>Save attempt</button><button data-naction="reset">Clear spaces</button></div>
-  <p class="nm-feedback ${checked?result.state:''}" role="status">${checked?esc(result.message):'Explore different arrangements, then check your work.'}</p>
-  ${attempts.length?`<details class="nm-attempts"><summary>Saved attempts (${attempts.length})</summary><ol>${attempts.map(a=>{const r=evaluateNumeric(q,a.slots,a.mode);return `<li>${q.modes?`<p>${esc(q.modes.find(m=>m[0]===a.mode)?.[1]??'')}</p>`:''}<div class="nm-history-equation">${q.rows.map(row=>`<span>${row.map(t=>token(t,r,a.slots,true)).join('')}</span>`).join('')}</div><p>${esc(r.message)}</p></li>`}).join('')}</ol><button data-naction="clear-history">Clear saved attempts</button></details>`:''}</section>`
+  <div class="nm-board ${q.baseTen?'nm-base-ten':''} ${result.state==='incomplete'?'':positive?'equal':'unequal'}" data-state="${result.state}"><div class="nm-equations ${q.rule==='equal-sums'?'nm-chain':''}">${q.rows.map(row=>`<div class="nm-row">${row.map(t=>token(t,result)).join('')}</div>`).join('')}</div>${visuals()}</div>
+  </section>`
+  const message=result.state==='incomplete'?'':result.message
+  if(status.textContent!==message)status.textContent=message
+  if(secondaryContainer)secondaryContainer.innerHTML=`<section class="nm-saved-work" aria-labelledby="nm-saved-title"><h3 id="nm-saved-title">Saved attempts</h3><p>Save an arrangement to compare later. Your current work is saved automatically.</p><button type="button" data-naction="save" ${slots.includes(null)?'disabled':''}>Save current arrangement</button><p class="nm-save-status" role="status"></p>${attempts.length?`<ol class="nm-attempts">${attempts.map(a=>{const r=evaluateNumeric(q,a.slots,a.mode);return `<li>${q.modes?`<p>${esc(q.modes.find(m=>m[0]===a.mode)?.[1]??'')}</p>`:''}<div class="nm-history-equation">${q.rows.map(row=>`<span>${row.map(t=>token(t,r,a.slots,true)).join('')}</span>`).join('')}</div><p>${esc(r.message)}</p></li>`}).join('')}</ol><button type="button" data-naction="clear-history">Clear saved attempts</button>`:'<p>No saved attempts yet.</p>'}</section>`
   if(restore)focus(restore)
  }
- function changed(restore){checked=false;save();render(restore)}
+ function changed(restore){save();render(restore)}
+ function reset(){slots=Array(q.slotCount).fill(null);selected=null;changed('[data-nslot="0"]')}
  const click=e=>{
   if(ignoreClick)return
   const bank=e.target.closest('[data-nbank]'),target=e.target.closest('[data-nslot]'),action=e.target.closest('[data-naction]')
@@ -48,10 +55,8 @@ export function mountNumeric(container,q) {
   if(target){const i=Number(target.dataset.nslot);if(selected!==null){slots=placeNumeric(slots,selected,i,q,mode);selected=null}else slots[i]=null;changed(`[data-nslot="${i}"]`)}
   if(action){
    const name=action.dataset.naction
-   if(name==='check'){checked=true;render('[data-naction="check"]')}
-   if(name==='reset'){slots=Array(q.slotCount).fill(null);selected=null;changed('[data-nslot="0"]')}
-   if(name==='save'){if(!slots.includes(null)){if(!attempts.some(a=>a.mode===mode&&a.slots.join(',')===slots.join(',')))attempts.push({slots:[...slots],mode});attempts=attempts.slice(-20);checked=true;save();render('[data-naction="save"]')}}
-   if(name==='clear-history'){attempts=[];save();render()}
+   if(name==='save'){if(!slots.includes(null)){const duplicate=attempts.some(a=>a.mode===mode&&a.slots.join(',')===slots.join(','));if(!duplicate)attempts.push({slots:[...slots],mode});attempts=attempts.slice(-20);save();render();secondaryContainer?.querySelector('[data-naction="save"]')?.focus();const status=secondaryContainer?.querySelector('.nm-save-status');if(status)status.textContent=duplicate?'This arrangement is already saved.':'Arrangement saved.'}}
+   if(name==='clear-history'){attempts=[];save();render();secondaryContainer?.querySelector('[data-naction="save"]')?.focus()}
   }
  }
  const key=e=>{const el=e.target.closest('[data-nslot]');if(!el)return;const i=Number(el.dataset.nslot)
@@ -61,10 +66,14 @@ export function mountNumeric(container,q) {
  }
  const change=e=>{if(e.target.matches('[data-nmode]')){mode=e.target.value;if(isUnique(q,mode)){const seen=new Set();slots=slots.map(d=>{if(d!==null&&seen.has(d))return null;seen.add(d);return d})}selected=null;changed('[data-nmode]')}}
  const down=e=>{const el=e.target.closest('[data-nslot],[data-nbank]');if(!el||el.disabled||e.button!==0)return;const source=el.hasAttribute('data-nslot')?Number(el.dataset.nslot):null,digit=source===null?Number(el.dataset.nbank):slots[source];if(digit===null)return;drag={el,source,digit,id:e.pointerId,x:e.clientX,y:e.clientY};el.setPointerCapture(e.pointerId)}
- const move=e=>{if(!drag||drag.id!==e.pointerId)return;if(!drag.ghost&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>6){drag.ghost=document.createElement('span');drag.ghost.className='nm-ghost';drag.ghost.textContent=drag.digit;drag.ghost.setAttribute('aria-hidden','true');document.body.append(drag.ghost)}if(drag.ghost){drag.ghost.style.left=e.clientX+'px';drag.ghost.style.top=e.clientY+'px'}}
- const finish=(e,cancel=false)=>{if(!drag)return;const d=drag;drag=null;if(!d.ghost)return;d.ghost.remove();ignoreClick=true;setTimeout(()=>ignoreClick=false,0);if(cancel)return;const el=document.elementFromPoint(e.clientX,e.clientY),slotEl=el?.closest('[data-nslot]');if(slotEl&&container.contains(slotEl)){const index=Number(slotEl.dataset.nslot);if(!isUnique(q,mode)&&d.source!==null)slots[d.source]=null;slots=placeNumeric(slots,d.digit,index,q,mode);selected=null;changed(`[data-nslot="${index}"]`)}else if(el?.closest('.nm-bank')&&d.source!==null){slots[d.source]=null;changed()}}
+ const clearDropTargets=()=>container.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target'))
+ const move=e=>{if(!drag||drag.id!==e.pointerId)return;if(!drag.ghost&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>6){drag.ghost=document.createElement('span');drag.ghost.className='nm-ghost';drag.ghost.textContent=drag.digit;drag.ghost.setAttribute('aria-hidden','true');document.body.append(drag.ghost)}if(drag.ghost){drag.ghost.style.left=e.clientX+'px';drag.ghost.style.top=e.clientY+'px';clearDropTargets();const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-nslot],.nm-bank');if(target&&container.contains(target))target.classList.add('drop-target')}}
+ const finish=(e,cancel=false)=>{if(!drag)return;const d=drag;drag=null;clearDropTargets();if(!d.ghost)return;d.ghost.remove();ignoreClick=true;setTimeout(()=>ignoreClick=false,0);if(cancel)return;const el=document.elementFromPoint(e.clientX,e.clientY),slotEl=el?.closest('[data-nslot]');if(slotEl&&container.contains(slotEl)){const index=Number(slotEl.dataset.nslot);if(!isUnique(q,mode)&&d.source!==null)slots[d.source]=null;slots=placeNumeric(slots,d.digit,index,q,mode);selected=null;changed(`[data-nslot="${index}"]`)}else if(el?.closest('.nm-bank')&&d.source!==null){slots[d.source]=null;selected=null;changed()}}
  const up=e=>finish(e),cancel=e=>finish(e,true)
  for(const [name,fn] of [['click',click],['keydown',key],['change',change],['pointerdown',down],['pointermove',move],['pointerup',up],['pointercancel',cancel]])container.addEventListener(name,fn)
+ secondaryContainer?.addEventListener('click',click)
  render()
- return ()=>{drag?.ghost?.remove();for(const [name,fn] of [['click',click],['keydown',key],['change',change],['pointerdown',down],['pointermove',move],['pointerup',up],['pointercancel',cancel]])container.removeEventListener(name,fn)}
+ const cleanup=()=>{drag?.ghost?.remove();secondaryContainer?.removeEventListener('click',click);for(const [name,fn] of [['click',click],['keydown',key],['change',change],['pointerdown',down],['pointermove',move],['pointerup',up],['pointercancel',cancel]])container.removeEventListener(name,fn)}
+ cleanup.reset=reset
+ return cleanup
 }

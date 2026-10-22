@@ -1,4 +1,3 @@
-import { layoutWithLines, prepareWithSegments } from '@chenglou/pretext'
 import './style.css'
 
 const STORAGE = {
@@ -54,7 +53,10 @@ const textContainer = byId<HTMLDivElement>('text-container')
 const sidebar = byId<HTMLElement>('sidebar')
 const sidebarToggle = byId<HTMLButtonElement>('sidebar-toggle')
 const sidebarClose = byId<HTMLButtonElement>('sidebar-close')
+const fullscreenToggle = byId<HTMLButtonElement>('fullscreen-toggle')
+const fullscreenStatus = byId<HTMLParagraphElement>('fullscreen-status')
 const textInput = byId<HTMLTextAreaElement>('text-input')
+const textStatus = byId<HTMLParagraphElement>('text-status')
 const fontSizeRange = byId<HTMLInputElement>('font-size-range')
 const fontSizeNumber = byId<HTMLInputElement>('font-size-number')
 const wordSpacingRange = byId<HTMLInputElement>('word-spacing-range')
@@ -81,9 +83,28 @@ const colourHex = byId<HTMLInputElement>('colour-hex')
 const colourTriggers = Array.from(document.querySelectorAll<HTMLButtonElement>('.colour-trigger'))
 
 let words: HTMLSpanElement[] = []
+let wordTexts: string[] = []
+let paragraphs: ParagraphLayout[] = []
+let highlightedThrough = -1
+let renderedActiveWord = -1
+let renderedCharacterCount = -1
+let renderedLeadingWord = -1
+let textBuildVersion = 0
+let processingText = false
+let textProcessTimer: number | null = null
+let textSaveTimer: number | null = null
+let textSaveError = ''
+let minimapTimer: number | null = null
+let minimapEntries: MinimapEntry[] = []
+let paragraphEstimateKey = ''
+let activeParagraph: HTMLElement | null = null
+let typographyTimer: number | null = null
+const LARGE_DOCUMENT_WORDS = 5000
+const MAX_MINIMAP_LINES = 512
 let currentWordIndex = 0
 let currentCharacterCount = 0
 let animationFrameId: number | null = null
+let scrollTargetProvider: (() => number) | null = null
 let minimapFrameId: number | null = null
 let minimapDragging = false
 let activeColourInput: HTMLInputElement | null = null
@@ -100,6 +121,45 @@ type MinimapLineLayout = {
   documentTop: number
   startWordIndex: number
   endWordIndex: number
+}
+
+type ParagraphLayout = {
+  element: HTMLParagraphElement
+  startWordIndex: number
+  endWordIndex: number
+  characters: number
+}
+
+type MinimapEntry = {
+  element: HTMLElement
+  start: number
+  end: number
+  progress: number
+}
+
+function updateTextStatus(): void {
+  textStatus.textContent = processingText ? 'Preparing text…' : textSaveError
+  textStatus.hidden = !textStatus.textContent
+}
+
+function saveText(): void {
+  if (textSaveTimer !== null) clearTimeout(textSaveTimer)
+  textSaveTimer = null
+  try {
+    localStorage.setItem(STORAGE.lastText, textInput.value)
+    textSaveError = ''
+  } catch {
+    textSaveError = 'This text could not be saved in your browser. Keep a copy before closing the page.'
+  }
+  updateTextStatus()
+}
+
+function savePreference(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // Full or restricted storage must not prevent changing the current view.
+  }
 }
 
 const storedNumber = (key: string, fallback: number, minimum: number, maximum: number) => {
@@ -176,9 +236,8 @@ const setColour = (inputId: string, value: string) => {
   const input = byId<HTMLInputElement>(inputId)
   input.value = normalized
   document.documentElement.style.setProperty(preference.cssProperty, normalized)
-  localStorage.setItem(preference.storageKey, normalized)
+  savePreference(preference.storageKey, normalized)
   updateColourTrigger(inputId, normalized)
-  scheduleMinimapRender()
   return true
 }
 
@@ -276,17 +335,19 @@ const applyMinimapSettings = () => {
   textContainer.classList.toggle('minimap-visible', visible)
   textContainer.classList.toggle('minimap-left', visible && side === 'left')
   textContainer.classList.toggle('minimap-right', visible && side === 'right')
-  localStorage.setItem(STORAGE.minimapVisible, String(visible))
-  localStorage.setItem(STORAGE.minimapSide, side)
+  savePreference(STORAGE.minimapVisible, String(visible))
+  savePreference(STORAGE.minimapSide, side)
   scheduleMinimapRender()
 }
 
 const applyLeadingWordSetting = () => {
-  localStorage.setItem(STORAGE.showLeadingWord, String(showLeadingWordInput.checked))
+  savePreference(STORAGE.showLeadingWord, String(showLeadingWordInput.checked))
   updateHighlighting()
 }
 
 const applyTypography = () => {
+  if (typographyTimer !== null) clearTimeout(typographyTimer)
+  typographyTimer = null
   const fontSize = Math.min(120, Math.max(12, Number.parseFloat(fontSizeRange.value) || defaults.fontSize))
   const wordSpacing = Number.parseFloat(wordSpacingRange.value) || 0
   const characterSpacing = Number.parseFloat(characterSpacingRange.value) || 0
@@ -303,12 +364,21 @@ const applyTypography = () => {
   textContainer.style.letterSpacing = `${characterSpacing}em`
   textContainer.style.lineHeight = String(lineSpacing)
 
-  localStorage.setItem(STORAGE.fontSize, String(fontSize))
-  localStorage.setItem(STORAGE.wordSpacing, String(wordSpacing))
-  localStorage.setItem(STORAGE.characterSpacing, String(characterSpacing))
-  localStorage.setItem(STORAGE.lineSpacing, String(lineSpacing))
+  savePreference(STORAGE.fontSize, String(fontSize))
+  savePreference(STORAGE.wordSpacing, String(wordSpacing))
+  savePreference(STORAGE.characterSpacing, String(characterSpacing))
+  savePreference(STORAGE.lineSpacing, String(lineSpacing))
   scheduleMinimapRender()
   requestAnimationFrame(centerActiveWord)
+}
+
+const scheduleTypography = () => {
+  if (typographyTimer !== null) clearTimeout(typographyTimer)
+  if (words.length > LARGE_DOCUMENT_WORDS) {
+    typographyTimer = window.setTimeout(applyTypography, 120)
+  } else {
+    applyTypography()
+  }
 }
 
 function loadPreferences(): void {
@@ -325,7 +395,7 @@ function loadPreferences(): void {
   if (localStorage.getItem(STORAGE.minimapDefaultsVersion) !== '2') {
     minimapVisibleInput.checked = defaults.minimapVisible
     minimapSideInput.value = defaults.minimapSide
-    localStorage.setItem(STORAGE.minimapDefaultsVersion, '2')
+    savePreference(STORAGE.minimapDefaultsVersion, '2')
   } else {
     minimapVisibleInput.checked = localStorage.getItem(STORAGE.minimapVisible) !== 'false'
     minimapSideInput.value = localStorage.getItem(STORAGE.minimapSide) === 'right' ? 'right' : defaults.minimapSide
@@ -340,48 +410,77 @@ function loadPreferences(): void {
   applyLeadingWordSetting()
 }
 
-function processText(text: string): void {
-  const previousIndex = currentWordIndex
-  textContainer.replaceChildren()
-  words = []
+async function processText(text: string): Promise<void> {
+  const version = ++textBuildVersion
+  processingText = true
+  textContainer.setAttribute('aria-busy', 'true')
+  updateTextStatus()
+  textInput.spellcheck = text.length < 20000
+  const nextWords: HTMLSpanElement[] = []
+  const nextTexts: string[] = []
+  const nextParagraphs: ParagraphLayout[] = []
+  const fragment = document.createDocumentFragment()
+  let sliceStarted = performance.now()
 
   if (text) {
-    text.replace(/\r\n?/g, '\n').split('\n').forEach((paragraph) => {
+    for (const paragraph of text.replace(/\r\n?/g, '\n').split('\n')) {
       const paragraphElement = document.createElement('p')
+      const startWordIndex = nextWords.length
       if (!paragraph.trim()) {
         paragraphElement.className = 'empty-line'
         paragraphElement.append(document.createElement('br'))
       } else {
         const tokens = paragraph.trim().split(/\s+/)
-        tokens.forEach((token, index) => {
+        for (let index = 0; index < tokens.length; index++) {
+          const token = tokens[index]
           const span = document.createElement('span')
           span.className = 'word'
           span.textContent = token
-          span.dataset.index = String(words.length)
-          span.dataset.text = token
-          span.addEventListener('click', () => {
-            currentWordIndex = Number(span.dataset.index)
-            currentCharacterCount = wordCharacters(currentWordIndex).length
-            updateHighlighting()
-            centerActiveWord()
-          })
+          span.dataset.index = String(nextWords.length)
           paragraphElement.append(span)
           if (index < tokens.length - 1) paragraphElement.append(document.createTextNode(' '))
-          words.push(span)
-        })
+          nextWords.push(span)
+          nextTexts.push(token)
+          if (nextWords.length % 128 === 0 && performance.now() - sliceStarted >= 8) {
+            await new Promise<void>((resolve) => setTimeout(resolve, 0))
+            if (version !== textBuildVersion) return
+            sliceStarted = performance.now()
+          }
+        }
       }
-      textContainer.append(paragraphElement)
-    })
+      fragment.append(paragraphElement)
+      nextParagraphs.push({ element: paragraphElement, startWordIndex, endWordIndex: nextWords.length - 1, characters: paragraph.trim().length })
+      if (performance.now() - sliceStarted >= 8) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+        if (version !== textBuildVersion) return
+        sliceStarted = performance.now()
+      }
+    }
   }
 
-  currentWordIndex = Math.min(previousIndex, Math.max(0, words.length - 1))
+  if (version !== textBuildVersion) return
+  stopScrollAnimation()
+  words = nextWords
+  wordTexts = nextTexts
+  paragraphs = nextParagraphs
+  textContainer.replaceChildren(fragment)
+  textContainer.classList.toggle('large-document', words.length > LARGE_DOCUMENT_WORDS)
+  paragraphEstimateKey = ''
+  highlightedThrough = renderedActiveWord = renderedLeadingWord = -1
+  renderedCharacterCount = -1
+  currentWordIndex = Math.min(currentWordIndex, Math.max(0, words.length - 1))
   currentCharacterCount = wordCharacters(currentWordIndex).length
+  processingText = false
+  textContainer.setAttribute('aria-busy', 'false')
+  updateTextStatus()
+  updateParagraphEstimates()
   updateHighlighting()
+  centerActiveWord()
   scheduleMinimapRender()
 }
 
 function wordCharacters(index: number): string[] {
-  return Array.from(words[index]?.dataset.text ?? '')
+  return Array.from(wordTexts[index] ?? '')
 }
 
 function renderWordHighlight(span: HTMLSpanElement, index: number): void {
@@ -391,7 +490,7 @@ function renderWordHighlight(span: HTMLSpanElement, index: number): void {
   span.classList.toggle('highlighted', isFullyHighlighted)
 
   if (index !== currentWordIndex || currentCharacterCount <= 0 || isFullyHighlighted) {
-    span.replaceChildren(span.dataset.text ?? '')
+    if (span.firstElementChild) span.replaceChildren(wordTexts[index] ?? '')
     return
   }
 
@@ -405,18 +504,36 @@ function renderWordHighlight(span: HTMLSpanElement, index: number): void {
 }
 
 function updateHighlighting(): void {
+  const currentWordIsPartial = currentCharacterCount < wordCharacters(currentWordIndex).length
+  const nextHighlightedThrough = currentWordIndex - (currentWordIsPartial ? 1 : 0)
+  // Adjacent navigation touches only the changed words, not the whole document.
+  for (let index = Math.min(highlightedThrough, nextHighlightedThrough) + 1;
+    index <= Math.max(highlightedThrough, nextHighlightedThrough); index++) {
+    words[index]?.classList.toggle('highlighted', index <= nextHighlightedThrough)
+  }
+  highlightedThrough = nextHighlightedThrough
+  if (renderedActiveWord !== currentWordIndex) {
+    const previous = words[renderedActiveWord]
+    if (previous?.firstElementChild) previous.replaceChildren(wordTexts[renderedActiveWord])
+  }
+  if (renderedActiveWord !== currentWordIndex || renderedCharacterCount !== currentCharacterCount) {
+    const active = words[currentWordIndex]
+    if (active) renderWordHighlight(active, currentWordIndex)
+    renderedActiveWord = currentWordIndex
+    renderedCharacterCount = currentCharacterCount
+  }
   let leadingWordIndex = -1
   if (showLeadingWordInput.checked) {
-    const currentWordIsPartial = currentCharacterCount < wordCharacters(currentWordIndex).length
     leadingWordIndex = currentWordIsPartial ? currentWordIndex : currentWordIndex + 1
-    while (leadingWordIndex < words.length && isPunctuation(words[leadingWordIndex].textContent?.trim() ?? '')) {
+    while (leadingWordIndex < words.length && isPunctuation(wordTexts[leadingWordIndex])) {
       leadingWordIndex += 1
     }
   }
-  words.forEach((span, index) => {
-    renderWordHighlight(span, index)
-    span.classList.toggle('leading-word', index === leadingWordIndex)
-  })
+  if (leadingWordIndex !== renderedLeadingWord) {
+    words[renderedLeadingWord]?.classList.remove('leading-word')
+    words[leadingWordIndex]?.classList.add('leading-word')
+    renderedLeadingWord = leadingWordIndex
+  }
   updateMinimapHighlight()
 }
 
@@ -424,191 +541,213 @@ function isPunctuation(str: string): boolean {
   return /^[.,;:!?]+$/.test(str)
 }
 
-function smoothScrollTo(element: HTMLElement, target: number, duration: number): void {
+function stopScrollAnimation(): void {
   if (animationFrameId !== null) cancelAnimationFrame(animationFrameId)
-  const start = element.scrollTop
-  const maximum = Math.max(0, element.scrollHeight - element.clientHeight)
-  const change = Math.min(maximum, Math.max(0, target)) - start
-  let startTime: number | null = null
+  animationFrameId = null
+  scrollTargetProvider = null
+}
+
+function smoothScrollTo(element: HTMLElement, target: () => number, duration: number): void {
+  scrollTargetProvider = target
+  const destination = () => {
+    const target = scrollTargetProvider?.() ?? element.scrollTop
+    const maximum = Math.max(0, element.scrollHeight - element.clientHeight)
+    return Math.min(maximum, Math.max(0, target))
+  }
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const target = destination()
+    stopScrollAnimation()
+    element.scrollTop = target
+    return
+  }
+  // Repeated keys update the destination without restarting the animation.
+  if (animationFrameId !== null) return
+  let previousTime = performance.now()
+  let settledFrames = 0
 
   const animateScroll = (timestamp: number) => {
-    if (startTime === null) startTime = timestamp
-    const progress = Math.min((timestamp - startTime) / duration, 1)
-    const eased = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress
-    element.scrollTop = start + change * eased
-    animationFrameId = progress < 1 ? requestAnimationFrame(animateScroll) : null
+    // Offscreen paragraphs may acquire their measured heights while scrolling.
+    // Follow the word's current position rather than a stale document offset.
+    const scrollTarget = destination()
+    const distance = scrollTarget - element.scrollTop
+    if (Math.abs(distance) <= 1) {
+      element.scrollTop = scrollTarget
+      settledFrames++
+      animationFrameId = settledFrames < 3 ? requestAnimationFrame(animateScroll) : null
+      return
+    }
+    settledFrames = 0
+    const elapsed = Math.max(0, timestamp - previousTime)
+    previousTime = timestamp
+    const step = Math.abs(distance) * (1 - Math.exp(-elapsed / (duration / 4)))
+    // A minimum step avoids stalling on browsers that round scrollTop.
+    element.scrollTop += Math.sign(distance) * Math.min(Math.abs(distance), Math.max(1, step))
+    animationFrameId = requestAnimationFrame(animateScroll)
   }
 
   animationFrameId = requestAnimationFrame(animateScroll)
 }
 
-function centerActiveWord(): void {
+function activeWordScrollTarget(): number {
   const activeSpan = words[currentWordIndex]
-  if (!activeSpan) return
-  const target = activeSpan.offsetTop - textContainer.clientHeight / 2 + activeSpan.offsetHeight / 2
-  smoothScrollTo(textContainer, target, 320)
+  if (!activeSpan) return textContainer.scrollTop
+  if (words.length > LARGE_DOCUMENT_WORDS && activeSpan.parentElement !== activeParagraph) {
+    activeParagraph?.style.removeProperty('content-visibility')
+    activeParagraph = activeSpan.parentElement
+    // Materialise just the destination paragraph before measuring a distant jump.
+    if (activeParagraph) activeParagraph.style.contentVisibility = 'visible'
+  }
+  const top = activeSpan.offsetTop
+  const height = activeSpan.offsetHeight
+  const viewportHeight = textContainer.clientHeight
+  const inset = Math.min(height, viewportHeight * 0.15, Math.max(0, (viewportHeight - height) / 2))
+  // Keep the active word inside the viewport even when navigation outruns easing.
+  if (top < textContainer.scrollTop + inset) {
+    textContainer.scrollTop = Math.max(0, top - inset)
+  } else if (top + height > textContainer.scrollTop + viewportHeight - inset) {
+    textContainer.scrollTop = top + height - viewportHeight + inset
+  }
+  return top - viewportHeight / 2 + height / 2
+}
+
+function centerActiveWord(): void {
+  if (!words[currentWordIndex]) return
+  // Resolve immediately as well as on each frame to guarantee visibility.
+  activeWordScrollTarget()
+  smoothScrollTo(textContainer, activeWordScrollTarget, 320)
+}
+
+function updateParagraphEstimates(): void {
+  if (words.length <= LARGE_DOCUMENT_WORDS) return
+  const style = getComputedStyle(textContainer)
+  const width = Math.max(1, textContainer.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight))
+  const key = `${width}|${style.font}|${style.letterSpacing}|${style.wordSpacing}|${style.lineHeight}`
+  if (key === paragraphEstimateKey) return
+  paragraphEstimateKey = key
+  const context = document.createElement('canvas').getContext('2d')
+  if (context) context.font = style.font
+  const sample = 'The reader walked through the quiet village.'
+  const characterWidth = (context?.measureText(sample).width ?? sample.length * parseFloat(style.fontSize) * 0.5) / sample.length
+  const letterSpacing = parseFloat(style.letterSpacing) || 0
+  const wordSpacing = parseFloat(style.wordSpacing) || 0
+  const lineHeight = parseFloat(style.lineHeight)
+  for (const paragraph of paragraphs) {
+    const wordCount = Math.max(0, paragraph.endWordIndex - paragraph.startWordIndex + 1)
+    const estimatedWidth = paragraph.characters * (characterWidth + letterSpacing) + wordCount * wordSpacing
+    const height = Math.max(1, Math.ceil(estimatedWidth / (width * 0.9))) * lineHeight
+    paragraph.element.style.containIntrinsicSize = `auto ${height}px`
+  }
 }
 
 function scheduleMinimapRender(): void {
-  if (minimapFrameId !== null) cancelAnimationFrame(minimapFrameId)
-  minimapFrameId = requestAnimationFrame(() => {
-    minimapFrameId = null
-    renderMinimap()
-  })
+  if (minimapTimer !== null) clearTimeout(minimapTimer)
+  minimapTimer = window.setTimeout(() => {
+    minimapTimer = null
+    if (minimapFrameId !== null) cancelAnimationFrame(minimapFrameId)
+    minimapFrameId = requestAnimationFrame(() => {
+      minimapFrameId = null
+      if (processingText) return
+      updateParagraphEstimates()
+      renderMinimap()
+    })
+  }, 120)
 }
 
 function renderMinimap(): void {
   if (minimap.hidden) return
   const style = getComputedStyle(textContainer)
-  const fontSize = Number.parseFloat(style.fontSize)
-  const lineHeight = Number.parseFloat(style.lineHeight)
-  const paddingLeft = Number.parseFloat(style.paddingLeft)
-  const contentWidth = Math.max(
-    1,
-    textContainer.clientWidth - paddingLeft - Number.parseFloat(style.paddingRight),
-  )
-  const containerBounds = textContainer.getBoundingClientRect()
-  const contentLeft = containerBounds.left + paddingLeft
-  const paragraphElements = Array.from(textContainer.querySelectorAll<HTMLParagraphElement>(':scope > p'))
-  const minimapLines: MinimapLineLayout[] = []
-  let usedPretext = false
-  let pretextMismatchCount = 0
-  let pretextLineCount = 0
+  const paddingLeft = parseFloat(style.paddingLeft)
+  const contentWidth = Math.max(1, textContainer.clientWidth - paddingLeft - parseFloat(style.paddingRight))
+  const bounds = textContainer.getBoundingClientRect()
+  const contentLeft = bounds.left + paddingLeft
+  let layouts: MinimapLineLayout[] = []
 
-  paragraphElements.forEach((paragraphElement) => {
-    const paragraphWords = Array.from(paragraphElement.querySelectorAll<HTMLSpanElement>('.word'))
-    if (paragraphWords.length === 0) return
-
-    const renderedLineMap = new Map<number, {
-      documentTop: number
-      left: number
-      right: number
-      startWordIndex: number
-      endWordIndex: number
-    }>()
-    paragraphWords.forEach((word) => {
-      const wordIndex = Number(word.dataset.index ?? 0)
-      Array.from(word.getClientRects()).forEach((bounds) => {
-        if (bounds.width <= 0 || bounds.height <= 0) return
-        const documentTop = bounds.top - containerBounds.top + textContainer.scrollTop
-        const lineKey = Math.round(documentTop * 2) / 2
-        const renderedLine = renderedLineMap.get(lineKey)
-        if (renderedLine) {
-          renderedLine.left = Math.min(renderedLine.left, bounds.left)
-          renderedLine.right = Math.max(renderedLine.right, bounds.right)
-          renderedLine.startWordIndex = Math.min(renderedLine.startWordIndex, wordIndex)
-          renderedLine.endWordIndex = Math.max(renderedLine.endWordIndex, wordIndex)
-        } else {
-          renderedLineMap.set(lineKey, {
-            documentTop,
-            left: bounds.left,
-            right: bounds.right,
-            startWordIndex: wordIndex,
-            endWordIndex: wordIndex,
-          })
-        }
+  if (words.length > LARGE_DOCUMENT_WORDS) {
+    // A novel cannot show every line in a few hundred pixels. Use a bounded
+    // overview without measuring every word or waking offscreen paragraphs.
+    const sections = paragraphs.filter((paragraph) => paragraph.endWordIndex >= paragraph.startWordIndex).map((paragraph) => ({
+      ...paragraph, top: paragraph.element.offsetTop, height: paragraph.element.offsetHeight,
+    }))
+    const stride = Math.max(1, Math.ceil(words.length / MAX_MINIMAP_LINES))
+    let sectionIndex = 0
+    for (let start = 0; start < words.length; start += stride) {
+      while (sectionIndex + 1 < sections.length && start > sections[sectionIndex].endWordIndex) sectionIndex++
+      const section = sections[sectionIndex]
+      if (!section) break
+      const fraction = (start - section.startWordIndex) / Math.max(1, section.endWordIndex - section.startWordIndex + 1)
+      layouts.push({
+        leftRatio: 0, widthRatio: 0.9, densityRatio: 0.9,
+        documentTop: section.top + fraction * section.height,
+        startWordIndex: start, endWordIndex: Math.min(words.length - 1, start + stride - 1),
       })
-    })
-    const renderedLines = [...renderedLineMap.values()].sort((first, second) => first.documentTop - second.documentTop)
-
-    let pretextLines: Array<{ text: string; widthRatio: number }> = []
-    try {
-      const prepared = prepareWithSegments(
-        paragraphElement.textContent?.trim() ?? '',
-        `${style.fontWeight} ${fontSize}px ${style.fontFamily}`,
-        {
-          whiteSpace: 'pre-wrap',
-          letterSpacing: Number.parseFloat(style.letterSpacing) || 0,
-        },
-      )
-      pretextLines = layoutWithLines(prepared, contentWidth, lineHeight).lines.map((line) => ({
-        text: line.text,
-        widthRatio: Math.min(1, line.width / contentWidth),
-      }))
-      pretextLineCount += pretextLines.length
-      usedPretext = true
-    } catch {
-      pretextLines = []
     }
-    const normalizeLineText = (value: string) => value.trim().replace(/\s+/g, ' ')
-    const pretextAgreesWithBrowser = pretextLines.length === renderedLines.length && pretextLines.every(
-      (pretextLine, index) => {
-        const renderedLine = renderedLines[index]
-        const renderedText = paragraphWords
-          .filter((word) => {
-            const wordIndex = Number(word.dataset.index ?? 0)
-            return wordIndex >= renderedLine.startWordIndex && wordIndex <= renderedLine.endWordIndex
-          })
-          .map((word) => word.textContent ?? '')
-          .join(' ')
-        return normalizeLineText(pretextLine.text) === normalizeLineText(renderedText)
-      },
-    )
-    if (pretextLines.length > 0 && !pretextAgreesWithBrowser) pretextMismatchCount += 1
+    minimap.dataset.layoutEngine = 'paragraph-overview'
+  } else {
+    for (const paragraph of paragraphs) {
+      const lines = new Map<number, { left: number; right: number; top: number; start: number; end: number }>()
+      for (let index = paragraph.startWordIndex; index <= paragraph.endWordIndex; index++) {
+        for (const rect of words[index].getClientRects()) {
+          if (rect.width <= 0 || rect.height <= 0) continue
+          const top = rect.top - bounds.top + textContainer.scrollTop
+          const key = Math.round(top * 2) / 2
+          const line = lines.get(key)
+          if (line) {
+            line.left = Math.min(line.left, rect.left)
+            line.right = Math.max(line.right, rect.right)
+            line.end = index
+          } else {
+            lines.set(key, { left: rect.left, right: rect.right, top, start: index, end: index })
+          }
+        }
+      }
+      for (const line of lines.values()) {
+        const leftRatio = clamp((line.left - contentLeft) / contentWidth)
+        const widthRatio = Math.min(1 - leftRatio, (line.right - line.left) / contentWidth)
+        layouts.push({ leftRatio, widthRatio, densityRatio: widthRatio, documentTop: line.top, startWordIndex: line.start, endWordIndex: line.end })
+      }
+    }
+    minimap.dataset.layoutEngine = 'dom'
+  }
 
-    renderedLines.forEach((renderedLine, lineIndex) => {
-      const leftRatio = Math.min(1, Math.max(0, renderedLine.left - contentLeft) / contentWidth)
-      const renderedWidthRatio = Math.min(1 - leftRatio, Math.max(0, renderedLine.right - renderedLine.left) / contentWidth)
-      const predictedWidthRatio = pretextAgreesWithBrowser ? pretextLines[lineIndex]?.widthRatio : undefined
-      minimapLines.push({
-        leftRatio,
-        widthRatio: renderedWidthRatio,
-        densityRatio: predictedWidthRatio === undefined
-          ? renderedWidthRatio
-          : (renderedWidthRatio * 2 + predictedWidthRatio) / 3,
-        documentTop: renderedLine.documentTop,
-        startWordIndex: renderedLine.startWordIndex,
-        endWordIndex: renderedLine.endWordIndex,
-      })
-    })
-  })
-
-  minimap.dataset.layoutEngine = usedPretext ? 'pretext-verified-dom' : 'dom-fallback'
-  minimap.dataset.pretextMismatches = String(pretextMismatchCount)
-  minimap.dataset.pretextLineCount = String(pretextLineCount)
-  minimap.dataset.renderedLineCount = String(minimapLines.length)
-
+  if (layouts.length > MAX_MINIMAP_LINES) {
+    const stride = Math.ceil(layouts.length / MAX_MINIMAP_LINES)
+    const grouped: MinimapLineLayout[] = []
+    for (let index = 0; index < layouts.length; index += stride) {
+      grouped.push({ ...layouts[index], endWordIndex: layouts[Math.min(layouts.length - 1, index + stride - 1)].endWordIndex })
+    }
+    layouts = grouped
+  }
   const fragment = document.createDocumentFragment()
-  const minimapHeight = Math.max(1, minimapContent.clientHeight)
+  const height = Math.max(1, minimapContent.clientHeight)
   const documentHeight = Math.max(1, textContainer.scrollHeight)
-  const baseThickness = Math.min(6, Math.max(1, (minimapHeight / Math.max(1, minimapLines.length)) * 0.48))
-
-  minimapLines.forEach((layout) => {
+  const thickness = Math.min(6, Math.max(1, height / Math.max(1, layouts.length) * 0.48))
+  minimapEntries = []
+  for (const layout of layouts) {
     const line = document.createElement('span')
-    const densityScale = 0.64 + Math.min(1, Math.max(0, layout.densityRatio)) * 0.36
-    const thickness = Math.max(1, baseThickness * densityScale)
-    const top = Math.min(minimapHeight - thickness, Math.max(0, (layout.documentTop / documentHeight) * minimapHeight))
     line.className = 'minimap-line'
-    line.dataset.startWordIndex = String(layout.startWordIndex)
-    line.dataset.endWordIndex = String(layout.endWordIndex)
-    line.style.top = `${top}px`
+    line.style.top = `${clamp(layout.documentTop / documentHeight * height, 0, height - thickness)}px`
     line.style.left = `${layout.leftRatio * 100}%`
     line.style.width = `${Math.max(5, layout.widthRatio * 100)}%`
     line.style.height = `${thickness}px`
     fragment.append(line)
-  })
+    minimapEntries.push({ element: line, start: layout.startWordIndex, end: layout.endWordIndex, progress: -1 })
+  }
   minimapContent.replaceChildren(fragment)
   updateMinimapHighlight()
   updateMinimapViewport()
 }
 
 function updateMinimapHighlight(): void {
-  const lines = minimapContent.querySelectorAll<HTMLElement>('.minimap-line')
-  lines.forEach((line) => {
-    const startWordIndex = Number(line.dataset.startWordIndex ?? 0)
-    const endWordIndex = Number(line.dataset.endWordIndex ?? startWordIndex)
-    const wordCount = Math.max(1, endWordIndex - startWordIndex + 1)
-    const activeWordLength = Math.max(1, wordCharacters(currentWordIndex).length)
-    const activeWordProgress = currentCharacterCount / activeWordLength
-    const readProgress = currentWordIndex < startWordIndex
-      ? 0
-      : currentWordIndex > endWordIndex
-        ? 1
-        : (currentWordIndex - startWordIndex + activeWordProgress) / wordCount
-    line.style.setProperty('--read-progress', `${readProgress * 100}%`)
-    line.classList.toggle('read', readProgress === 1)
-    line.classList.toggle('reading', readProgress > 0 && readProgress < 1)
-  })
+  if (minimap.hidden) return
+  const activeProgress = currentCharacterCount / Math.max(1, wordCharacters(currentWordIndex).length)
+  for (const entry of minimapEntries) {
+    const progress = clamp((currentWordIndex - entry.start + activeProgress) / Math.max(1, entry.end - entry.start + 1))
+    if (progress === entry.progress) continue
+    entry.progress = progress
+    entry.element.style.setProperty('--read-progress', `${progress * 100}%`)
+    entry.element.classList.toggle('read', progress === 1)
+    entry.element.classList.toggle('reading', progress > 0 && progress < 1)
+  }
 }
 
 function updateMinimapViewport(): void {
@@ -635,6 +774,34 @@ function scrollFromMinimap(event: PointerEvent): void {
 
 sidebarToggle.addEventListener('click', () => setSidebarOpen(!sidebar.classList.contains('open')))
 sidebarClose.addEventListener('click', () => setSidebarOpen(false))
+
+function syncFullscreen(): void {
+  const active = Boolean(document.fullscreenElement)
+  const label = active ? 'Exit fullscreen' : 'Enter fullscreen'
+  fullscreenToggle.setAttribute('aria-label', label)
+  fullscreenToggle.setAttribute('aria-pressed', String(active))
+  fullscreenToggle.title = label
+  fullscreenToggle.querySelector('.fullscreen-enter')?.toggleAttribute('hidden', active)
+  fullscreenToggle.querySelector('.fullscreen-exit')?.toggleAttribute('hidden', !active)
+}
+
+fullscreenToggle.disabled = !document.fullscreenEnabled
+if (fullscreenToggle.disabled) fullscreenToggle.title = 'Fullscreen is not available in this browser'
+document.addEventListener('fullscreenchange', syncFullscreen)
+fullscreenToggle.addEventListener('click', async () => {
+  fullscreenStatus.hidden = true
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen()
+    } else {
+      await document.documentElement.requestFullscreen()
+    }
+  } catch {
+    fullscreenStatus.textContent = 'Fullscreen could not be changed. Please try again.'
+    fullscreenStatus.hidden = false
+  }
+})
+
 document.addEventListener('pointerdown', (event) => {
   if (!sidebar.classList.contains('open')) return
   const target = event.target
@@ -644,20 +811,52 @@ document.addEventListener('pointerdown', (event) => {
 })
 
 textInput.addEventListener('input', () => {
-  localStorage.setItem(STORAGE.lastText, textInput.value)
-  processText(textInput.value)
+  ++textBuildVersion
+  if (textProcessTimer !== null) clearTimeout(textProcessTimer)
+  if (textSaveTimer !== null) clearTimeout(textSaveTimer)
+  const text = textInput.value
+  textInput.spellcheck = text.length < 20000
+  textSaveTimer = window.setTimeout(saveText, 700)
+  if (text.length >= 20000) {
+    processingText = true
+    textContainer.setAttribute('aria-busy', 'true')
+    updateTextStatus()
+    textProcessTimer = window.setTimeout(() => {
+      textProcessTimer = null
+      void processText(text)
+    }, 150)
+  } else {
+    void processText(text)
+  }
+})
+window.addEventListener('pagehide', () => {
+  if (textSaveTimer !== null) saveText()
 })
 
-fontSizeRange.addEventListener('input', applyTypography)
+textContainer.addEventListener('click', (event) => {
+  const target = event.target
+  if (!(target instanceof Element)) return
+  const word = target.closest<HTMLSpanElement>('.word')
+  if (!word || !textContainer.contains(word)) return
+  currentWordIndex = Number(word.dataset.index)
+  currentCharacterCount = wordCharacters(currentWordIndex).length
+  updateHighlighting()
+  centerActiveWord()
+})
+
+fontSizeRange.addEventListener('input', scheduleTypography)
 fontSizeNumber.addEventListener('input', () => {
   if (!fontSizeNumber.value) return
   fontSizeRange.value = fontSizeNumber.value
-  applyTypography()
+  scheduleTypography()
 })
 fontSizeNumber.addEventListener('change', applyTypography)
-wordSpacingRange.addEventListener('input', applyTypography)
-characterSpacingRange.addEventListener('input', applyTypography)
-lineSpacingRange.addEventListener('input', applyTypography)
+wordSpacingRange.addEventListener('input', scheduleTypography)
+characterSpacingRange.addEventListener('input', scheduleTypography)
+lineSpacingRange.addEventListener('input', scheduleTypography)
+for (const range of [fontSizeRange, wordSpacingRange, characterSpacingRange, lineSpacingRange]) {
+  range.addEventListener('change', applyTypography)
+}
 
 colourTriggers.forEach((trigger) => {
   trigger.setAttribute('aria-expanded', 'false')
@@ -731,8 +930,14 @@ colourHex.addEventListener('change', () => {
 minimapVisibleInput.addEventListener('change', applyMinimapSettings)
 minimapSideInput.addEventListener('change', applyMinimapSettings)
 showLeadingWordInput.addEventListener('change', applyLeadingWordSetting)
-textContainer.addEventListener('scroll', updateMinimapViewport, { passive: true })
+textContainer.addEventListener('scroll', () => {
+  updateMinimapViewport()
+  if (words.length > LARGE_DOCUMENT_WORDS && !minimap.hidden) scheduleMinimapRender()
+}, { passive: true })
+textContainer.addEventListener('wheel', stopScrollAnimation, { passive: true })
+textContainer.addEventListener('pointerdown', stopScrollAnimation, { passive: true })
 minimap.addEventListener('pointerdown', (event) => {
+  stopScrollAnimation()
   minimapDragging = true
   minimap.setPointerCapture(event.pointerId)
   scrollFromMinimap(event)
@@ -776,7 +981,7 @@ document.addEventListener('keydown', (event) => {
       moveHighlightByCharacter(1)
     } else {
       let next = currentWordIndex + 1
-      while (next < words.length && isPunctuation(words[next].textContent?.trim() ?? '')) next += 1
+      while (next < words.length && isPunctuation(wordTexts[next])) next += 1
       if (next < words.length) {
         currentWordIndex = next
         currentCharacterCount = wordCharacters(currentWordIndex).length
@@ -787,7 +992,7 @@ document.addEventListener('keydown', (event) => {
       moveHighlightByCharacter(-1)
     } else {
       let previous = currentWordIndex - 1
-      while (previous >= 0 && isPunctuation(words[previous].textContent?.trim() ?? '')) previous -= 1
+      while (previous >= 0 && isPunctuation(wordTexts[previous])) previous -= 1
       if (previous >= 0) {
         currentWordIndex = previous
         currentCharacterCount = wordCharacters(currentWordIndex).length
@@ -821,6 +1026,9 @@ const textLayoutObserver = new ResizeObserver(scheduleMinimapRender)
 textLayoutObserver.observe(textContainer)
 window.addEventListener('load', () => {
   loadPreferences()
-  processText(textInput.value)
-  void document.fonts.ready.then(scheduleMinimapRender)
+  void processText(textInput.value)
+  void document.fonts.ready.then(() => {
+    paragraphEstimateKey = ''
+    scheduleMinimapRender()
+  })
 })

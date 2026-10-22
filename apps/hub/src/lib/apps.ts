@@ -17,6 +17,16 @@ const withBase = (path: string) => `${baseUrl}${path.replace(/^\/+/, '')}`
 export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
+    id: 'paper-airplane-visualizer',
+    name: 'Paper Airplane Visualizer',
+    description: 'Watch a sheet become a paper airplane.\nRotate, zoom, and explore every fold in 3D.',
+    href: withBase('paper-airplane-visualizer/'),
+    preview: withBase('images/PaperAirplaneVisualizer-screenshot.png'),
+    tags: ['Classroom'],
+    accent: '#285d51',
+  },
+  {
+    kind: 'app',
     id: 'open-middle',
     name: 'Open Middle Math',
     description: 'Open Middle Math problems',

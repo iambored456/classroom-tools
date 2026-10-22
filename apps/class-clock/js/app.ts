@@ -24,6 +24,7 @@ export const App = {
         updateDOMCache();
 
         Settings.load();
+        document.addEventListener('visibilitychange', Visuals.handleVisibilityChange);
 
         Layout.update();
 

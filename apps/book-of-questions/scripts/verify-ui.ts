@@ -182,11 +182,11 @@ try {
   assert.equal(await settingsIcon.getAttribute('data-icon-source'), 'music-learning-tools/packages/diatonic-compass-ui/public/assets/Settings_optimized.svg')
   assert.match(await settingsIcon.getAttribute('src') ?? '', /Settings_optimized-.*\.svg$/)
   assert.equal(await page.locator('.question-shortcuts').count(), 0)
-  assert.equal(await page.getByRole('button', { name: 'Choose another card' }).innerText(), 'Choose another card')
+  assert.equal(await page.getByRole('button', { name: 'Reshuffle' }).innerText(), 'Reshuffle')
   assert.equal(await page.locator('.follow-up-reveal-icon').count(), 0)
-  assert.equal(await page.getByRole('button', { name: /Next Card/ }).isDisabled(), true)
+  assert.equal(await page.getByRole('button', { name: 'Next', exact: true }).isDisabled(), true)
   await page.getByRole('button', { name: 'Follow-Up Question' }).click()
-  assert.equal(await page.getByRole('button', { name: /Next Card/ }).isEnabled(), true)
+  assert.equal(await page.getByRole('button', { name: 'Next', exact: true }).isEnabled(), true)
   await page.getByText('What’s the advantage of your method?', { exact: true }).waitFor()
   const followUpStyle = await page.locator('.follow-up-sequence li').evaluate((element) => {
     const style = getComputedStyle(element)
@@ -194,7 +194,7 @@ try {
   })
   assert.ok(followUpStyle.fontSize >= 36)
   assert.equal(followUpStyle.fontWeight, '400')
-  await page.getByRole('button', { name: /Choose another card/ }).click()
+  await page.getByRole('button', { name: /Reshuffle/ }).click()
   await page.getByRole('heading', { name: 'How many siblings do you have?' }).waitFor()
 
   const savedAfterSwap = await page.evaluate(() =>

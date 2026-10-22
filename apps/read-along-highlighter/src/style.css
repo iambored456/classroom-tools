@@ -47,8 +47,11 @@ button, select, input[type='range'], input[type='color'], input[type='checkbox']
 #text-container p { margin: 0 0 1em; }
 #text-container p:not(.empty-line) { text-indent: 1.5em; }
 #text-container .empty-line { min-height: 1em; margin: 0; }
+#text-container.large-document > p { content-visibility: auto; }
+/* Isolate inline layout so highlighting does not reflow a novel-sized paragraph. */
+#text-container.large-document .word { display: inline-block; max-width: 100%; line-height: normal; }
 
-.word { border-radius: .12em; cursor: pointer; transition: color 80ms ease, background-color 80ms ease, outline-color 80ms ease; }
+.word { border-radius: .12em; cursor: pointer; transition: color 80ms ease, background-color 80ms ease; }
 .word:hover, .word.leading-word { outline: .08em solid color-mix(in srgb, var(--highlight-bg-color) 72%, transparent); }
 .highlighted { background: var(--highlight-bg-color); color: var(--highlight-text-color); }
 .character-highlighted { border-radius: .12em 0 0 .12em; background: var(--highlight-bg-color); color: var(--highlight-text-color); }
@@ -93,6 +96,15 @@ button, select, input[type='range'], input[type='color'], input[type='checkbox']
 .sidebar-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .eyebrow { margin: 0 0 .15rem; color: #a1a1aa; font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .sidebar-header .eyebrow { margin: 0; font-size: .78rem; }
+.sidebar-actions { display: flex; flex-shrink: 0; align-items: center; gap: .4rem; }
+.sidebar-actions .icon-button { padding: 0; text-decoration: none; }
+.sidebar-actions .icon-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.sidebar-actions .icon-button:hover:not(:disabled) { background: #35353b; color: #fafafa; }
+.sidebar-actions .icon-button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.sidebar-actions .icon-button:disabled { cursor: default; opacity: .45; }
+.sidebar-actions [hidden] { display: none; }
+.fullscreen-status { margin: .75rem 0 0; color: #fca5a5; font-size: .85rem; line-height: 1.4; }
+.text-status { margin: .65rem 0 0; color: #a1a1aa; font-size: .85rem; line-height: 1.4; }
 
 .icon-button {
   width: 2.45rem;

@@ -1,0 +1,9 @@
+{
+  "name": "paper-airplane-visualizer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "vite", "build": "vite build", "preview": "vite preview", "test": "node --test src/model.test.js src/arrowhead.test.js src/raven.test.js" },
+  "dependencies": { "three": "^0.177.0" },
+  "devDependencies": { "vite": "^7.2.4" }
+}

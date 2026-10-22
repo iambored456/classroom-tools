@@ -269,7 +269,7 @@ export const Settings = {
             if (
                 preferences.visualizationMode === normalizedMode
                 || preferences.visualizationMode === 'none'
-                || ['ice', 'plant', 'bubbles', 'fractal'].includes(preferences.visualizationMode)
+                || ['ice', 'plant', 'bubbles', 'fractal', 'water2'].includes(preferences.visualizationMode)
             ) {
                 return normalizedMode;
             }
@@ -288,7 +288,7 @@ export const Settings = {
         preferences.visualizationMode = mode;
         preferences.showProgressBar = mode === 'progress';
         preferences.showSandBars = mode === 'sand';
-        preferences.showWaterFill = mode === 'water' || mode === 'water2';
+        preferences.showWaterFill = mode === 'water';
         return mode;
     },
 

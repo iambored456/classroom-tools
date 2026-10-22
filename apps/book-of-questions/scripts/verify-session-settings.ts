@@ -41,7 +41,7 @@ try {
   while (await page.getByRole('button', { name: 'Next Follow-up', exact: true }).count()) {
     await page.getByRole('button', { name: 'Next Follow-up', exact: true }).click()
   }
-  await page.getByRole('button', { name: /Next Card/ }).click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
   const answered = await saved()
   assert.ok(answered.askedQuestionIds.includes(first.currentQuestionId!))
 

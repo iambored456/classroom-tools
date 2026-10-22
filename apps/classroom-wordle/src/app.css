@@ -585,6 +585,24 @@ button:disabled {
   pointer-events: none;
 }
 
+.game-message:not(.sr-only) {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%);
+  max-width: calc(100% - 2rem);
+  padding: 0.75rem 1rem;
+  border: 1px solid #7e8da1;
+  border-radius: 0.5rem;
+  background: var(--deep-navy);
+  color: #fff;
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  font-weight: 800;
+  text-align: center;
+  pointer-events: none;
+}
+
 .keyboard {
   width: min(100%, 75rem);
   display: grid;

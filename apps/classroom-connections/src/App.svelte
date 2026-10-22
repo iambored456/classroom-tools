@@ -2,6 +2,7 @@
   import { onMount, tick } from 'svelte'
   import { flip } from 'svelte/animate'
   import GroupLibrary from './GroupLibrary.svelte'
+  import Fireworks from './Fireworks.svelte'
   import { createStarterGroups } from './groups'
   import { fitAnswerText } from './fitAnswerText'
   import {
@@ -754,6 +755,7 @@
   </main>
 {:else}
   <div class="game-screen" class:completed={gameEnded} class:dark-mode={darkMode} style={`--group-count: ${groupCount}; --card-text-transform: ${allCaps ? 'uppercase' : 'none'};`}>
+    {#if gameWon}<Fireworks />{/if}
     <main class="game-main">
       <section
         class="game-board"
@@ -762,6 +764,7 @@
         aria-label="Classroom Connections game board"
         aria-busy={isSubmitting}
       >
+        {#if gameWon}<Fireworks scope="board" />{/if}
         {#if solvedGroups.length > 0 || solvingGroup}
           <div class="solved-list" style={`--solved-rows: ${solvedGroups.length + (solvingGroup ? 1 : 0)}`} aria-label="Found groups">
             {#each solvedGroups as group (group.id)}

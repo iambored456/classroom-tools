@@ -6,6 +6,7 @@ const BAR_COUNT = State.SAND_COLORS.length;
 const MAX_DROPLETS_DEFAULT = 220;
 const MAX_SPLASH_PARTICLES = 320;
 const GRAVITY = 1150;
+const MIN_DROPLET_VISIBLE_SECONDS = 0.18;
 const SURFACE_TENSION = 34;
 const SURFACE_DAMPING = 6.5;
 const SURFACE_SPREAD = 18;
@@ -589,7 +590,8 @@ export const WaterBars = {
             colorHex: colorHex || bar.colorHex,
             radius,
             x: spawnX,
-            y: bar.yTop + radius + 1,
+            y: bar.yTop + (radius * 1.35) + 1,
+            age: 0,
             vx: (Math.random() - 0.5) * 22,
             vy: 24 + (Math.random() * 52)
         });
@@ -643,6 +645,7 @@ export const WaterBars = {
                 continue;
             }
 
+            drop.age += dt;
             drop.vy += GRAVITY * dt;
             drop.vx *= Math.max(0, 1 - (dt * 1.8));
             drop.x += drop.vx * dt;
@@ -660,6 +663,13 @@ export const WaterBars = {
 
             const surfaceY = getSurfaceYAt(bar, WaterBars.barCapacity, drop.x - bar.x);
             if (drop.y + drop.radius >= surfaceY) {
+                // Keep short drops visible at the inlet before they merge, even when
+                // the surface is too high to leave any falling room.
+                if (drop.age < MIN_DROPLET_VISIBLE_SECONDS) {
+                    drop.y = Math.max(bar.yTop + (drop.radius * 1.35) + 1, surfaceY - drop.radius);
+                    drop.vy = 0;
+                    continue;
+                }
                 bar.fillUnits = clamp(bar.fillUnits + 1, 0, WaterBars.barCapacity);
                 WaterBars.disturbSurface(bar, drop.x, drop.vy);
                 WaterBars.createSplash(bar, drop.x, surfaceY, drop.vy, drop.colorHex || bar.colorHex);
@@ -828,6 +838,12 @@ export const WaterBars = {
             addRoundedRectPath(ctx, paintBounds.x, paintBounds.yTop, paintBounds.width, paintBounds.height, paintBounds.radius);
             ctx.clip();
 
+            // Let the rising water cover any part of a droplet below the surface.
+            dropletsByBar[bar.index].forEach(drop => {
+                const color = hexToRgb(drop.colorHex);
+                drawLiquidDroplet(ctx, drop, color);
+            });
+
             const fillRatio = getFillRatio(bar, WaterBars.barCapacity);
 
             if (fillRatio > 0) {
@@ -880,11 +896,6 @@ export const WaterBars = {
             splashByBar[bar.index].forEach(splash => {
                 const color = hexToRgb(splash.colorHex);
                 drawSplashParticle(ctx, splash, color);
-            });
-
-            dropletsByBar[bar.index].forEach(drop => {
-                const color = hexToRgb(drop.colorHex);
-                drawLiquidDroplet(ctx, drop, color);
             });
 
             ctx.restore();

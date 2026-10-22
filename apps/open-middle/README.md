@@ -4,12 +4,14 @@
 
 Run `pnpm --filter open-middle dev` from the repository root, then open `http://localhost:5194/open-middle/`. Use `pnpm --filter open-middle test` for the shared model and all activity tests, and `pnpm --filter open-middle build` for the production bundle.
 
+Landing-page links show a screenshot preview while the pointer hovers over them. The previews omit navigation controls, ignore pointer events, and use a fresh, empty activity state. After changing question layouts or styling, run `pnpm --filter open-middle capture:previews` to regenerate the 37 images in `public/question-previews/` and rebuild the app.
+
 ## Activity types
 
 - `src/questions/index.js` registers and sorts the entire library. Numeric and string IDs are supported, with stable `#<id>` links and a searchable landing page.
 - `src/questions/34.js`, `38.js`, and `40.js` retain the existing sum square and two-digit equation experiences, including base-ten blocks and side totals. Their digit handling comes from `@classroom-tools/open-middle-core`.
 - `src/numeric-catalog.js` defines 23 number, fraction, decimal, percent, geometry, and probability tasks. Diagrams use structured slot/group/fraction tokens; each rule has its own evaluator. Cross-products and integer hundredths avoid floating-point equality errors.
-- `src/numeric-view.js` implements digit dragging, select-and-place, keyboard entry, reset, challenge modes, feedback, and up to 20 saved arrangements per question. Unique-digit tasks swap placed digits; repeatable tasks retain the bank.
+- `src/numeric-view.js` implements digit dragging, select-and-place, keyboard entry, reset, challenge modes, automatic feedback, and up to 20 saved arrangements per question. Digit activities use circular spaces and live green/red highlighting when complete; instructions are in Help and saved arrangements are in Settings. Unique-digit tasks swap placed digits; repeatable tasks retain the bank.
 - `src/manipulatives.js` supplies ladybug spots, domino arrangement/flipping, shared boards, and coordinate plots with three possible pairings. Domino corner cells contribute to both adjacent side totals. Line comparisons use integer cross and dot products, including vertical, coincident, and degenerate lines.
 - `src/explorations.js` provides apple stories, editable dice outcome tables, the corner-rope model, rounded backpay, and grid/staggered coin arrangements, with checkable responses and written reasoning.
 

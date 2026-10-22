@@ -17,7 +17,6 @@ function queryElements(): DOMCache {
         waterFillContainerEl: document.getElementById("water-fill-container"),
         waterFillOutlineEls: Array.from(document.querySelectorAll('#water-fill-container .water-fill-outline-segment')),
         waterFillCanvas: document.getElementById('water-fill-canvas'), // Canvas for fluid water bars
-        waterFill2Canvas: document.getElementById('water-fill-2-canvas'),
         stageVisualizationContainerEl: document.getElementById("stage-visualization-container"),
         stageVisualizationOutlineEls: Array.from(document.querySelectorAll('#stage-visualization-container .stage-visualization-outline-segment')),
         stageVisualizationCanvas: document.getElementById('stage-visualization-canvas'),

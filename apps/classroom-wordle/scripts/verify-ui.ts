@@ -175,7 +175,15 @@ try {
   await page.getByRole('button', { name: 'Use this word' }).click()
   await page.locator('.word-grid').waitFor()
 
-  await page.keyboard.type('aaa')
+  await page.keyboard.type('zzq')
+  await page.keyboard.press('Enter')
+  await page.getByRole('status').getByText('Word not recognized.', { exact: true }).waitFor()
+  assert.equal(await page.getByRole('status').isVisible(), true)
+  assert.equal(await page.locator('.letter-tile.evaluated').count(), 0)
+  assert.equal((await page.locator('.guess-row').first().innerText()).replace(/\s/g, ''), 'ZZQ')
+  assert.equal(await page.locator('.keyboard .correct, .keyboard .present, .keyboard .absent').count(), 0)
+  for (let letter = 0; letter < 3; letter += 1) await page.keyboard.press('Backspace')
+  await page.keyboard.type('dad')
   await page.keyboard.press('Enter')
   const firstGuess = page.locator('.guess-row').first()
   assert.equal(await firstGuess.locator('.present').count(), 0)
@@ -205,7 +213,7 @@ try {
     ) >= 24,
   )
 
-  await page.keyboard.type('tzz')
+  await page.keyboard.type('try')
   await page.keyboard.press('Enter')
   const secondGuess = page.locator('.guess-row').nth(1)
   assert.equal(await secondGuess.locator('.present').count(), 1)
@@ -298,10 +306,23 @@ try {
   await page.getByRole('button', { name: /Play 5-letter Wordle/ }).click()
   await page.getByRole('button', { name: 'Choose Random' }).click()
   assert.equal(await page.locator('.guess-row').count(), 3)
+  await context.setOffline(true)
+  await page.keyboard.type('qzxqz')
+  await page.getByRole('button', { name: 'ENTER', exact: true }).click()
+  await page.getByRole('status').getByText('Word not recognized.', { exact: true }).waitFor()
+  await page.keyboard.press('Enter')
+  assert.equal(await page.locator('.letter-tile.evaluated').count(), 0)
+  assert.equal((await page.locator('.guess-row').first().innerText()).replace(/\s/g, ''), 'QZXQZ')
+  assert.equal(await page.locator('.keyboard .correct, .keyboard .present, .keyboard .absent').count(), 0)
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('classroom-wordle:score-history:v1') ?? '[]').length), 1)
+  await page.screenshot({ path: join(tmpdir(), 'classroom-wordle-unrecognized.png') })
+  for (let letter = 0; letter < 5; letter += 1) await page.getByRole('button', { name: 'Backspace', exact: true }).click()
   for (let guess = 0; guess < 3; guess += 1) {
-    await page.keyboard.type('qqqqq')
+    // A real word outside the starter answer set must still be accepted, offline.
+    await page.keyboard.type('crane')
     await page.keyboard.press('Enter')
   }
+  await context.setOffline(false)
   assert.equal(await page.locator('.letter-tile.evaluated').count(), 15)
   await page.getByRole('button', { name: 'New Game', exact: true }).waitFor()
   assert.equal(await successPanel.count(), 0)
@@ -379,7 +400,38 @@ try {
   assert.equal(await page.locator('.length-tabs button').count(), 4)
   await page.screenshot({ path: mobileShot, fullPage: false })
 
-  console.log('Classroom Wordle UI verification passed.')
+  // Exercise all lengths and prove custom classroom vocabulary remains usable.
+  const validationPage = await context.newPage()
+  await validationPage.goto(url, { waitUntil: 'networkidle' })
+  for (const [length, answer, guesses] of [
+    [3, 'qzx', ['cat']],
+    [4, 'qzxq', ['cats']],
+    [5, 'qzxqz', ['color', 'crane']],
+    [6, 'qzxqzx', ['colour', 'center', 'centre']],
+  ] as const) {
+    await validationPage.evaluate(({ length, answer }) => {
+      localStorage.setItem('classroom-wordle-library-v2', JSON.stringify({
+        [length]: [{ id: 'custom', label: 'Custom', text: answer, enabled: true }],
+      }))
+      localStorage.setItem('classroom-wordle-settings-v1', JSON.stringify({ wordLength: length, guessLimit: 6, colorblindMode: true }))
+    }, { length, answer })
+    await validationPage.reload({ waitUntil: 'networkidle' })
+    await validationPage.getByRole('button', { name: new RegExp(`Play ${length}-letter Wordle`) }).click()
+    await validationPage.getByLabel('Type in a word').fill(answer)
+    await validationPage.getByRole('button', { name: 'Use this word' }).click()
+    for (const [index, guess] of guesses.entries()) {
+      await validationPage.keyboard.type(guess.toUpperCase())
+      await validationPage.keyboard.press('Enter')
+      assert.equal(await validationPage.locator('.letter-tile.evaluated').count(), (index + 1) * length)
+    }
+    await validationPage.keyboard.type(answer)
+    await validationPage.keyboard.press('Enter')
+    await validationPage.getByRole('region', { name: 'success!', exact: true }).waitFor()
+    assert.equal(await validationPage.locator('.letter-tile.evaluated').count(), (guesses.length + 1) * length)
+  }
+  await validationPage.close()
+
+  console.log('Classroom Wordle UI verification passed, including dictionary rejection, offline guesses, spelling variants, and custom answers at all lengths.')
   console.log(`Setup: ${setupShot}`)
   console.log(`Word chooser: ${chooserShot}`)
   console.log(`Game: ${gameShot}`)

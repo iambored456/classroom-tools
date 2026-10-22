@@ -4,6 +4,7 @@
   import WinCelebration from './WinCelebration.svelte'
   import Fireworks from './Fireworks.svelte'
   import { keepBoardClear } from './keepBoardClear'
+  import { isRecognizedWord } from './dictionary'
   import { loadLibrary, loadSettings, saveLibrary, saveSettings } from './storage'
   import {
     WORD_LENGTHS,
@@ -269,6 +270,12 @@
       return
     }
 
+    if (currentGuess !== answer && !enabledWords.includes(currentGuess) && !isRecognizedWord(currentGuess)) {
+      showGameMessage('Word not recognized.')
+      return
+    }
+
+    gameMessage = ''
     const scored = scoreGuess(currentGuess)
     const nextGuesses = [...submittedGuesses, scored]
     submittedGuesses = nextGuesses
@@ -551,7 +558,7 @@
         </div>
       </div>
 
-      <div class="sr-only" aria-live="polite">
+      <div class="game-message" class:sr-only={!gameMessage} role="status" aria-live="polite">
         {#if gameMessage}
           {gameMessage}
         {:else if gameEnded}

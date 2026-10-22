@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx scripts/dev-all.ts",
     "test:dev": "tsx --test scripts/lib/dev-readiness.test.ts",
-    "dev:raw": "pnpm -r --parallel --filter hub --filter open-middle --filter class-clock --filter class-schedule-widget --filter classroom-connections --filter book-of-questions --filter classroom-wordle --filter read-along-highlighter --filter launchpad-whack-a-mole --filter launchpad-snake --filter launchpad-reversi --filter launchpad-paint-war --filter launchpad-finger-twister --filter fish-visualizer --filter tax-brackets-marble-visual --filter coordinates --filter simple-compound-interest --filter oklch-visualizer --filter rugby-play-visualizer --filter city-navigator run dev",
+    "dev:raw": "pnpm -r --parallel --filter hub --filter open-middle --filter class-clock --filter class-schedule-widget --filter classroom-connections --filter book-of-questions --filter classroom-wordle --filter read-along-highlighter --filter launchpad-whack-a-mole --filter launchpad-snake --filter launchpad-reversi --filter launchpad-paint-war --filter launchpad-finger-twister --filter fish-visualizer --filter tax-brackets-marble-visual --filter coordinates --filter simple-compound-interest --filter oklch-visualizer --filter rugby-play-visualizer --filter city-navigator --filter paper-airplane-visualizer run dev",
     "dev:hub": "pnpm --filter hub run dev",
     "dev:open-middle": "pnpm --filter open-middle run dev",
     "dev:class-clock": "pnpm --filter class-clock run dev",
@@ -38,7 +38,8 @@
     "preview:class-schedule-widget": "pnpm --filter class-schedule-widget run preview",
     "preview:oklch-visualizer": "pnpm --filter oklch-visualizer run preview",
     "typecheck": "pnpm -r --if-present run typecheck && tsc -p tsconfig.scripts.json",
-    "clean": "pnpm -r exec rm -rf dist node_modules/.vite"
+    "clean": "pnpm -r exec rm -rf dist node_modules/.vite",
+    "dev:paper-airplane": "pnpm --filter paper-airplane-visualizer run dev"
   },
   "author": "Quinn Fleming",
   "license": "MIT",

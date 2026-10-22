@@ -17,6 +17,7 @@ const movingShot = join(tmpdir(), 'classroom-connections-moving.png')
 const gameShot = join(tmpdir(), 'classroom-connections-game.png')
 const mobileShot = join(tmpdir(), 'classroom-connections-mobile.png')
 const completionShot = join(tmpdir(), 'classroom-connections-completion.png')
+const celebrationShot = join(tmpdir(), 'classroom-connections-celebration.png')
 
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -418,6 +419,7 @@ try {
   )
   assert.equal(await page.locator('.moving-card-clone').count(), 0)
   assert.equal(await page.locator('.word-tile').count(), 12)
+  assert.equal(await page.locator('.success-fireworks, .board-fireworks').count(), 0, 'A single solved group should not trigger the win celebration')
   assert.match(await page.locator('.solved-group h2').innerText(), new RegExp(playableGroup.title, 'i'))
   await page.screenshot({ path: gameShot, fullPage: false })
 
@@ -484,6 +486,29 @@ try {
     new Set(['rgb(249, 223, 109)', 'rgb(160, 195, 90)', 'rgb(176, 196, 239)', 'rgb(186, 129, 197)']),
   )
 
+  const fireworks = page.locator('.success-fireworks, .board-fireworks')
+  assert.equal(await fireworks.count(), 2)
+  assert.equal(await page.locator('.celebration-star').count(), 6)
+  assert.equal(await page.locator('.firework-spark').count(), 400)
+  assert.ok(await fireworks.evaluateAll((layers) => layers.every((layer) =>
+    layer.getAttribute('aria-hidden') === 'true' && getComputedStyle(layer).pointerEvents === 'none',
+  )))
+  await page.waitForTimeout(1000)
+  await page.screenshot({ path: celebrationShot, fullPage: false })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.waitForFunction(() => [...document.querySelectorAll('.firework-spark')].every((spark) => {
+    const style = getComputedStyle(spark)
+    return style.animationName === 'none' && Number(style.opacity) > 0
+  }))
+  assert.ok(await page.locator('.firework-spark').evaluateAll((sparks) => sparks.every((spark) => {
+    const style = getComputedStyle(spark)
+    return style.animationName === 'none' && Number(style.opacity) > 0
+  })))
+  assert.ok(await page.locator('.celebration-star').evaluateAll((stars) =>
+    stars.every((star) => getComputedStyle(star).animationName === 'none'),
+  ))
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+
   const completionTime = page.locator('.completion-time')
   await completionTime.waitFor()
   assert.match(await completionTime.innerText(), /Time\s+\d+:\d{2}/i)
@@ -518,6 +543,7 @@ try {
 
   await page.getByRole('button', { name: 'New Game' }).click()
   await page.waitForFunction(() => document.querySelectorAll('.word-tile').length === 16)
+  assert.equal(await fireworks.count(), 0, 'New Game should remove the celebration')
   const secondRoundWords = (await page.locator('.word-tile').allTextContents()).map((word) =>
     word.trim().toLocaleLowerCase(),
   )
@@ -585,6 +611,7 @@ try {
   console.log(`Game: ${gameShot}`)
   console.log(`Mobile: ${mobileShot}`)
   console.log(`Completion: ${completionShot}`)
+  console.log(`Celebration: ${celebrationShot}`)
 
   await context.close()
 } finally {

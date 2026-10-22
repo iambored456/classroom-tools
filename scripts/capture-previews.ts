@@ -105,25 +105,28 @@ function buildTargets(rootBase) {
 
   return [
     {
+      id: 'paper-airplane-visualizer',
+      outputFile: 'PaperAirplaneVisualizer-screenshot.png',
+      distDir: 'apps/paper-airplane-visualizer/dist',
+      basePath: appendPath(rootBase, 'paper-airplane-visualizer'),
+      route: appendPath(rootBase, 'paper-airplane-visualizer'),
+      waitFor: '#viewport canvas',
+      delayMs: 500,
+    },
+    {
       id: 'classroom-wordle',
       outputFile: 'ClassroomWordle-screenshot.png',
       distDir: 'apps/classroom-wordle/dist',
       basePath: classroomWordleBase,
       route: classroomWordleBase,
       waitFor: '[data-action="play"]',
-      postReadyScript: async () => {
-        Math.random = () => 0
-        document.querySelector<HTMLElement>('[data-action="play"]')?.click()
-        await new Promise((resolve) => requestAnimationFrame(resolve))
-        document.querySelector<HTMLElement>('[data-action="choose-random"]')?.click()
-        await new Promise((resolve) => requestAnimationFrame(resolve))
-        for (const letter of 'dream') {
-          window.dispatchEvent(new KeyboardEvent('keydown', { key: letter }))
-        }
-        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
-      },
-      postReadyWaitFor: '.letter-tile.evaluated',
-      delayMs: 900,
+      // Keep the hub preview on the landing page, matching Classroom Connections.
+      delayMs: 250,
+      injectCss: `
+.hub-link {
+  display: none !important;
+}
+`,
     },
     {
       id: 'classroom-connections',

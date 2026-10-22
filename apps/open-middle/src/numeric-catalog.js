@@ -14,7 +14,7 @@ export const numericQuestions = [
  make(33,'Subtracting Two-Digit Numbers',4,[[n(0),'−',n(2),'=',output]],{digits:digits.slice(1),category:'Subtraction',instruction:'Choose four different digits from 1 to 9. Make the smallest positive difference or the largest difference.',modes:[['smallest','Smallest positive'],['largest','Largest']],rule:'difference',leading:[0,2]}),
  make(43,'Get the Smallest Difference',6,[[n(0,3),'−',n(3,3),'=',output]],{category:'Subtraction',instruction:'Use each digit at most once to make two three-digit numbers with the smallest positive difference. The answer may repeat digits.',rule:'difference',leading:[0,3]}),
  make(44,'Subtraction With Regrouping',4,[[n(0),'−',n(2),'≈','39']],{digits:digits.slice(1),category:'Subtraction',instruction:'Choose four different digits from 1 to 9. Make a difference as close to 39 as possible.',rule:'near-39'}),
- make(47,'Sums to 100',6,[[n(0),'+',n(2),'+',n(4),'≈','100']],{digits:digits.slice(1),category:'Addition',instruction:'Use each digit at most once. Make three two-digit numbers whose sum is as close to 100 as possible.',rule:'sum-100'}),
+ make(47,'Sums to 100',6,[[n(0),'+',n(2),'+',n(4),'≈','100']],{digits:digits.slice(1),category:'Addition',instruction:'Use each digit at most once. Make three two-digit numbers whose sum is as close to 100 as possible.',rule:'sum-100',baseTen:true,encourageAttempts:true}),
  make(53,'Largest Area Rectangle',3,[[{type:'label',text:'Length'},n(0),{type:'label',text:'Width'},s(2)]],{category:'Geometry',instruction:'Choose digits from 0 to 9 to make a rectangle with the largest possible area. Use each chosen digit at most once.',rule:'area',leading:[0],visual:'rectangle'}),
  make(58,'Area and Perimeter Double / Quadruple',4,[[{type:'label',text:'Smaller rectangle'},s(0),'×',s(1)],[{type:'label',text:'Larger rectangle'},s(2),'×',s(3)]],{category:'Geometry',instruction:'Use each digit at most once. Goal A: double the smaller rectangle’s perimeter. Goal B: quadruple its area. Try satisfying both.',modes:[['both','Both goals'],['perimeter','Double perimeter'],['area','Quadruple area']],rule:'scale-rectangles',visual:'rectangles'}),
  make(69,'Multiply and Divide Within a Hundred 1',5,[[s(0),'×',s(1),'=',n(2),'÷',s(4)]],{digits:digits.slice(2),category:'Multiplication',instruction:'Use digits 2 to 9 at most once. Make a true equation. Then try a common value greater than 30 or less than 30.',modes:[['any','Any true equation'],['greater','Greater than 30'],['less','Less than 30']],rule:'multiply-divide'}),
@@ -46,7 +46,7 @@ export function diceWays(sum,sides) { return Math.max(0,Math.min(sides,sum-1)-Ma
 const fmt = value => Number(value.toFixed(6)).toString()
 export function evaluateNumeric(q,a,mode=q.modes?.[0][0]) {
  const result=(state,message,value=null)=>({state,message,value})
- if(a.length!==q.slotCount || a.some(v=>v===null))return result('incomplete','Fill every space, then check your work.')
+ if(a.length!==q.slotCount || a.some(v=>v===null))return result('incomplete','Fill every space to see feedback.')
  if(a.some(v=>!q.digits.includes(v)))return result('invalid','Use digits from the bank.')
  if(isUnique(q,mode)&&new Set(a).size!==a.length)return result('invalid','Use each digit only once.')
  if(q.leading?.some(i=>a[i]===0))return result('invalid','A multi-digit number cannot begin with zero.')

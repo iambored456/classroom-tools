@@ -30,14 +30,13 @@ export const Layout = {
         const mode = Settings.getVisualizationMode();
         const showProgress = mode === 'progress';
         const showSand = mode === 'sand';
-        const showWater = mode === 'water' || mode === 'water2';
+        const showWater = mode === 'water';
         const showStage = Settings.isStageVisualizationMode();
         const showCandle = showStage && mode === 'candle';
 
         DOM.progressBarEl?.classList.toggle('element-hidden', !showProgress);
         DOM.sandBarsContainerEl?.classList.toggle('element-hidden', !showSand);
         DOM.waterFillContainerEl?.classList.toggle('element-hidden', !showWater);
-        DOM.waterFillContainerEl?.classList.toggle('water2-mode', mode === 'water2');
         DOM.stageVisualizationContainerEl?.classList.toggle('element-hidden', !showStage);
         DOM.stageVisualizationContainerEl?.classList.toggle('candle-mode', showCandle);
         DOM.periodContainerEl?.classList.toggle('candle-bleed-mode', showCandle);
@@ -45,7 +44,6 @@ export const Layout = {
 
         if (DOM.sandBarsCanvas) DOM.sandBarsCanvas.style.display = showSand ? 'block' : 'none';
         if (DOM.waterFillCanvas) DOM.waterFillCanvas.style.display = mode === 'water' ? 'block' : 'none';
-        if (DOM.waterFill2Canvas) DOM.waterFill2Canvas.style.display = mode === 'water2' ? 'block' : 'none';
         if (DOM.stageVisualizationCanvas) DOM.stageVisualizationCanvas.style.display = showStage ? 'block' : 'none';
 
         Layout.applyFontAndSizePreferences();

@@ -5,6 +5,9 @@ import './numeric.css'
 import './explorations.css'
 import './manipulatives.css'
 import './collection.css'
+import './theme.css'
+import './question-previews.css'
+import {mountQuestionPreviews} from './question-previews.js'
 import {emptySlots, placeDigit, numberAt, equationState, numberWords, sideSum} from '@classroom-tools/open-middle-core'
 import {baseTenBlocks as blocks} from '@classroom-tools/open-middle-core/blocks'
 import {findQuestion, questions, questionLabel} from './questions/index.js'
@@ -17,6 +20,7 @@ let slots = emptySlots(), selected = null, drag = null, suppressClick = false
 let showSums = [false, false]
 let activeQuestionId = null
 let cleanupCustom = null
+let landingPreviews = null
 let searchText = ''
 const customQuestion = problem => problem && (problem.layout === 'digit-task' || problem.layout === 'exploration' || problem.kind === 'manipulative')
 const escapeHtml = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
@@ -24,6 +28,8 @@ let doubleSpace = false
 try { doubleSpace = localStorage.getItem('open-middle-double-space') === 'true' } catch {}
 const icons = {help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .7-1.5 1-1.5 3"/><path d="M12 17h.01"/>',home:'<path d="m3 11 9-8 9 8v10h-6v-7H9v7H3z"/>',refresh:'<path d="M20 7v5h-5M20 12a8 8 0 1 0-2 6"/>',settings:'<path d="m10 3-1 3-3 1-3 3 2 2-1 4 3 1 2 4h4l1-3 3-1 3-3-2-2 1-4-3-1-2-4z"/><circle cx="11.5" cy="12" r="3"/>'}
 const icon = (name,label) => `<button class="icon" id="${name}" aria-label="${label}" title="${label}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${icons[name]}</svg></button>`
+const questionNumber = question => `<span class="question-number">${escapeHtml(questionLabel(question).split(' - ')[0])}</span>`
+const restartControls = question => `<div class="restart-controls">${questionNumber(question)}${icon('refresh','Reset problem')}</div>`
 const classroomToolsUrl = location.pathname.includes('/open-middle/')
   ? new URL('../', location.href).href
   : 'https://iambored456.github.io/classroom-tools/'
@@ -34,6 +40,7 @@ function twoDigitEquation(problem) {
  return `${problem.instructionPosition==='above'?instructions(problem):''}${bank(problem)}${problem.instructionPosition==='below'?instructions(problem):''}<section class="equation ${equationState(slots,problem)}" data-layout="${problem.layout}" aria-label="${problem.numberCount} two-digit numbers in an equation">${Array.from({length:problem.numberCount},(_,i)=>`${i?`<span class="operator">${i===problem.sides[1][0]?'=':'+'}</span>`:''}<div class="number"><div class="number-box"><svg class="number-outline" aria-hidden="true" width="100%" height="100%"><rect x="1" y="1" width="calc(100% - 2px)" height="calc(100% - 2px)" /></svg>${[i*2,i*2+1].map(s=>`<button class="slot ${slots[s]!==null?'filled':''}" data-slot="${s}" ${slots[s]!==null?`data-digit="${slots[s]}"`:''} aria-label="Number ${i+1}, ${s%2?'ones':'tens'}: ${slots[s]??'empty'}"><svg class="slot-outline" aria-hidden="true" viewBox="0 0 100 100"><circle cx="50" cy="50" r="49" /></svg><span>${slots[s]??''}</span></button>`).join('')}</div><div class="words">${numberAt(slots,i)===null?'':numberWords(numberAt(slots,i))}</div>${blocks(numberAt(slots,i))}</div>`).join('')}${problem.showSideSums?sumPanel(0,problem)+sumPanel(1,problem):''}</section>`
 }
 function render() {
+ landingPreviews?.cleanup(); landingPreviews=null
  const problem = findQuestion(location.hash)
  cleanupCustom?.(); cleanupCustom=null
  if ((problem?.id ?? null) !== activeQuestionId) {
@@ -42,24 +49,28 @@ function render() {
    activeQuestionId = problem?.id ?? null
  }
  if (problem?.showSideSums) for (const side of [0,1]) if (sideSum(slots,side,problem) === null) showSums[side] = false
- app.className = [doubleSpace ? 'double-space' : '', customQuestion(problem)?'custom-question':''].join(' ')
+ app.className = [doubleSpace ? 'double-space' : '', customQuestion(problem)?`custom-question ${problem.layout==='digit-task'?'numeric-question':''}`:''].join(' ')
  document.title = problem ? `${questionLabel(problem)} · Open Middle` : 'Open Middle · Classroom Tools'
  if (!problem) {
   app.innerHTML = `<main class="landing"><div class="landing-heading"><h1>Open Middle Math</h1>${landingHome}</div><label class="collection-search">Find a question <input id="question-search" type="search" placeholder="Number, title, or topic" value="${escapeHtml(searchText)}"></label><p id="question-count" class="collection-count" role="status"></p><div class="problem-list"></div></main>`
-  const filter=()=>{const terms=searchText.toLowerCase().trim().split(/\s+/).filter(Boolean),filtered=questions.filter(q=>terms.every(term=>`${q.id} ${q.title} ${q.category??q.topic??''}`.toLowerCase().includes(term)));document.querySelector('.problem-list').innerHTML=filtered.map(question=>`<a class="problem-link" href="#${question.id}">${escapeHtml(questionLabel(question))}</a>`).join('');document.querySelector('#question-count').textContent=`${filtered.length} of ${questions.length} activities`}
-  document.querySelector('#question-search').oninput=e=>{searchText=e.target.value;filter()};filter();return
+  const filter=()=>{landingPreviews?.hide();const terms=searchText.toLowerCase().trim().split(/\s+/).filter(Boolean),filtered=questions.filter(q=>terms.every(term=>`${q.id} ${q.title} ${q.category??q.topic??''}`.toLowerCase().includes(term)));document.querySelector('.problem-list').innerHTML=filtered.map(question=>`<a class="problem-link" href="#${question.id}">${escapeHtml(questionLabel(question))}</a>`).join('');document.querySelector('#question-count').textContent=`${filtered.length} of ${questions.length} activities`}
+  document.querySelector('#question-search').oninput=e=>{searchText=e.target.value;filter()};filter();landingPreviews=mountQuestionPreviews(document.querySelector('.problem-list'));return
  }
  if(customQuestion(problem)){
-  app.innerHTML=`${icon('home','Home')}<nav class="corner-tools" aria-label="Problem controls">${icon('help','Help')}${icon('settings','Settings')}</nav><main class="workspace collection-workspace"><h1 class="question-title">${escapeHtml(questionLabel(problem))}</h1><div id="interactive-question"></div></main><dialog id="help-dialog" aria-labelledby="help-title"><form method="dialog"><div class="dialog-heading"><h2 id="help-title">How to play</h2><button aria-label="Close help" class="close">×</button></div><p class="help-copy">Follow the question’s directions and explore different answers. Use the controls beside the activity to check or reset your work. Digit spaces support dragging, selecting, and typing. Work is saved in this browser as you go.</p></form></dialog><dialog id="settings-dialog" aria-labelledby="settings-title"><form method="dialog"><div class="dialog-heading"><h2 id="settings-title">Settings</h2><button aria-label="Close settings" class="close">×</button></div><label><input id="spacing" type="checkbox" ${doubleSpace?'checked':''}> Double-space between words</label></form></dialog>`
+  const numeric=problem.layout==='digit-task'
+  const feedbackCopy=problem.encourageAttempts?'Every complete arrangement turns green. Use the sum and distance from 100 to find ways to improve.':'Once every space is filled, green means the goal is met; red means keep exploring.'
+  const helpCopy=numeric?`Drag a digit, or select a digit and then a space. Select a filled space to return its digit. You can also type digits and use the arrow keys, Backspace, or Delete. ${feedbackCopy} Calculated answers update automatically. Use the corner arrow to reset and Settings to save or compare arrangements.`:'Follow the question’s directions and explore different answers. Use the controls beside the activity to check or reset your work. Digit spaces support dragging, selecting, and typing. Work is saved in this browser as you go.'
+  app.innerHTML=`${icon('home','Home')}<nav class="corner-tools" aria-label="Problem controls">${numeric?restartControls(problem):questionNumber(problem)}${icon('help','Help')}${icon('settings','Settings')}</nav><main class="workspace collection-workspace" aria-label="${escapeHtml(questionLabel(problem))}">${numeric?'':`<h1 class="question-title">${escapeHtml(questionLabel(problem))}</h1>`}<div id="interactive-question"></div></main><dialog id="help-dialog" aria-labelledby="help-title"><form method="dialog"><div class="dialog-heading"><h2 id="help-title">How to play</h2><button aria-label="Close help" class="close">×</button></div><p class="help-copy">${helpCopy}</p></form></dialog><dialog id="settings-dialog" aria-labelledby="settings-title"><form method="dialog"><div class="dialog-heading"><h2 id="settings-title">Settings</h2><button aria-label="Close settings" class="close">×</button></div><label><input id="spacing" type="checkbox" ${doubleSpace?'checked':''}> Double-space between words</label>${numeric?'<div id="numeric-secondary"></div>':''}</form></dialog>`
   document.querySelector('#home').onclick=()=>{location.hash=''}
   document.querySelector('#help').onclick=()=>document.querySelector('#help-dialog').showModal()
   document.querySelector('#settings').onclick=()=>document.querySelector('#settings-dialog').showModal()
   document.querySelector('#spacing').onchange=e=>{doubleSpace=e.target.checked;app.classList.toggle('double-space',doubleSpace);try{localStorage.setItem('open-middle-double-space',String(doubleSpace))}catch{}}
   const target=document.querySelector('#interactive-question')
-  cleanupCustom=problem.layout==='digit-task'?mountNumeric(target,problem):problem.layout==='exploration'?mountExploration(target,problem):mountManipulative(target,problem)
+  cleanupCustom=problem.layout==='digit-task'?mountNumeric(target,problem,{secondaryContainer:document.querySelector('#numeric-secondary')}):problem.layout==='exploration'?mountExploration(target,problem):mountManipulative(target,problem)
+  if(numeric)document.querySelector('#refresh').onclick=()=>cleanupCustom.reset()
   return
  }
- app.innerHTML = `${icon('home','Home')}<nav class="corner-tools" aria-label="Problem controls">${icon('refresh','Reset problem')}${icon('help','Help')}${icon('settings','Settings')}</nav><main class="workspace">${problem.layout === 'sum-square' ? bank(problem) + renderSumSquare(slots,problem) : twoDigitEquation(problem)}</main><dialog id="help-dialog" aria-labelledby="help-title"><form method="dialog"><div class="dialog-heading"><h2 id="help-title">How to play</h2><button aria-label="Close help" class="close">&times;</button></div><p class="help-copy">Drag a digit, or select a digit and then a space. Select a placed digit to return it.${problem.layout === 'sum-square' ? ' Each gray square shows its side’s total when all three digits are placed.' : ''}</p></form></dialog><dialog id="settings-dialog" aria-labelledby="settings-title"><form method="dialog"><div class="dialog-heading"><h2 id="settings-title">Settings</h2><button aria-label="Close settings" class="close">×</button></div><label><input id="spacing" type="checkbox" ${doubleSpace?'checked':''}> Double-space between words</label></form></dialog>`
+ app.innerHTML = `${icon('home','Home')}<nav class="corner-tools" aria-label="Problem controls">${restartControls(problem)}${icon('help','Help')}${icon('settings','Settings')}</nav><main class="workspace">${problem.layout === 'sum-square' ? bank(problem) + renderSumSquare(slots,problem) : twoDigitEquation(problem)}</main><dialog id="help-dialog" aria-labelledby="help-title"><form method="dialog"><div class="dialog-heading"><h2 id="help-title">How to play</h2><button aria-label="Close help" class="close">&times;</button></div><p class="help-copy">Drag a digit, or select a digit and then a space. Select a placed digit to return it.${problem.layout === 'sum-square' ? ' Each gray square shows its side’s total when all three digits are placed.' : ''}</p></form></dialog><dialog id="settings-dialog" aria-labelledby="settings-title"><form method="dialog"><div class="dialog-heading"><h2 id="settings-title">Settings</h2><button aria-label="Close settings" class="close">×</button></div><label><input id="spacing" type="checkbox" ${doubleSpace?'checked':''}> Double-space between words</label></form></dialog>`
  document.querySelector('#home').onclick = () => {location.hash=''}
  document.querySelector('#refresh').onclick = () => { slots=emptySlots(problem);selected=null;showSums=[false,false];render() }
  document.querySelector('#help').onclick = () => document.querySelector('#help-dialog').showModal()
