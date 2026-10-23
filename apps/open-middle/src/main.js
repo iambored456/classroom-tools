@@ -12,6 +12,7 @@ import {emptySlots, placeDigit, numberAt, equationState, numberWords, sideSum} f
 import {baseTenBlocks as blocks} from '@classroom-tools/open-middle-core/blocks'
 import {findQuestion, questions, questionLabel} from './questions/index.js'
 import {renderSumSquare} from './sum-square.js'
+import {fitToWindow} from './fit-to-window.js'
 import {mountNumeric} from './numeric-view.js'
 import {mountExploration} from './explorations.js'
 import {mountManipulative} from './manipulatives.js'
@@ -20,16 +21,36 @@ let slots = emptySlots(), selected = null, drag = null, suppressClick = false
 let showSums = [false, false]
 let activeQuestionId = null
 let cleanupCustom = null
+let windowFit = null
 let landingPreviews = null
 let searchText = ''
 const customQuestion = problem => problem && (problem.layout === 'digit-task' || problem.layout === 'exploration' || problem.kind === 'manipulative')
 const escapeHtml = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
 let doubleSpace = false
 try { doubleSpace = localStorage.getItem('open-middle-double-space') === 'true' } catch {}
-const icons = {help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .7-1.5 1-1.5 3"/><path d="M12 17h.01"/>',home:'<path d="m3 11 9-8 9 8v10h-6v-7H9v7H3z"/>',refresh:'<path d="M20 7v5h-5M20 12a8 8 0 1 0-2 6"/>',settings:'<path d="m10 3-1 3-3 1-3 3 2 2-1 4 3 1 2 4h4l1-3 3-1 3-3-2-2 1-4-3-1-2-4z"/><circle cx="11.5" cy="12" r="3"/>'}
+const icons = {fullscreen:'<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>',exitFullscreen:'<path d="M3 8h5V3m8 0v5h5M8 21v-5H3m13 5v-5h5"/>',help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .7-1.5 1-1.5 3"/><path d="M12 17h.01"/>',home:'<path d="m3 11 9-8 9 8v10h-6v-7H9v7H3z"/>',refresh:'<path d="M20 7v5h-5M20 12a8 8 0 1 0-2 6"/>',settings:'<path d="m10 3-1 3-3 1-3 3 2 2-1 4 3 1 2 4h4l1-3 3-1 3-3-2-2 1-4-3-1-2-4z"/><circle cx="11.5" cy="12" r="3"/>'}
 const icon = (name,label) => `<button class="icon" id="${name}" aria-label="${label}" title="${label}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${icons[name]}</svg></button>`
+const fullscreenControl = () => icon(document.fullscreenElement ? 'exitFullscreen' : 'fullscreen', document.fullscreenElement ? 'Exit fullscreen' : 'Enter fullscreen').replace(/id="[^"]+"/, 'id="fullscreen"')
+function bindFullscreen() {
+ const button = document.querySelector('#fullscreen')
+ button.setAttribute('aria-pressed', String(Boolean(document.fullscreenElement)))
+ button.onclick = async () => {
+  try {
+   if (document.fullscreenElement) await document.exitFullscreen()
+   else await document.documentElement.requestFullscreen()
+  } catch {
+   button.title = 'Fullscreen is unavailable in this browser'
+  }
+ }
+}
+document.addEventListener('fullscreenchange', () => {
+ const button = document.querySelector('#fullscreen')
+ if (!button) return
+ button.outerHTML = fullscreenControl()
+ bindFullscreen()
+})
 const questionNumber = question => `<span class="question-number">${escapeHtml(questionLabel(question).split(' - ')[0])}</span>`
-const restartControls = question => `<div class="restart-controls">${questionNumber(question)}${icon('refresh','Reset problem')}</div>`
+const homeControls = question => `<nav class="home-controls" aria-label="Question navigation">${icon('home','Home')}${questionNumber(question)}</nav>`
 const classroomToolsUrl = location.pathname.includes('/open-middle/')
   ? new URL('../', location.href).href
   : 'https://iambored456.github.io/classroom-tools/'
@@ -40,6 +61,7 @@ function twoDigitEquation(problem) {
  return `${problem.instructionPosition==='above'?instructions(problem):''}${bank(problem)}${problem.instructionPosition==='below'?instructions(problem):''}<section class="equation ${equationState(slots,problem)}" data-layout="${problem.layout}" aria-label="${problem.numberCount} two-digit numbers in an equation">${Array.from({length:problem.numberCount},(_,i)=>`${i?`<span class="operator">${i===problem.sides[1][0]?'=':'+'}</span>`:''}<div class="number"><div class="number-box"><svg class="number-outline" aria-hidden="true" width="100%" height="100%"><rect x="1" y="1" width="calc(100% - 2px)" height="calc(100% - 2px)" /></svg>${[i*2,i*2+1].map(s=>`<button class="slot ${slots[s]!==null?'filled':''}" data-slot="${s}" ${slots[s]!==null?`data-digit="${slots[s]}"`:''} aria-label="Number ${i+1}, ${s%2?'ones':'tens'}: ${slots[s]??'empty'}"><svg class="slot-outline" aria-hidden="true" viewBox="0 0 100 100"><circle cx="50" cy="50" r="49" /></svg><span>${slots[s]??''}</span></button>`).join('')}</div><div class="words">${numberAt(slots,i)===null?'':numberWords(numberAt(slots,i))}</div>${blocks(numberAt(slots,i))}</div>`).join('')}${problem.showSideSums?sumPanel(0,problem)+sumPanel(1,problem):''}</section>`
 }
 function render() {
+ windowFit?.cleanup(); windowFit=null
  landingPreviews?.cleanup(); landingPreviews=null
  const problem = findQuestion(location.hash)
  cleanupCustom?.(); cleanupCustom=null
@@ -60,7 +82,8 @@ function render() {
   const numeric=problem.layout==='digit-task'
   const feedbackCopy=problem.encourageAttempts?'Every complete arrangement turns green. Use the sum and distance from 100 to find ways to improve.':'Once every space is filled, green means the goal is met; red means keep exploring.'
   const helpCopy=numeric?`Drag a digit, or select a digit and then a space. Select a filled space to return its digit. You can also type digits and use the arrow keys, Backspace, or Delete. ${feedbackCopy} Calculated answers update automatically. Use the corner arrow to reset and Settings to save or compare arrangements.`:'Follow the question’s directions and explore different answers. Use the controls beside the activity to check or reset your work. Digit spaces support dragging, selecting, and typing. Work is saved in this browser as you go.'
-  app.innerHTML=`${icon('home','Home')}<nav class="corner-tools" aria-label="Problem controls">${numeric?restartControls(problem):questionNumber(problem)}${icon('help','Help')}${icon('settings','Settings')}</nav><main class="workspace collection-workspace" aria-label="${escapeHtml(questionLabel(problem))}">${numeric?'':`<h1 class="question-title">${escapeHtml(questionLabel(problem))}</h1>`}<div id="interactive-question"></div></main><dialog id="help-dialog" aria-labelledby="help-title"><form method="dialog"><div class="dialog-heading"><h2 id="help-title">How to play</h2><button aria-label="Close help" class="close">×</button></div><p class="help-copy">${helpCopy}</p></form></dialog><dialog id="settings-dialog" aria-labelledby="settings-title"><form method="dialog"><div class="dialog-heading"><h2 id="settings-title">Settings</h2><button aria-label="Close settings" class="close">×</button></div><label><input id="spacing" type="checkbox" ${doubleSpace?'checked':''}> Double-space between words</label>${numeric?'<div id="numeric-secondary"></div>':''}</form></dialog>`
+  app.innerHTML=`${homeControls(problem)}<nav class="corner-tools" aria-label="Problem controls">${numeric?icon('refresh','Reset problem'):''}${icon('help','Help')}<div class="settings-controls">${fullscreenControl()}${icon('settings','Settings')}</div></nav><main class="workspace collection-workspace ${numeric?'':'fitted-question'}" aria-label="${escapeHtml(questionLabel(problem))}">${numeric?'':`<div class="window-fit-content"><h1 class="question-title">${escapeHtml(questionLabel(problem))}</h1>`}<div id="interactive-question"></div>${numeric?'':'</div>'}</main><dialog id="help-dialog" aria-labelledby="help-title"><form method="dialog"><div class="dialog-heading"><h2 id="help-title">How to play</h2><button aria-label="Close help" class="close">×</button></div><p class="help-copy">${helpCopy}</p></form></dialog><dialog id="settings-dialog" aria-labelledby="settings-title"><form method="dialog"><div class="dialog-heading"><h2 id="settings-title">Settings</h2><button aria-label="Close settings" class="close">×</button></div><label><input id="spacing" type="checkbox" ${doubleSpace?'checked':''}> Double-space between words</label>${numeric?'<div id="numeric-secondary"></div>':''}</form></dialog>`
+  bindFullscreen()
   document.querySelector('#home').onclick=()=>{location.hash=''}
   document.querySelector('#help').onclick=()=>document.querySelector('#help-dialog').showModal()
   document.querySelector('#settings').onclick=()=>document.querySelector('#settings-dialog').showModal()
@@ -68,9 +91,12 @@ function render() {
   const target=document.querySelector('#interactive-question')
   cleanupCustom=problem.layout==='digit-task'?mountNumeric(target,problem,{secondaryContainer:document.querySelector('#numeric-secondary')}):problem.layout==='exploration'?mountExploration(target,problem):mountManipulative(target,problem)
   if(numeric)document.querySelector('#refresh').onclick=()=>cleanupCustom.reset()
+  else windowFit=fitToWindow(document.querySelector('.window-fit-content'),{allowVerticalScroll:true})
   return
  }
- app.innerHTML = `${icon('home','Home')}<nav class="corner-tools" aria-label="Problem controls">${restartControls(problem)}${icon('help','Help')}${icon('settings','Settings')}</nav><main class="workspace">${problem.layout === 'sum-square' ? bank(problem) + renderSumSquare(slots,problem) : twoDigitEquation(problem)}</main><dialog id="help-dialog" aria-labelledby="help-title"><form method="dialog"><div class="dialog-heading"><h2 id="help-title">How to play</h2><button aria-label="Close help" class="close">&times;</button></div><p class="help-copy">Drag a digit, or select a digit and then a space. Select a placed digit to return it.${problem.layout === 'sum-square' ? ' Each gray square shows its side’s total when all three digits are placed.' : ''}</p></form></dialog><dialog id="settings-dialog" aria-labelledby="settings-title"><form method="dialog"><div class="dialog-heading"><h2 id="settings-title">Settings</h2><button aria-label="Close settings" class="close">×</button></div><label><input id="spacing" type="checkbox" ${doubleSpace?'checked':''}> Double-space between words</label></form></dialog>`
+ app.innerHTML = `${homeControls(problem)}<nav class="corner-tools" aria-label="Problem controls">${icon('refresh','Reset problem')}${icon('help','Help')}<div class="settings-controls">${fullscreenControl()}${icon('settings','Settings')}</div></nav><main class="workspace ${problem.layout==='sum-square'?'':'fitted-question equation-question'}">${problem.layout === 'sum-square' ? bank(problem) + renderSumSquare(slots,problem) : `<div class="window-fit-content">${twoDigitEquation(problem)}</div>`}</main><dialog id="help-dialog" aria-labelledby="help-title"><form method="dialog"><div class="dialog-heading"><h2 id="help-title">How to play</h2><button aria-label="Close help" class="close">&times;</button></div><p class="help-copy">Drag a digit, or select a digit and then a space. Select a placed digit to return it.${problem.layout === 'sum-square' ? ' Each gray square shows its side’s total when all three digits are placed.' : ''}</p></form></dialog><dialog id="settings-dialog" aria-labelledby="settings-title"><form method="dialog"><div class="dialog-heading"><h2 id="settings-title">Settings</h2><button aria-label="Close settings" class="close">×</button></div><label><input id="spacing" type="checkbox" ${doubleSpace?'checked':''}> Double-space between words</label></form></dialog>`
+ if(problem.layout!=='sum-square')windowFit=fitToWindow(document.querySelector('.window-fit-content'))
+ bindFullscreen()
  document.querySelector('#home').onclick = () => {location.hash=''}
  document.querySelector('#refresh').onclick = () => { slots=emptySlots(problem);selected=null;showSums=[false,false];render() }
  document.querySelector('#help').onclick = () => document.querySelector('#help-dialog').showModal()

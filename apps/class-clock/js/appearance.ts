@@ -197,7 +197,7 @@ function applyPreferenceValue(prefKey: string, newValue: string | number, min: n
         Settings.preferences[prefKey] = parsedValue;
         Layout.applyFontAndSizePreferences();
 
-        if (['sandWidth', 'sandHeight', 'sandParticleSize'].includes(prefKey)) {
+        if (['sandWidth', 'sandHeight', 'sandParticleSize', 'waterDripSpeed'].includes(prefKey)) {
             requestAnimationFrame(() => {
                 Visuals.handleDisplayToggle();
             });
@@ -407,6 +407,10 @@ export const Appearance = {
         });
 
         const activeMode = Settings.getVisualizationMode();
+        const detailRow = document.getElementById('animation-detail-pref');
+        const dripSpeedRow = document.getElementById('water-drip-speed-pref');
+        if (detailRow) detailRow.hidden = activeMode === 'water';
+        if (dripSpeedRow) dripSpeedRow.hidden = activeMode !== 'water';
         DOM.visualizationModeInputs?.forEach((input: HTMLInputElement) => {
             input.checked = input.value === activeMode;
         });
@@ -414,6 +418,7 @@ export const Appearance = {
         syncPreferenceInputs('sandWidth', Settings.preferences.sandWidth);
         syncPreferenceInputs('sandHeight', Settings.preferences.sandHeight);
         syncPreferenceInputs('sandParticleSize', Settings.preferences.sandParticleSize);
+        syncPreferenceInputs('waterDripSpeed', Settings.getWaterDripSpeed());
     },
 
     resetTimelineVisualizationDefaults: function() {
@@ -426,6 +431,7 @@ export const Appearance = {
         Settings.preferences.sandWidth = Settings.defaultPreferences.sandWidth;
         Settings.preferences.sandHeight = Settings.defaultPreferences.sandHeight;
         Settings.preferences.sandParticleSize = Settings.defaultPreferences.sandParticleSize;
+        Settings.preferences.waterDripSpeed = Settings.defaultPreferences.waterDripSpeed;
         Appearance.updateInputs();
         Layout.applyFontAndSizePreferences();
         requestAnimationFrame(() => {

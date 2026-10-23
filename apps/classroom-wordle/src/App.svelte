@@ -562,12 +562,21 @@
         {#if gameMessage}
           {gameMessage}
         {:else if gameEnded}
-          {gameWon ? 'Correct.' : 'Round complete.'}
+          {gameWon ? 'Correct.' : `Good effort! Every guess helps you learn. The word was ${answer.toLocaleUpperCase()}.`}
         {/if}
       </div>
 
       {#if gameWon}
         <WinCelebration guessesUsed={submittedGuesses.length} />
+      {:else if gameEnded}
+        <section class="failure-panel" aria-labelledby="failure-title">
+          <h2 id="failure-title">Good effort!</h2>
+          <p>Every guess helps you learn.</p>
+          <p class="round-answer">
+            <span>The word was</span>
+            <strong>{answer.toLocaleUpperCase()}</strong>
+          </p>
+        </section>
       {:else}
       <section class="keyboard" aria-label="On-screen keyboard">
         {#each KEYBOARD_ROWS as row}

@@ -209,16 +209,17 @@ export const Visuals = {
         };
     },
 
-    getTimelineTargetUnits: function(unitsPerBar, periodInfo = undefined, now = getCurrentOffsetTime()) {
+    getTimelineTargetUnits: function(unitsPerBar, periodInfo = undefined, now = getCurrentOffsetTime(), minimumPartialUnits = 1) {
         const safeUnitsPerBar = Math.max(1, Math.floor(Number(unitsPerBar) || 0));
         const timelineState = Visuals.getTimelineProgressState(now, periodInfo);
         const targetUnits = timelineState.bars.map(barState => {
             if (barState.status === 'completed') return safeUnitsPerBar;
             if (barState.status === 'future' || barState.progress <= 0) return 0;
-            if (safeUnitsPerBar === 1) return 1;
+            if (safeUnitsPerBar === 1) return minimumPartialUnits;
 
-            const partialUnits = Math.floor(barState.progress * safeUnitsPerBar);
-            return clamp(partialUnits, 1, safeUnitsPerBar - 1);
+            // Avoid delaying an exact droplet boundary due to floating-point rounding.
+            const partialUnits = Math.floor(barState.progress * safeUnitsPerBar + 1e-7);
+            return clamp(partialUnits, minimumPartialUnits, safeUnitsPerBar - 1);
         });
 
         return {
@@ -256,19 +257,17 @@ export const Visuals = {
         };
     },
 
-    calculateWaterMetrics: function(layout) {
-        const particleRadius = Math.max(2, Settings.getAnimationDetailSizePx(layout.height) * 0.75);
-        const particleArea = Math.PI * particleRadius * particleRadius;
-        const segmentWidths = layout.bars.map(bar => bar.width).filter(width => Number.isFinite(width) && width > 0);
-        const segmentHeights = layout.bars.map(bar => bar.height).filter(height => Number.isFinite(height) && height > 0);
-        const segmentWidth = segmentWidths.length > 0 ? Math.min(...segmentWidths) : Math.max(6, layout.width / State.SAND_COLORS.length);
-        const usableHeight = segmentHeights.length > 0 ? Math.min(...segmentHeights) : Math.max(20, layout.height);
-        const packingDensity = 0.7;
-        const capacityPerBar = Math.max(30, Math.floor((segmentWidth * usableHeight * packingDensity) / particleArea));
+    calculateWaterMetrics: function(_layout, periodInfo = Clock.getCurrentPeriodInfo()) {
+        const particleRadius = 3.75;
+        const durationSeconds = periodInfo
+            ? Math.max(0, (periodInfo.end.getTime() - periodInfo.start.getTime()) / 1000)
+            : 0;
+        // Each drop contributes one unit. Scale the capacity with section length
+        // so the same number of drops arrive each second in every section.
+        const capacityPerBar = Math.max(1, Math.round(durationSeconds * Settings.getWaterDripSpeed() / State.SAND_COLORS.length));
 
         return {
             particleRadius,
-            particleArea,
             capacityPerBar,
             totalCapacity: capacityPerBar * State.SAND_COLORS.length
         };
@@ -304,7 +303,8 @@ export const Visuals = {
         const WaterBars = getWaterBars();
         if (!WaterBars?.isInitialized) return;
 
-        const { targetUnits } = Visuals.getTimelineTargetUnits(WaterBars.barCapacity, periodInfo, now);
+        // Slow water drips start after their full interval rather than at the bar's start.
+        const { targetUnits } = Visuals.getTimelineTargetUnits(WaterBars.barCapacity, periodInfo, now, 0);
         WaterBars.setFillUnits(targetUnits);
         State.physicsParticlesAdded = WaterBars.getTotalFillUnits();
     },
@@ -486,6 +486,18 @@ export const Visuals = {
                 return;
             }
 
+            // Drain using the outgoing section's capacity before configuring the next one.
+            if (options.animateDrainReset && !document.hidden && !Visuals.waterNeedsProgressSync) {
+                await WaterBars.drainReset({
+                    requireFull: true,
+                    fillToTop: true
+                });
+                if (!Visuals.isVisualSetupCurrent(requestId, 'water')) {
+                    return;
+                }
+            } else {
+                WaterBars.reset();
+            }
             const metrics = Visuals.calculateWaterMetrics(layout);
             State.visualMaxParticlesPerSegment = metrics.capacityPerBar;
             State.totalParticlesForPeriod = metrics.totalCapacity;
@@ -499,17 +511,6 @@ export const Visuals = {
             });
             WaterBars.setCapacity(metrics.capacityPerBar);
             WaterBars.setParticleRadius(metrics.particleRadius);
-            if (options.animateDrainReset && !document.hidden && !Visuals.waterNeedsProgressSync) {
-                await WaterBars.drainReset({
-                    requireFull: true,
-                    fillToTop: true
-                });
-                if (!Visuals.isVisualSetupCurrent(requestId, 'water')) {
-                    return;
-                }
-            } else {
-                WaterBars.reset();
-            }
             // Setup or draining may have awaited frames while the tab was hidden.
             const activePeriod = Clock.getCurrentPeriodInfo();
             Visuals.syncWaterBarsToCurrentProgress(activePeriod);
@@ -708,7 +709,7 @@ export const Visuals = {
             return;
         }
 
-        const { timelineState, targetUnits } = Visuals.getTimelineTargetUnits(WaterBars.barCapacity, periodInfo, now);
+        const { timelineState, targetUnits } = Visuals.getTimelineTargetUnits(WaterBars.barCapacity, periodInfo, now, 0);
         const projectedUnitsByBar = WaterBars.bars.map((bar, index) => {
             return clamp((bar.fillUnits || 0) + WaterBars.getPendingForBar(index), 0, WaterBars.barCapacity);
         });

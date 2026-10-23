@@ -1,6 +1,15 @@
 <script lang="ts">
   import { hubEntries } from './lib/apps'
 
+  const cityRoutesIndex = hubEntries.findIndex((entry) => entry.id === 'city-navigator')
+  const openingApps = hubEntries.slice(0, cityRoutesIndex + 1)
+  const remainingApps = hubEntries.slice(cityRoutesIndex + 1)
+  const orderedEntries = [
+    ...openingApps,
+    ...remainingApps.filter((entry) => entry.id.startsWith('launchpad-')),
+    ...remainingApps.filter((entry) => !entry.id.startsWith('launchpad-')),
+  ]
+
   const prefetchedApps = new Map<string, Promise<void>>()
   const prefetchedAssets = new Set<string>()
 
@@ -63,10 +72,13 @@
   </header>
 
   <section class="cards" aria-label="Apps">
-    {#each hubEntries as entry, index}
+    {#each orderedEntries as entry, index}
+      {#if index > 0 && (orderedEntries[index - 1].id === 'city-navigator' || (orderedEntries[index - 1].id.startsWith('launchpad-') && !entry.id.startsWith('launchpad-')))}
+        <div class="row-break" aria-hidden="true"></div>
+      {/if}
       <article class="card" style={`--card-accent: ${entry.accent}; --card-delay: ${index * 90}ms;`}>
         <div class="card-header">
-          <h2>{entry.name}</h2>
+          <h2>{#each entry.name.split('\n') as line, lineIndex}{#if lineIndex > 0}<br />{/if}{line}{/each}</h2>
         </div>
 
         <a

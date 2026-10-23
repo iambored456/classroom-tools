@@ -1,3 +1,4 @@
+import {fitToWindow} from './fit-to-window.js'
 import {evaluateNumeric,isUnique,placeNumeric} from './numeric-catalog.js'
 import {numberAt} from '@classroom-tools/open-middle-core'
 import {baseTenBlocks} from '@classroom-tools/open-middle-core/blocks'
@@ -6,6 +7,7 @@ const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>
 export function mountNumeric(container,q,{secondaryContainer}={}) {
  container.innerHTML='<div class="nm-view"></div><p class="nm-feedback" role="status" aria-live="polite" aria-atomic="true"></p>'
  const view=container.querySelector('.nm-view'),status=container.querySelector('.nm-feedback')
+ const windowFit=fitToWindow(container)
  const storageKey=`open-middle-work-v1-${q.id}`
  let slots=Array(q.slotCount).fill(null),mode=q.modes?.[0][0],attempts=[],selected=null,drag=null,ignoreClick=false
  try {const saved=JSON.parse(localStorage.getItem(storageKey));if(saved){
@@ -44,6 +46,7 @@ export function mountNumeric(container,q,{secondaryContainer}={}) {
   const message=result.state==='incomplete'?'':result.message
   if(status.textContent!==message)status.textContent=message
   if(secondaryContainer)secondaryContainer.innerHTML=`<section class="nm-saved-work" aria-labelledby="nm-saved-title"><h3 id="nm-saved-title">Saved attempts</h3><p>Save an arrangement to compare later. Your current work is saved automatically.</p><button type="button" data-naction="save" ${slots.includes(null)?'disabled':''}>Save current arrangement</button><p class="nm-save-status" role="status"></p>${attempts.length?`<ol class="nm-attempts">${attempts.map(a=>{const r=evaluateNumeric(q,a.slots,a.mode);return `<li>${q.modes?`<p>${esc(q.modes.find(m=>m[0]===a.mode)?.[1]??'')}</p>`:''}<div class="nm-history-equation">${q.rows.map(row=>`<span>${row.map(t=>token(t,r,a.slots,true)).join('')}</span>`).join('')}</div><p>${esc(r.message)}</p></li>`}).join('')}</ol><button type="button" data-naction="clear-history">Clear saved attempts</button>`:'<p>No saved attempts yet.</p>'}</section>`
+  windowFit.fit()
   if(restore)focus(restore)
  }
  function changed(restore){save();render(restore)}
@@ -73,7 +76,7 @@ export function mountNumeric(container,q,{secondaryContainer}={}) {
  for(const [name,fn] of [['click',click],['keydown',key],['change',change],['pointerdown',down],['pointermove',move],['pointerup',up],['pointercancel',cancel]])container.addEventListener(name,fn)
  secondaryContainer?.addEventListener('click',click)
  render()
- const cleanup=()=>{drag?.ghost?.remove();secondaryContainer?.removeEventListener('click',click);for(const [name,fn] of [['click',click],['keydown',key],['change',change],['pointerdown',down],['pointermove',move],['pointerup',up],['pointercancel',cancel]])container.removeEventListener(name,fn)}
+ const cleanup=()=>{windowFit.cleanup();drag?.ghost?.remove();secondaryContainer?.removeEventListener('click',click);for(const [name,fn] of [['click',click],['keydown',key],['change',change],['pointerdown',down],['pointermove',move],['pointerup',up],['pointercancel',cancel]])container.removeEventListener(name,fn)}
  cleanup.reset=reset
  return cleanup
 }

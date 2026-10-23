@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json",
-    "test:water": "tsx --test scripts/water-bars.test.ts scripts/water-visibility.test.ts"
+    "test:water": "tsx --test scripts/water-bars.test.ts scripts/water-visibility.test.ts scripts/water-drip-speed.test.ts"
   },
   "dependencies": {
     "matter-js": "^0.19.0"

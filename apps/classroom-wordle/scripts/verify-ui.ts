@@ -14,6 +14,8 @@ const gameShot = join(tmpdir(), 'classroom-wordle-game.png')
 const mobileSetupShot = join(tmpdir(), 'classroom-wordle-mobile-setup.png')
 const mobileShot = join(tmpdir(), 'classroom-wordle-mobile.png')
 const successShot = join(tmpdir(), 'classroom-wordle-success.png')
+const failureShot = join(tmpdir(), 'classroom-wordle-failure.png')
+const mobileFailureShot = join(tmpdir(), 'classroom-wordle-mobile-failure.png')
 
 const server = await startStaticServer({
   rootDir: join(rootDir, 'dist'),
@@ -304,8 +306,12 @@ try {
   await page.getByRole('button', { name: 'Fewer guesses' }).click()
   await page.getByRole('button', { name: 'Fewer guesses' }).click()
   await page.getByRole('button', { name: /Play 5-letter Wordle/ }).click()
-  await page.getByRole('button', { name: 'Choose Random' }).click()
+  await page.getByLabel('Type in a word').fill('apple')
+  await page.getByRole('button', { name: 'Use this word' }).click()
   assert.equal(await page.locator('.guess-row').count(), 3)
+  const failurePanel = page.getByRole('region', { name: 'Good effort!', exact: true })
+  assert.equal(await failurePanel.count(), 0)
+  assert.equal(await page.getByText('The word was', { exact: true }).count(), 0)
   await context.setOffline(true)
   await page.keyboard.type('qzxqz')
   await page.getByRole('button', { name: 'ENTER', exact: true }).click()
@@ -327,13 +333,33 @@ try {
   await page.getByRole('button', { name: 'New Game', exact: true }).waitFor()
   assert.equal(await successPanel.count(), 0)
   assert.equal(await scoreboard.count(), 0)
-  const keyStyles = await page.locator('.keyboard .key').evaluateAll((keys) => keys.map((key) => ({
-    disabled: (key as HTMLButtonElement).disabled,
-    color: getComputedStyle(key).backgroundColor,
-    image: getComputedStyle(key).backgroundImage,
-  })))
-  assert.ok(keyStyles.length > 0 && keyStyles.every((style) => style.disabled && style.image === 'none'))
-  assert.equal(new Set(keyStyles.map((style) => style.color)).size, 1)
+  await failurePanel.waitFor()
+  await failurePanel.getByText('Every guess helps you learn.', { exact: true }).waitFor()
+  assert.equal(await failurePanel.locator('.round-answer strong').innerText(), 'APPLE')
+  assert.match(await page.getByRole('status').innerText(), /The word was APPLE\./)
+  assert.equal(await page.locator('.keyboard').count(), 0)
+  assert.equal(await page.getByRole('button', { name: 'New Game', exact: true }).evaluate((button) => document.activeElement === button), true)
+  for (const viewport of [{ width: 1200, height: 900 }, { width: 320, height: 844 }]) {
+    await page.setViewportSize(viewport)
+    await page.waitForTimeout(650)
+    const panelBox = await failurePanel.boundingBox()
+    const gridBox = await page.locator('.word-grid').boundingBox()
+    const actionsBox = await page.locator('.completion-actions').boundingBox()
+    assert.ok(panelBox && gridBox && actionsBox)
+    assert.ok(panelBox.x >= 0 && panelBox.x + panelBox.width <= viewport.width + 1)
+    assert.ok(gridBox.y + gridBox.height <= panelBox.y + 1)
+    assert.ok(panelBox.y + panelBox.height <= viewport.height + 1)
+    assert.ok(
+      gridBox.x >= actionsBox.x + actionsBox.width ||
+      gridBox.x + gridBox.width <= actionsBox.x ||
+      gridBox.y >= actionsBox.y + actionsBox.height ||
+      gridBox.y + gridBox.height <= actionsBox.y,
+      JSON.stringify({ viewport, gridBox, actionsBox }),
+    )
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1), false)
+    await page.screenshot({ path: viewport.width === 320 ? mobileFailureShot : failureShot, fullPage: false })
+  }
+  await page.setViewportSize({ width: 1200, height: 900 })
   await page.getByRole('button', { name: 'View Scoreboard', exact: true }).click()
   await scoreboard.waitFor()
   assert.equal(await scoreboard.locator('tbody tr').count(), 2)
@@ -341,6 +367,14 @@ try {
   await scoreboard.getByRole('button', { name: 'Clear History' }).click()
   await scoreboard.getByText('No saved games yet.').waitFor()
   await scoreboard.getByRole('button', { name: 'Close', exact: true }).click()
+
+  await page.getByRole('button', { name: 'New Game', exact: true }).click()
+  await page.getByLabel('Type in a word').fill('bread')
+  await page.getByRole('button', { name: 'Use this word' }).click()
+  assert.equal(await failurePanel.count(), 0)
+  assert.equal(await page.getByText('The word was', { exact: true }).count(), 0)
+  assert.equal(await page.locator('.keyboard').count(), 1)
+  assert.equal(await page.locator('.letter-tile.evaluated').count(), 0)
 
   await page.getByRole('button', { name: 'Return to home' }).click()
   await page.getByRole('button', { name: 'Exit game' }).click()
@@ -436,6 +470,8 @@ try {
   console.log(`Word chooser: ${chooserShot}`)
   console.log(`Game: ${gameShot}`)
   console.log(`Win celebration: ${successShot}`)
+  console.log(`Loss feedback: ${failureShot}`)
+  console.log(`Mobile loss feedback: ${mobileFailureShot}`)
   console.log(`Mobile setup: ${mobileSetupShot}`)
   console.log(`Mobile library: ${mobileShot}`)
 

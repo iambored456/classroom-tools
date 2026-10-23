@@ -83,3 +83,7 @@
   .nm-base-ten .nm-row > :nth-child(7) { grid-column: 3; grid-row: 2; }
   .nm-amount .blocks { gap: 8px; margin-top: 12px; }
 }
+
+/* Numeric activities share a measured scale for classroom displays. */
+.numeric-question .collection-workspace { max-width: none; }
+.numeric-question #interactive-question { display: flow-root; margin-inline: auto; }

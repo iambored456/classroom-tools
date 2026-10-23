@@ -635,6 +635,9 @@ html, body {
   border-radius: 8px;
   background: #202225;
 }
+.slider-pref-row[hidden] {
+  display: none;
+}
 .slider-pref-row label {
   min-width: 0;
   margin: 0;

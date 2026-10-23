@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Classroom Digital Clock – Editable Schedule & Preferences</title>
-  <script type="module" crossorigin src="/classroom-tools/class-clock/assets/index-DWjEV3tr.js"></script>
-  <link rel="stylesheet" crossorigin href="/classroom-tools/class-clock/assets/index-BxOsA55s.css">
+  <script type="module" crossorigin src="/classroom-tools/class-clock/assets/index-Be_Eaxxo.js"></script>
+  <link rel="stylesheet" crossorigin href="/classroom-tools/class-clock/assets/index-BhPibl81.css">
 </head>
 <body>
   <!-- Main Clock Display Container -->
@@ -132,7 +132,7 @@
                 </label>
             </div>
              <div class="preferences-container compact slider-pref-list">
-                 <div class="slider-pref-row">
+                 <div class="slider-pref-row" id="animation-detail-pref">
                      <label for="pref-sand-particle-size-slider">Animation Detail</label>
                      <div class="slider-stepper">
                          <button class="num-btn minus" aria-label="Decrease Animation Detail Size">-</button>
@@ -141,6 +141,17 @@
                              <input class="pref-slider" type="range" id="pref-sand-particle-size-slider" data-pref="sandParticleSize" min="1" max="20" step="0.5" value="5" aria-label="Animation Detail Size">
                          </div>
                          <button class="num-btn plus" aria-label="Increase Animation Detail Size">+</button>
+                     </div>
+                 </div>
+                 <div class="slider-pref-row" id="water-drip-speed-pref" hidden>
+                     <label for="pref-water-drip-speed-slider">Drip Speed <small>(drops/sec)</small></label>
+                     <div class="slider-stepper">
+                         <button class="num-btn minus" aria-label="Decrease Drip Speed">-</button>
+                         <div class="slider-track-shell">
+                             <span class="slider-value" data-pref-value="waterDripSpeed">0.5</span>
+                             <input class="pref-slider" type="range" id="pref-water-drip-speed-slider" data-pref="waterDripSpeed" min="0.05" max="2" step="0.05" value="0.5" aria-label="Drip Speed" aria-description="Drops per second, from one drop every 20 seconds to two drops per second, consistent across schedule sections.">
+                         </div>
+                         <button class="num-btn plus" aria-label="Increase Drip Speed">+</button>
                      </div>
                  </div>
                  <div class="slider-pref-row">

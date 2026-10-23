@@ -10,7 +10,7 @@ test('each completed side fills its own endpoint', () => {
   ]) {
     assert.match(html, new RegExp(`class="square-total total-${side}" style="--col:${column};--row:${row}"[^>]*>${sum}</output>`))
   }
-  assert.match(html, /result-left[\s\S]*result-top[\s\S]*result-bottom[\s\S]*result-right/)
+  assert.doesNotMatch(html, /square-results|square-result/)
   assert.doesNotMatch(html, /class="blocks"/)
 })
 

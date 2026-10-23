@@ -83,3 +83,17 @@
   .hundred-slat { width: 80px; height: 80px; }
   .slot { width: 50%; height: auto; font-size: clamp(1rem, 4.6vw, 1.7rem); }
 }
+
+/* Center #40's equation and its number representations as one group. */
+.equation[data-layout="two-digit-addition"] {
+  min-height: 360px;
+  grid-template-rows: 1fr auto auto auto 1fr;
+}
+.equation[data-layout="two-digit-addition"] .number { grid-row: 2 / span 3; }
+.equation[data-layout="two-digit-addition"] .operator { grid-row: 2; }
+.equation[data-layout="two-digit-addition"] :is(.words, .blocks):empty { display: none; }
+@media(max-width:650px) {
+ .equation[data-layout="two-digit-addition"] { min-height: 260px; }
+}
+
+.equation[data-layout="two-digit-addition"] .number-box { width:100%; min-width:0; align-self:center; }

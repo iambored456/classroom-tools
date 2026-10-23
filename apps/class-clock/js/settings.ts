@@ -229,6 +229,7 @@ export const Settings = {
         sandHeight: 14, // percentage of viewport height
         // sandDropInterval: 1000, // REMOVED
         sandParticleSize: 5, // pixels (radius)
+        waterDripSpeed: 0.5, // droplets per second, independent of schedule section length
         // -----------------------------
         colourSchemes: [
             { id: 1, name: "Default Dark", background: "#000000", text: "#FFFFFF" },
@@ -326,6 +327,12 @@ export const Settings = {
     getAnimationDetailSizePx: function(referenceHeight?: number) {
         const detailSizePx = Number(Settings.preferences?.sandParticleSize) || Settings.defaultPreferences.sandParticleSize;
         return Math.max(1, Math.min(20, detailSizePx));
+    },
+
+    getWaterDripSpeed: function(preferences = Settings.preferences) {
+        const speed = Number(preferences?.waterDripSpeed);
+        const safeSpeed = Number.isFinite(speed) ? speed : Settings.defaultPreferences.waterDripSpeed;
+        return Math.max(0.05, Math.min(2, Math.round(safeSpeed * 20) / 20));
     },
 
     getSyncTargets: function(preferences = Settings.preferences) {
@@ -504,6 +511,7 @@ export const Settings = {
                         tempPrefs[key] = roundScaleValue(Number(tempPrefs[key]) || Settings.defaultPreferences[key]);
                     }
                     tempPrefs.sandParticleSize = roundDetailSizeValue(Number(tempPrefs.sandParticleSize) || Settings.defaultPreferences.sandParticleSize);
+                    tempPrefs.waterDripSpeed = Settings.getWaterDripSpeed(tempPrefs);
                     if (typeof tempPrefs.visualizationMode !== 'string') {
                         tempPrefs.visualizationMode = Settings.defaultPreferences.visualizationMode;
                     }

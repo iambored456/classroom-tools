@@ -18,8 +18,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'paper-airplane-visualizer',
-    name: 'Paper Airplane Visualizer',
-    description: 'Watch a sheet become a paper airplane.\nRotate, zoom, and explore every fold in 3D.',
+    name: "Paper Airplanes",
+    description: "Animated instructions to fold paper airplanes.",
     href: withBase('paper-airplane-visualizer/'),
     preview: withBase('images/PaperAirplaneVisualizer-screenshot.png'),
     tags: ['Classroom'],
@@ -28,8 +28,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'open-middle',
-    name: 'Open Middle Math',
-    description: 'Open Middle Math problems',
+    name: "Open Middle Math",
+    description: "Interactable open-ended math problems.",
     href: withBase('open-middle/'),
     preview: withBase('images/OpenMiddle-preview.svg'),
     tags: ['Math'],
@@ -38,8 +38,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'classroom-wordle',
-    name: 'Classroom Wordle',
-    description: 'Guess the hidden word.\nAdjust length, attempts, and answers.',
+    name: "Classroom Wordle",
+    description: "A clone of 'Wordle' that lets you control difficulty, answers.",
     href: withBase('classroom-wordle/'),
     preview: withBase('images/ClassroomWordle-screenshot.png'),
     tags: ['Dev. Ed.'],
@@ -48,8 +48,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'classroom-connections',
-    name: 'Classroom Connections',
-    description: 'Find groups of connected words.\nAdjust difficulty, groups, and make your own.',
+    name: "Classroom Connections",
+    description: "A clone of 'Connections' that lets you control difficulty, answers.",
     href: withBase('classroom-connections/'),
     preview: withBase('images/ClassroomConnections-screenshot.png'),
     tags: ['Dev. Ed.'],
@@ -58,8 +58,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'book-of-questions',
-    name: 'Book of Questions',
-    description: 'Draw conversation prompts without repeats.\nSave sessions and customize the question library.',
+    name: "Book of Questions",
+    description: "Hundreds of conversation starters to better get to know someone.",
     href: withBase('book-of-questions/'),
     preview: withBase('images/BookOfQuestions-screenshot.png'),
     tags: ['Classroom'],
@@ -68,9 +68,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'read-along-highlighter',
-    name: 'ReadAlong Highlighter',
-    description:
-      'Visually highlight text as you read aloud.\nUse arrow keys to navigate words and lines, hold shift to highlight each letter.',
+    name: "ReadAlong Highlighter",
+    description: "Highlights text as someone reads.",
     href: withBase('read-along-highlighter/'),
     preview: withBase('images/ReadAlongHighlighter-screenshot.png'),
     tags: ['Classroom'],
@@ -79,9 +78,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'class-clock',
-    name: 'ClassClock',
-    description:
-      'Visually show your class schedule.\nMultiple designs to show how much time is left this period.',
+    name: "ClassClock",
+    description: "Visually show students the time and how much time is left in the current period.",
     href: withBase('class-clock/'),
     preview: withBase('images/ClassClock-screenshot.png'),
     tags: ['Classroom'],
@@ -90,8 +88,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'city-navigator',
-    name: 'City Routes',
-    description: 'Plan routes through a city.\nThen, watch every instruction play out.',
+    name: "CityRoutes",
+    description: "Use your orientation skills to plan a car trip, and see if you can lead the car to its destination!",
     href: withBase('city-navigator/'),
     preview: withBase('images/CityRoutes-screenshot.png'),
     tags: ['Dev. Ed.'],
@@ -130,9 +128,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'launchpad-whack-a-mole',
-    name: 'Launchpad Whack-a-Mole',
-    description:
-      'Chase glowing pads, build streaks, and beat the clock. Play on a Launchpad or directly on screen.',
+    name: "Launchpad\nWhacke-a-Mole",
+    description: "Hit the single light as fast as possible within the time limit. 1 Player.",
     href: withBase('launchpad-whack-a-mole/'),
     preview: withBase('images/LaunchpadWhackaMole-screenshot.png'),
     tags: ['Dev. Ed.'],
@@ -141,9 +138,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'launchpad-snake',
-    name: 'Launchpad Snake',
-    description:
-      'Guide a glowing snake across all 64 pads. Steer from the edge zones on a Launchpad or directly on screen.',
+    name: "Launchpad\nSnack",
+    description: "Play the retro arcade game 'Snake' on a Launchpad. 1 Player.",
     href: withBase('launchpad-snake/'),
     preview: withBase('images/LaunchpadSnake-screenshot.png'),
     tags: ['Dev. Ed.'],
@@ -152,9 +148,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'launchpad-reversi',
-    name: 'Launchpad Reversi',
-    description:
-      'Outflank and flip discs across all 64 pads. Play head-to-head or challenge a three-level computer opponent.',
+    name: "Launchpad\nReversi",
+    description: "Play the classic game 'Reverse' on a Launchpad. 1-2 Players.",
     href: withBase('launchpad-reversi/'),
     preview: withBase('images/LaunchpadReversi-screenshot.png'),
     tags: ['Dev. Ed.'],
@@ -163,9 +158,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'launchpad-paint-war',
-    name: 'Launchpad Paint War',
-    description:
-      'Race to cover the 8 by 8 grid before time runs out. Play head-to-head or against a three-speed computer.',
+    name: "Launchpad\nPaint War",
+    description: "Push pads as fast as possible to control more squares than your opponent. 1-2 Players.",
     href: withBase('launchpad-paint-war/'),
     preview: withBase('images/LaunchpadPaintWar-screenshot.png'),
     tags: ['Dev. Ed.'],
@@ -174,9 +168,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'launchpad-finger-twister',
-    name: 'Launchpad Finger Twister',
-    description:
-      'Hold every new coloured pad without letting go. Play solo or face another player with one- and two-hand modes.',
+    name: "Launchpad\nFinder Twister",
+    description: "Place a finger on each new colour without lifting any off of the Launchpad. 1-2 Players.",
     href: withBase('launchpad-finger-twister/'),
     preview: withBase('images/LaunchpadFingerTwister-screenshot.png'),
     tags: ['Dev. Ed.'],
