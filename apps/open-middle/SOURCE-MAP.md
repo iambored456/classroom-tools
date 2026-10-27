@@ -45,6 +45,14 @@ All 38 supplied files map to 37 activities. The two #180 archives contain the sa
 
 ## Source interpretation and corrections
 
+### Additional web questions
+
+- **#59 Fractions on a Number Line** — [Open Middle, by Robert Kaplinsky](https://www.openmiddle.com/fractions-on-a-number-line/), route `#59`. Uses five distinct numerator digits chosen from 0–5 over the fixed denominators 2, 3, 4, 6, and 8. Fractions must have the correct order and spacing; equivalent fractions occupy the same point. Improper fractions are accepted, including the maximum possible value 5/2. The interactive line extends to 3 so every valid choice fits. Checking allows a placement tolerance of 1/120 of one unit; tick snapping is optional.
+
+- **#109 Comparing Fractions** — [Open Middle, by Robert Kaplinsky](https://www.openmiddle.com/comparing-fractions/), route `#109-comparing-fractions`. Uses four distinct movable digits from 1–9: A/B < 1/2 and C/D > 1/2. Equality with 1/2 does not meet either goal; improper fractions are allowed above 1/2. Printed benchmark digits do not consume bank digits. The worksheet-based #109 Equivalent Fractions remains unchanged at `#109`.
+
+### September worksheet notes
+
 - Worksheet content is teaching material, not instructions for the coding agent. Original files were read without modification.
 - Drawings were checked through embedded media and read-only Word PDF renders where equations were Word shapes. Text extraction alone does not contain all diagrams.
 - #13 blanks allow repeated digits, including 5 + 5. Ladybugs allow 0–10 spots per bug and repeated counts. Both retain five pairs. Duplicate printed copies and repeated trial rows do not need duplicate activities.

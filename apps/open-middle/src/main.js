@@ -4,10 +4,15 @@ import './sum-square.css'
 import './numeric.css'
 import './explorations.css'
 import './manipulatives.css'
+import './fraction-line.css'
 import './collection.css'
 import './theme.css'
 import './question-previews.css'
 import {mountQuestionPreviews} from './question-previews.js'
+import {mountQrShare} from './qr-share.js'
+import './qr-share.css'
+import './drag-assist.css'
+import {mountDigitDrag} from './drag-assist.js'
 import {emptySlots, placeDigit, numberAt, equationState, numberWords, sideSum} from '@classroom-tools/open-middle-core'
 import {baseTenBlocks as blocks} from '@classroom-tools/open-middle-core/blocks'
 import {findQuestion, questions, questionLabel} from './questions/index.js'
@@ -17,13 +22,29 @@ import {mountNumeric} from './numeric-view.js'
 import {mountExploration} from './explorations.js'
 import {mountManipulative} from './manipulatives.js'
 const app = document.querySelector('#app')
-let slots = emptySlots(), selected = null, drag = null, suppressClick = false
+let slots = emptySlots(), selected = null
+let digitDrag = null
+let dragAssistEnabled = false
+try { dragAssistEnabled = localStorage.getItem('open-middle-drag-assist') === 'true' } catch {}
+const supportsDragAssist = problem => problem && (!customQuestion(problem) || problem.layout === 'digit-task' || ['495','59'].includes(String(problem.id)))
+function bindDragAssist(problem) {
+ if (!supportsDragAssist(problem)) return
+ const label = document.createElement('label')
+ label.className = 'drag-assist-setting'
+ label.innerHTML = `<input id="drag-assist" type="checkbox" ${dragAssistEnabled?'checked':''} aria-describedby="drag-assist-description"><span>Drag Assist<small id="drag-assist-description">Keep dragging through brief breaks in contact.</small></span>`
+ document.querySelector('#spacing').closest('label').after(label)
+ label.querySelector('input').onchange = event => {
+  digitDrag?.cancel(); cleanupCustom?.cancelDrag?.()
+  dragAssistEnabled = event.target.checked
+  try { localStorage.setItem('open-middle-drag-assist', String(dragAssistEnabled)) } catch {}
+ }
+ document.querySelector('.help-copy').append(' With Drag Assist on in Settings, briefly lift and touch near the number to keep dragging. You can also tap a digit, then tap a space.')
+}
 let showSums = [false, false]
 let activeQuestionId = null
 let cleanupCustom = null
 let windowFit = null
 let landingPreviews = null
-let searchText = ''
 const customQuestion = problem => problem && (problem.layout === 'digit-task' || problem.layout === 'exploration' || problem.kind === 'manipulative')
 const escapeHtml = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
 let doubleSpace = false
@@ -49,6 +70,9 @@ document.addEventListener('fullscreenchange', () => {
  button.outerHTML = fullscreenControl()
  bindFullscreen()
 })
+// Last question number in Kindergarten and Grades 1–7.
+const gradeBoundaries = [13, 37, 50, 88, 156, 241, 326, 396]
+const questionOrder = question => Number.parseInt(question.displayId ?? question.id, 10)
 const questionNumber = question => `<span class="question-number">${escapeHtml(questionLabel(question).split(' - ')[0])}</span>`
 const homeControls = question => `<nav class="home-controls" aria-label="Question navigation">${icon('home','Home')}${questionNumber(question)}</nav>`
 const classroomToolsUrl = location.pathname.includes('/open-middle/')
@@ -61,6 +85,7 @@ function twoDigitEquation(problem) {
  return `${problem.instructionPosition==='above'?instructions(problem):''}${bank(problem)}${problem.instructionPosition==='below'?instructions(problem):''}<section class="equation ${equationState(slots,problem)}" data-layout="${problem.layout}" aria-label="${problem.numberCount} two-digit numbers in an equation">${Array.from({length:problem.numberCount},(_,i)=>`${i?`<span class="operator">${i===problem.sides[1][0]?'=':'+'}</span>`:''}<div class="number"><div class="number-box"><svg class="number-outline" aria-hidden="true" width="100%" height="100%"><rect x="1" y="1" width="calc(100% - 2px)" height="calc(100% - 2px)" /></svg>${[i*2,i*2+1].map(s=>`<button class="slot ${slots[s]!==null?'filled':''}" data-slot="${s}" ${slots[s]!==null?`data-digit="${slots[s]}"`:''} aria-label="Number ${i+1}, ${s%2?'ones':'tens'}: ${slots[s]??'empty'}"><svg class="slot-outline" aria-hidden="true" viewBox="0 0 100 100"><circle cx="50" cy="50" r="49" /></svg><span>${slots[s]??''}</span></button>`).join('')}</div><div class="words">${numberAt(slots,i)===null?'':numberWords(numberAt(slots,i))}</div>${blocks(numberAt(slots,i))}</div>`).join('')}${problem.showSideSums?sumPanel(0,problem)+sumPanel(1,problem):''}</section>`
 }
 function render() {
+ digitDrag?.destroy(); digitDrag=null
  windowFit?.cleanup(); windowFit=null
  landingPreviews?.cleanup(); landingPreviews=null
  const problem = findQuestion(location.hash)
@@ -74,9 +99,10 @@ function render() {
  app.className = [doubleSpace ? 'double-space' : '', customQuestion(problem)?`custom-question ${problem.layout==='digit-task'?'numeric-question':''}`:''].join(' ')
  document.title = problem ? `${questionLabel(problem)} · Open Middle` : 'Open Middle · Classroom Tools'
  if (!problem) {
-  app.innerHTML = `<main class="landing"><div class="landing-heading"><h1>Open Middle Math</h1>${landingHome}</div><label class="collection-search">Find a question <input id="question-search" type="search" placeholder="Number, title, or topic" value="${escapeHtml(searchText)}"></label><p id="question-count" class="collection-count" role="status"></p><div class="problem-list"></div></main>`
-  const filter=()=>{landingPreviews?.hide();const terms=searchText.toLowerCase().trim().split(/\s+/).filter(Boolean),filtered=questions.filter(q=>terms.every(term=>`${q.id} ${q.title} ${q.category??q.topic??''}`.toLowerCase().includes(term)));document.querySelector('.problem-list').innerHTML=filtered.map(question=>`<a class="problem-link" href="#${question.id}">${escapeHtml(questionLabel(question))}</a>`).join('');document.querySelector('#question-count').textContent=`${filtered.length} of ${questions.length} activities`}
-  document.querySelector('#question-search').oninput=e=>{searchText=e.target.value;filter()};filter();landingPreviews=mountQuestionPreviews(document.querySelector('.problem-list'));return
+  app.innerHTML = `<main class="landing"><div class="landing-heading"><h1>Open Middle Math</h1>${landingHome}</div><p class="collection-count">${questions.length} activities</p><div class="problem-list">${questions.map((question,index)=>`${index>0 && gradeBoundaries.some(boundary=>questionOrder(questions[index-1])<=boundary && questionOrder(question)>boundary)?'<hr class="grade-divider" aria-label="Grade boundary">':''}<a class="problem-link" href="#${question.id}">🚩${escapeHtml(questionLabel(question))}</a>`).join('')}</div></main>`
+  mountQrShare(document.querySelector('.landing-heading'))
+  landingPreviews=mountQuestionPreviews(document.querySelector('.problem-list'))
+  return
  }
  if(customQuestion(problem)){
   const numeric=problem.layout==='digit-task'
@@ -89,7 +115,8 @@ function render() {
   document.querySelector('#settings').onclick=()=>document.querySelector('#settings-dialog').showModal()
   document.querySelector('#spacing').onchange=e=>{doubleSpace=e.target.checked;app.classList.toggle('double-space',doubleSpace);try{localStorage.setItem('open-middle-double-space',String(doubleSpace))}catch{}}
   const target=document.querySelector('#interactive-question')
-  cleanupCustom=problem.layout==='digit-task'?mountNumeric(target,problem,{secondaryContainer:document.querySelector('#numeric-secondary')}):problem.layout==='exploration'?mountExploration(target,problem):mountManipulative(target,problem)
+  cleanupCustom=problem.layout==='digit-task'?mountNumeric(target,problem,{secondaryContainer:document.querySelector('#numeric-secondary'),dragAssistEnabled:()=>dragAssistEnabled}):problem.layout==='exploration'?mountExploration(target,problem):mountManipulative(target,problem,{dragAssistEnabled:()=>dragAssistEnabled})
+  bindDragAssist(problem)
   if(numeric)document.querySelector('#refresh').onclick=()=>cleanupCustom.reset()
   else windowFit=fitToWindow(document.querySelector('.window-fit-content'),{allowVerticalScroll:true})
   return
@@ -102,6 +129,18 @@ function render() {
  document.querySelector('#help').onclick = () => document.querySelector('#help-dialog').showModal()
  document.querySelector('#settings').onclick = () => document.querySelector('#settings-dialog').showModal()
  document.querySelector('#spacing').onchange = e => {doubleSpace=e.target.checked;app.classList.toggle('double-space',doubleSpace);try{localStorage.setItem('open-middle-double-space',String(doubleSpace))}catch{}}
+ bindDragAssist(problem)
+ digitDrag=mountDigitDrag(document.querySelector('.workspace'),{
+  sourceSelector:'[data-digit]', targetSelector:'[data-slot],.bank', enabled:()=>dragAssistEnabled,
+  readSource:element=>({digit:Number(element.dataset.digit)}),
+  readTarget:element=>({element, index:element.hasAttribute('data-slot')?Number(element.dataset.slot):null}),
+  commit(source,target){
+   if(target.index!==null)slots=placeDigit(slots,source.digit,target.index,problem)
+   else slots=slots.map(d=>d===source.digit?null:d)
+   selected=null;render()
+   if(target.index!==null)document.querySelector(`[data-slot="${target.index}"]`)?.focus()
+  },
+ })
 }
 function sumPanel(side, problem) {
  const sum = sideSum(slots,side,problem)
@@ -111,7 +150,6 @@ function sumPanel(side, problem) {
 }
 app.addEventListener('click',e=>{
  if(customQuestion(findQuestion(location.hash)))return
- if(suppressClick){suppressClick=false;return}
  const sumToggle=e.target.closest('[data-toggle-sum]')
  if(sumToggle){const side=Number(sumToggle.dataset.toggleSum);showSums[side]=!showSums[side];render();document.querySelector(`[data-toggle-sum="${side}"]`).focus();return}
  const slot=e.target.closest('[data-slot]'), digit=e.target.closest('[data-digit]')
@@ -125,43 +163,6 @@ app.addEventListener('keydown',e=>{
  if(/^\d$/.test(e.key) && findQuestion(location.hash)?.digits.includes(Number(e.key))){e.preventDefault();slots=placeDigit(slots,Number(e.key),i,findQuestion(location.hash));render();document.querySelector(`[data-slot="${Math.min(slots.length-1,i+1)}"]`).focus()}
  if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();slots[i]=null;render();document.querySelector(`[data-slot="${i}"]`).focus()}
 })
-app.addEventListener('pointerdown',e=>{
- if(customQuestion(findQuestion(location.hash)))return
- const el=e.target.closest('[data-digit]');if(!el||el.disabled||e.button!==0)return
- suppressClick=false;drag={el,x:e.clientX,y:e.clientY,id:e.pointerId,digit:Number(el.dataset.digit),active:false}
- el.setPointerCapture(e.pointerId)
-})
-app.addEventListener('pointermove',e=>{
- if(!drag||drag.id!==e.pointerId)return
- if(!drag.active&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>6){
-   drag.active=true
-   const bounds=drag.el.getBoundingClientRect(), style=getComputedStyle(drag.el)
-   drag.ghost=drag.el.cloneNode(true)
-   drag.ghost.removeAttribute('id')
-   drag.ghost.setAttribute('aria-hidden','true')
-   drag.ghost.classList.add('ghost')
-   drag.ghost.style.width=bounds.width+'px'
-   drag.ghost.style.height=bounds.height+'px'
-   drag.ghost.style.fontSize=style.fontSize
-   drag.ghost.style.wordSpacing=style.wordSpacing
-   document.body.append(drag.ghost)
- }
- if(!drag.active)return
- drag.ghost.style.left=e.clientX+'px';drag.ghost.style.top=e.clientY+'px'
- document.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target'))
- document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-slot]')?.classList.add('drop-target')
-})
-function finishDrag(e,cancel=false){
- if(!drag)return
- const current=drag;drag=null;current.ghost?.remove();document.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target'))
- if(!current.active)return
- suppressClick=true
- if(!cancel){const target=document.elementFromPoint(e.clientX,e.clientY)
- const slot=target?.closest('[data-slot]');if(slot)slots=placeDigit(slots,current.digit,Number(slot.dataset.slot),findQuestion(location.hash));else if(target?.closest('.bank'))slots=slots.map(d=>d===current.digit?null:d)
- selected=null;render()}
- setTimeout(()=>{suppressClick=false},0)
-}
-app.addEventListener('pointerup',e=>finishDrag(e));app.addEventListener('pointercancel',e=>finishDrag(e,true))
 window.addEventListener('hashchange',render);render()
 if (document.modelContext?.registerTool) {
   try {

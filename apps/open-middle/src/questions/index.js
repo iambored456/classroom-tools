@@ -13,7 +13,7 @@ export const questions = [question34, question38, question40, ...numericQuestion
  return (Number.isNaN(numberA)?1000:numberA)-(Number.isNaN(numberB)?1000:numberB) || String(a.id).localeCompare(String(b.id),undefined,{numeric:true})
 })
 
-export const questionLabel = question => `#${String(question.id).startsWith('qf-')?'QF':String(question.id).startsWith('13-')?'13':question.id==='20-21-boards'?'20 / 21':question.id} - ${question.title}`
+export const questionLabel = question => `#${question.displayId??(String(question.id).startsWith('qf-')?'QF':String(question.id).startsWith('13-')?'13':question.id==='20-21-boards'?'20 / 21':question.id)} - ${question.title}`
 
 export function findQuestion(hash) {
   return questions.find(question => hash === `#${question.id}`)

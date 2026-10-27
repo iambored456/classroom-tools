@@ -1,0 +1,51 @@
+import qrcode from 'qrcode-generator'
+
+const publishedLandingUrl = 'https://iambored456.github.io/classroom-tools/open-middle/'
+
+export function landingShareUrl(href) {
+  const url = new URL(href)
+  const localHost = url.hostname === 'localhost' || url.hostname.endsWith('.localhost') ||
+    /^127\./.test(url.hostname) || ['[::1]', '0.0.0.0'].includes(url.hostname)
+  if (localHost || !['http:', 'https:'].includes(url.protocol)) return publishedLandingUrl
+  url.hash = ''
+  url.search = ''
+  return url.href
+}
+
+export function mountQrShare(heading) {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'icon landing-qr'
+  button.title = 'Show QR code'
+  button.setAttribute('aria-label', 'Show QR code for Open Middle Math')
+  button.setAttribute('aria-haspopup', 'dialog')
+  button.setAttribute('aria-controls', 'qr-share-dialog')
+  button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx=".5"/><rect x="15" y="3" width="6" height="6" rx=".5"/><rect x="3" y="15" width="6" height="6" rx=".5"/><path d="M15 15h3v3h3v3h-6v-3h-3v-3M12 3v3m0 3v3h6m3 0v3M3 12h3m3 0h3m0 9v-3"/></svg>'
+
+  const dialog = document.createElement('dialog')
+  dialog.id = 'qr-share-dialog'
+  dialog.className = 'qr-share-dialog'
+  dialog.setAttribute('aria-labelledby', 'qr-share-title')
+  dialog.setAttribute('aria-describedby', 'qr-share-instructions')
+  dialog.innerHTML = `<form method="dialog" class="dialog-heading"><h2 id="qr-share-title">Open Middle Math</h2><button class="close" aria-label="Close QR code" autofocus>×</button></form><p id="qr-share-instructions">Scan with your iPad’s camera to open the activities.</p><div class="qr-code" role="img" aria-label="QR code linking to the Open Middle Math landing page"></div><a class="qr-share-url"></a>`
+
+  button.addEventListener('click', () => {
+    const url = landingShareUrl(window.location.href)
+    const code = qrcode(0, 'M')
+    code.addData(url)
+    code.make()
+    dialog.querySelector('.qr-code').innerHTML = code.createSvgTag({cellSize: 8, margin: 32, scalable: true})
+    dialog.querySelector('.qr-code svg').setAttribute('aria-hidden', 'true')
+    const link = dialog.querySelector('.qr-share-url')
+    link.href = url
+    link.textContent = url
+    dialog.showModal()
+  })
+  dialog.addEventListener('click', event => {
+    if (event.target !== dialog) return
+    const bounds = dialog.getBoundingClientRect()
+    if (event.clientX < bounds.left || event.clientX > bounds.right ||
+        event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close()
+  })
+  heading.append(button, dialog)
+}

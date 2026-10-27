@@ -1,0 +1,30 @@
+.landing-qr {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  background: #fff7e9e8;
+}
+
+.landing .landing-heading { padding-inline: 24px; }
+
+.qr-share-dialog {
+  width: min(880px, calc(100vw - 32px));
+  padding: clamp(18px, 3dvh, 32px);
+  text-align: center;
+}
+
+.qr-share-dialog::backdrop { background: #21170f99; }
+.qr-share-dialog .dialog-heading { margin: 0 0 8px; text-align: left; }
+.qr-share-dialog .close { min-width: 44px; min-height: 44px; padding: 0; }
+.qr-share-dialog p { margin: 0 0 16px; color: var(--muted-ink); }
+
+.qr-code {
+  width: min(100%, 62dvh, 620px);
+  aspect-ratio: 1;
+  margin: 0 auto 16px;
+  background: #fff;
+}
+
+.qr-code svg { display: block; width: 100%; height: auto; shape-rendering: crispEdges; }
+.qr-share-url, .qr-share-url:visited { color: var(--muted-ink); overflow-wrap: anywhere; }

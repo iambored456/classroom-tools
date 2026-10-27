@@ -78,7 +78,7 @@
       {/if}
       <article class="card" style={`--card-accent: ${entry.accent}; --card-delay: ${index * 90}ms;`}>
         <div class="card-header">
-          <h2>{#each entry.name.split('\n') as line, lineIndex}{#if lineIndex > 0}<br />{/if}{line}{/each}</h2>
+          <h2><a class="tool-text-link" href={entry.href} on:pointerenter={() => prefetchApp(entry.href)} on:focus={() => prefetchApp(entry.href)} on:pointerdown={() => prefetchApp(entry.href)}>{#each entry.name.split('\n') as line, lineIndex}{#if lineIndex > 0}<br />{/if}{line}{/each}</a></h2>
         </div>
 
         <a
@@ -94,7 +94,7 @@
           </div>
         </a>
 
-        <p class="description">{entry.description}</p>
+        <p class="description"><a class="tool-text-link" href={entry.href} on:pointerenter={() => prefetchApp(entry.href)} on:focus={() => prefetchApp(entry.href)} on:pointerdown={() => prefetchApp(entry.href)}>{entry.description}</a></p>
         <div class="tags" aria-label={`${entry.name} category`}>
           {#each entry.tags as tag}<span>{tag}</span>{/each}
         </div>

@@ -1,15 +1,16 @@
 import {fitToWindow} from './fit-to-window.js'
+import {mountDigitDrag} from './drag-assist.js'
 import {evaluateNumeric,isUnique,placeNumeric} from './numeric-catalog.js'
 import {numberAt} from '@classroom-tools/open-middle-core'
 import {baseTenBlocks} from '@classroom-tools/open-middle-core/blocks'
 
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
-export function mountNumeric(container,q,{secondaryContainer}={}) {
+export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=()=>false}={}) {
  container.innerHTML='<div class="nm-view"></div><p class="nm-feedback" role="status" aria-live="polite" aria-atomic="true"></p>'
  const view=container.querySelector('.nm-view'),status=container.querySelector('.nm-feedback')
  const windowFit=fitToWindow(container)
  const storageKey=`open-middle-work-v1-${q.id}`
- let slots=Array(q.slotCount).fill(null),mode=q.modes?.[0][0],attempts=[],selected=null,drag=null,ignoreClick=false
+ let slots=Array(q.slotCount).fill(null),mode=q.modes?.[0][0],attempts=[],selected=null
  try {const saved=JSON.parse(localStorage.getItem(storageKey));if(saved){
   if(Array.isArray(saved.slots)&&saved.slots.length===q.slotCount&&saved.slots.every(x=>x===null||q.digits.includes(x)))slots=saved.slots
   if(q.modes?.some(x=>x[0]===saved.mode))mode=saved.mode
@@ -50,9 +51,8 @@ export function mountNumeric(container,q,{secondaryContainer}={}) {
   if(restore)focus(restore)
  }
  function changed(restore){save();render(restore)}
- function reset(){slots=Array(q.slotCount).fill(null);selected=null;changed('[data-nslot="0"]')}
+ function reset(){digitDrag.cancel();slots=Array(q.slotCount).fill(null);selected=null;changed('[data-nslot="0"]')}
  const click=e=>{
-  if(ignoreClick)return
   const bank=e.target.closest('[data-nbank]'),target=e.target.closest('[data-nslot]'),action=e.target.closest('[data-naction]')
   if(bank&&!bank.disabled){const d=Number(bank.dataset.nbank);selected=selected===d?null:d;render(`[data-nbank="${d}"]`)}
   if(target){const i=Number(target.dataset.nslot);if(selected!==null){slots=placeNumeric(slots,selected,i,q,mode);selected=null}else slots[i]=null;changed(`[data-nslot="${i}"]`)}
@@ -68,15 +68,27 @@ export function mountNumeric(container,q,{secondaryContainer}={}) {
   else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();focus(`[data-nslot="${Math.max(0,Math.min(q.slotCount-1,i+(e.key==='ArrowRight'?1:-1)))}"]`)}
  }
  const change=e=>{if(e.target.matches('[data-nmode]')){mode=e.target.value;if(isUnique(q,mode)){const seen=new Set();slots=slots.map(d=>{if(d!==null&&seen.has(d))return null;seen.add(d);return d})}selected=null;changed('[data-nmode]')}}
- const down=e=>{const el=e.target.closest('[data-nslot],[data-nbank]');if(!el||el.disabled||e.button!==0)return;const source=el.hasAttribute('data-nslot')?Number(el.dataset.nslot):null,digit=source===null?Number(el.dataset.nbank):slots[source];if(digit===null)return;drag={el,source,digit,id:e.pointerId,x:e.clientX,y:e.clientY};el.setPointerCapture(e.pointerId)}
- const clearDropTargets=()=>container.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target'))
- const move=e=>{if(!drag||drag.id!==e.pointerId)return;if(!drag.ghost&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>6){drag.ghost=document.createElement('span');drag.ghost.className='nm-ghost';drag.ghost.textContent=drag.digit;drag.ghost.setAttribute('aria-hidden','true');document.body.append(drag.ghost)}if(drag.ghost){drag.ghost.style.left=e.clientX+'px';drag.ghost.style.top=e.clientY+'px';clearDropTargets();const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-nslot],.nm-bank');if(target&&container.contains(target))target.classList.add('drop-target')}}
- const finish=(e,cancel=false)=>{if(!drag)return;const d=drag;drag=null;clearDropTargets();if(!d.ghost)return;d.ghost.remove();ignoreClick=true;setTimeout(()=>ignoreClick=false,0);if(cancel)return;const el=document.elementFromPoint(e.clientX,e.clientY),slotEl=el?.closest('[data-nslot]');if(slotEl&&container.contains(slotEl)){const index=Number(slotEl.dataset.nslot);if(!isUnique(q,mode)&&d.source!==null)slots[d.source]=null;slots=placeNumeric(slots,d.digit,index,q,mode);selected=null;changed(`[data-nslot="${index}"]`)}else if(el?.closest('.nm-bank')&&d.source!==null){slots[d.source]=null;selected=null;changed()}}
- const up=e=>finish(e),cancel=e=>finish(e,true)
- for(const [name,fn] of [['click',click],['keydown',key],['change',change],['pointerdown',down],['pointermove',move],['pointerup',up],['pointercancel',cancel]])container.addEventListener(name,fn)
+ const digitDrag=mountDigitDrag(container,{
+  sourceSelector:'[data-nslot],[data-nbank]',targetSelector:'[data-nslot],.nm-bank',enabled:dragAssistEnabled,
+  readSource(element){
+   const source=element.hasAttribute('data-nslot')?Number(element.dataset.nslot):null
+   const digit=source===null?Number(element.dataset.nbank):slots[source]
+   return digit===null?null:{digit,source}
+  },
+  readTarget:element=>({element,index:element.hasAttribute('data-nslot')?Number(element.dataset.nslot):null}),
+  commit(d,target){
+   if(target.index!==null){
+    if(!isUnique(q,mode)&&d.source!==null)slots[d.source]=null
+    slots=placeNumeric(slots,d.digit,target.index,q,mode);selected=null;changed(`[data-nslot="${target.index}"]`)
+   }else if(d.source!==null){slots[d.source]=null;selected=null;changed()}
+  },
+ })
+ const handlers=[['click',click],['keydown',key],['change',change]]
+ for(const [name,fn] of handlers)container.addEventListener(name,fn)
  secondaryContainer?.addEventListener('click',click)
  render()
- const cleanup=()=>{windowFit.cleanup();drag?.ghost?.remove();secondaryContainer?.removeEventListener('click',click);for(const [name,fn] of [['click',click],['keydown',key],['change',change],['pointerdown',down],['pointermove',move],['pointerup',up],['pointercancel',cancel]])container.removeEventListener(name,fn)}
+ const cleanup=()=>{digitDrag.destroy();windowFit.cleanup();secondaryContainer?.removeEventListener('click',click);for(const [name,fn] of handlers)container.removeEventListener(name,fn)}
+ cleanup.cancelDrag=digitDrag.cancel
  cleanup.reset=reset
  return cleanup
 }

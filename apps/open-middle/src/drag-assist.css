@@ -1,0 +1,21 @@
+.om-drag-ghost {
+  position: fixed;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--ink, #111);
+  border-radius: 50%;
+  background: var(--paper, #fff);
+  color: var(--ink, #111);
+  line-height: 1;
+  box-shadow: 0 5px 20px #0003;
+}
+.om-drag-ghost.drag-paused { outline: 2px dashed var(--ink, #555); outline-offset: 5px; }
+.drag-reconnect-ready { touch-action: none; }
+.mp-workspace .mp-digit { touch-action: none; user-select: none; }
+.mp-coordinate-slot.drop-target { background: #efe2d0; outline: 2px dashed #777; }
+dialog .drag-assist-setting { margin-top: 18px; align-items: flex-start; }
+.drag-assist-setting input { flex: none; }
+.drag-assist-setting small { display: block; margin-top: 4px; font-size: .9rem; color: var(--ink, #555); }

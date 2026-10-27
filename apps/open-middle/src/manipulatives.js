@@ -1,6 +1,10 @@
+import {mountDigitDrag} from './drag-assist.js';
+import {mountFractionLine} from './fraction-line.js';
+
 const source = (name) => `OM #${name}.docx`;
 
 export const manipulativeQuestions = [
+  { id: '59', title: 'Fractions on a Number Line', topic: 'Fractions', summary: 'Build five fractions, then drag them onto a number line.', prompt: 'Using the digits 0 to 5 at most once each, create five fractions and place them on the number line with the correct order and spacing.', sourceUrl: 'https://www.openmiddle.com/fractions-on-a-number-line/' },
   { id: '13-ladybugs', title: 'Decomposing 10 with Ladybugs', topic: 'Addition', summary: 'Add spots to five pairs of ladybugs.', prompt: 'Add spots to each bug to make the total number of spots equal to 10.', sourceFiles: [source('13 - Decomposing Numbers_ 10 w_ Ladybugs')] },
   { id: '20', title: 'Domino Square 1', topic: 'Addition', summary: 'Arrange four dominoes so every side has the same total.', prompt: 'Use four of these dominoes to form a square with the same number of dots on each side.', sourceFiles: [source('20 - Domino Square 1')] },
   { id: '21', title: 'Domino Square 2', topic: 'Addition', summary: 'Explore a different set of five dominoes.', prompt: 'Use four of these dominoes to form a square with the same number of dots on each side.', sourceFiles: [source('21 - Domino Square 2')] },
@@ -256,14 +260,14 @@ function coordinateGraph(values, pairing) {
   return graph;
 }
 
-function mountCoordinates(container, question, signal) {
+function mountCoordinates(container, question, signal, dragAssistEnabled) {
   const saved = readSaved(question.id);
   let values = Array.from({ length: 8 }, (_, index) => Number.isInteger(saved?.values?.[index]) && saved.values[index] >= 0 && saved.values[index] <= 9 ? saved.values[index] : null);
   let mode = ['parallel', 'perpendicular', 'both'].includes(saved?.mode) ? saved.mode : 'parallel';
   let pairing = [0, 1, 2].includes(saved?.pairing) ? saved.pairing : 0, selectedDigit = null, feedback = null;
   const save = () => persist(question.id, { values, mode, pairing });
   function render() {
-    const bank = element('div', { class: 'mp-digit-bank', role: 'group', 'aria-label': 'Digits zero to nine' }, Array.from({ length: 10 }, (_, digit) => button(String(digit), { class: `mp-digit ${selectedDigit === digit ? 'mp-selected' : ''}`, 'data-digit': digit, 'data-focus': `digit-${digit}`, disabled: values.includes(digit), draggable: !values.includes(digit), 'aria-label': `Digit ${digit}${values.includes(digit) ? ', used' : ''}`, 'aria-pressed': selectedDigit === digit })));
+    const bank = element('div', { class: 'mp-digit-bank', role: 'group', 'aria-label': 'Digits zero to nine' }, Array.from({ length: 10 }, (_, digit) => button(String(digit), { class: `mp-digit ${selectedDigit === digit ? 'mp-selected' : ''}`, 'data-digit': digit, 'data-focus': `digit-${digit}`, disabled: values.includes(digit), 'aria-label': `Digit ${digit}${values.includes(digit) ? ', used' : ''}`, 'aria-pressed': selectedDigit === digit })));
     const coordinates = element('div', { class: 'mp-coordinate-inputs' }, Array.from({ length: 4 }, (_, point) => element('div', { class: 'mp-coordinate-pair' }, [element('strong', { text: `${'ABCD'[point]} = (` }), ...[0, 1].flatMap((axis) => {
       const slot = point * 2 + axis;
       const input = element('input', { class: 'mp-coordinate-slot', 'data-slot': slot, 'data-focus': `slot-${slot}`, type: 'text', inputmode: 'numeric', maxlength: '1', autocomplete: 'off', pattern: '[0-9]', value: values[slot] === null ? '' : values[slot], 'aria-label': `Point ${'ABCD'[point]} ${axis ? 'y' : 'x'} coordinate`, placeholder: '·' });
@@ -302,26 +306,27 @@ function mountCoordinates(container, question, signal) {
     save(); rerenderPreservingFocus(container, render);
   }, { signal });
   container.addEventListener('focusin', (event) => { if (event.target.hasAttribute('data-slot')) event.target.select(); }, { signal });
-  container.addEventListener('dragstart', (event) => {
-    const target = event.target.closest('[data-digit]');
-    if (target) { event.dataTransfer.setData('text/plain', `digit:${target.dataset.digit}`); event.dataTransfer.effectAllowed = 'copy'; }
-  }, { signal });
-  container.addEventListener('dragover', (event) => { if (event.target.hasAttribute('data-slot')) event.preventDefault(); }, { signal });
-  container.addEventListener('drop', (event) => {
-    if (!event.target.hasAttribute('data-slot')) return;
-    event.preventDefault();
-    const match = /^digit:([0-9])$/.exec(event.dataTransfer.getData('text/plain'));
-    if (match) putDigit(Number(event.target.dataset.slot), Number(match[1]));
-  }, { signal });
   render();
+  return mountDigitDrag(container, {
+    sourceSelector: '[data-digit]', targetSelector: '[data-slot]', enabled: dragAssistEnabled,
+    readSource: element => ({digit: Number(element.dataset.digit)}),
+    readTarget: element => ({element, index: Number(element.dataset.slot)}),
+    commit: (source, target) => putDigit(target.index, source.digit),
+  });
 }
 
-export function mountManipulative(container, question) {
+export function mountManipulative(container, question, {dragAssistEnabled=()=>false}={}) {
+  if (String(question.id) === '59') return mountFractionLine(container, question, {dragAssistEnabled});
   const definition = typeof question === 'string' ? manipulativeQuestions.find(({ id }) => id === question) : question;
   if (!definition) throw new Error('Unknown manipulative question.');
   const controller = new AbortController();
   if (definition.id === '13-ladybugs') mountLadybugs(container, definition, controller.signal);
-  else if (definition.id === '495') mountCoordinates(container, definition, controller.signal);
+  else if (definition.id === '495') {
+    const digitDrag = mountCoordinates(container, definition, controller.signal, dragAssistEnabled);
+    const cleanup = () => { digitDrag.destroy(); controller.abort(); };
+    cleanup.cancelDrag = digitDrag.cancel;
+    return cleanup;
+  }
   else if (['20', '21', '20-21-boards'].includes(definition.id)) mountDominoes(container, definition, controller.signal);
   else throw new Error(`Unknown manipulative question: ${definition.id}`);
   return () => controller.abort();
