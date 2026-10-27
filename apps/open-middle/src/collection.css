@@ -2,7 +2,13 @@
 
 .home-controls{position:fixed;top:12px;left:12px;z-index:10;display:flex;align-items:center;gap:4px;padding-right:8px;border-radius:26px;background:#fff7e9e8}.home-controls #home{position:static;background:transparent}.question-number{display:inline-flex;align-items:center;min-height:46px;padding:0 6px;font-size:1rem;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
 
-.settings-controls{display:flex;align-items:center;gap:6px}.corner-tools{align-items:flex-end}
+.corner-tools{align-items:center;flex-direction:row}
+
+#help-dialog{width:560px}
+.help-settings{margin-top:24px;padding-top:20px;border-top:1px solid var(--paper-edge,#ccc)}
+.help-settings>h3{margin:0 0 14px;font-size:1.15rem;font-weight:500}
+.help-settings input[type="checkbox"]{flex:none}
+@media(max-width:360px){.corner-tools{gap:2px}.corner-tools>.icon{width:44px}}
 
 .landing-heading{justify-content:center;text-align:center}.landing-home{position:fixed;top:12px;left:12px;z-index:10}@media(max-width:650px){.landing{padding-top:76px}}
 

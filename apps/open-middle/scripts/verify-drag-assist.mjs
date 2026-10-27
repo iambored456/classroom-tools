@@ -145,9 +145,9 @@ try {
   console.log('Second contact cannot hijack or clear the active digit')
 
   await open(38, false)
-  await page.locator('#settings').click(); await page.locator('#drag-assist').check()
-  await page.locator('#settings-dialog .close').click(); await page.reload()
-  await page.locator('#settings').click(); assert.equal(await page.locator('#drag-assist').isChecked(), true)
+  await page.locator('#help').click(); await page.locator('#drag-assist').check()
+  await page.locator('#help-dialog .close').click(); await page.reload()
+  await page.locator('#help').click(); assert.equal(await page.locator('#drag-assist').isChecked(), true)
   await page.goto(`${base}#20`); assert.equal(await page.locator('#drag-assist').count(), 0)
   console.log('Saved setting survives reload and is hidden for domino activities')
 
@@ -195,9 +195,9 @@ try {
     Storage.prototype.setItem = () => { throw new Error('Storage blocked') }
   })
   await restricted.goto(`${base}#38`)
-  await restricted.locator('#settings').click(); await restricted.locator('#drag-assist').check()
+  await restricted.locator('#help').click(); await restricted.locator('#drag-assist').check()
   assert.equal(await restricted.locator('#drag-assist').isChecked(), true)
-  await restricted.locator('#settings-dialog .close').click()
+  await restricted.locator('#help-dialog .close').click()
   const a = await restricted.locator('.bank [data-digit="7"]').boundingBox(), b = await restricted.locator('[data-slot="0"]').boundingBox()
   await restricted.mouse.move(a.x+a.width/2,a.y+a.height/2); await restricted.mouse.down()
   await restricted.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:5}); await restricted.mouse.up()

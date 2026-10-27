@@ -10,9 +10,15 @@ Run `pnpm --filter open-middle dev` from the repository root, then open `http://
 
 Landing-page links show a screenshot preview while the pointer hovers over them. The previews omit navigation controls, ignore pointer events, and use a fresh, empty activity state. After changing question layouts or styling, run `pnpm --filter open-middle capture:previews` to regenerate images for the available activities in `public/question-previews/` and rebuild the app.
 
+## Question controls
+
+Every question has Help, QR code, and Fullscreen controls in that order. Settings appear below the instructions in Help, including saved attempts for numeric activities. The QR popup shares the current question’s direct link; local previews share its published GitHub Pages URL. The landing-page QR continues to share the activity collection.
+
+With the dev server running, `node apps/open-middle/scripts/verify-question-controls.mjs` checks every question’s controls and QR destination, saved preferences and attempts, fullscreen/reset, and 320px/390px layouts. These browser checks, five QR URL tests, and the production build passed on October 27, 2026.
+
 ## Drag Assist for smartboards
 
-In a number activity, open Settings and enable **Drag Assist** to keep a move active through brief contact interruptions. It is off initially; the choice is saved in this browser across activities and reloads. Touch, pen, and primary mouse input are supported, including boards that report mouse input. If browser storage is blocked, the setting still works for the current session.
+In a number activity, open Help and enable **Drag Assist** in the Settings section at the bottom to keep a move active through brief contact interruptions. It is off initially; the choice is saved in this browser across activities and reloads. Touch, pen, and primary mouse input are supported, including boards that report mouse input. If browser storage is blocked, the setting still works for the current session.
 
 During a drag, lifting keeps the number visible for 300 ms. Touch within 48 CSS pixels of its last position to continue the same move. An intentional release settles after this short pause; an abandoned or cancelled move leaves its source unchanged. A dashed outline indicates the reconnect window. Tap a digit and then a space, or use the existing keyboard controls, as alternatives.
 
@@ -27,7 +33,7 @@ Local verification passed on October 25, 2026: 35 focused controller/model tests
 - `src/questions/index.js` registers and sorts the entire library. Numeric and string IDs are supported, with stable `#<id>` links and a landing page listing all activities in one left-aligned column.
 - `src/questions/34.js`, `38.js`, and `40.js` retain the existing sum square and two-digit equation experiences, including base-ten blocks and side totals. Their digit handling comes from `@classroom-tools/open-middle-core`.
 - `src/numeric-catalog.js` defines 24 number, fraction, decimal, percent, geometry, and probability tasks. Diagrams use structured slot/group/fraction tokens; each rule has its own evaluator. Cross-products and integer hundredths avoid floating-point equality errors.
-- `src/numeric-view.js` implements digit dragging, select-and-place, keyboard entry, reset, challenge modes, automatic feedback, and up to 20 saved arrangements per question. Digit activities use circular spaces and live green/red highlighting when complete; instructions are in Help and saved arrangements are in Settings. Unique-digit tasks swap placed digits; repeatable tasks retain the bank.
+- `src/numeric-view.js` implements digit dragging, select-and-place, keyboard entry, reset, challenge modes, automatic feedback, and up to 20 saved arrangements per question. Digit activities use circular spaces and live green/red highlighting when complete; instructions are in Help and saved arrangements are in the Settings section of Help. Unique-digit tasks swap placed digits; repeatable tasks retain the bank.
 - `src/manipulatives.js` supplies ladybug spots, domino arrangement/flipping, shared boards, fraction number-line placement, and coordinate plots with three possible pairings. `src/fraction-line-model.js` checks unique numerator digits and number-line spacing and handles pointer/keyboard position conversion. Domino corner cells contribute to both adjacent side totals. Line comparisons use integer cross and dot products, including vertical, coincident, and degenerate lines.
 - `src/explorations.js` provides apple stories, editable dice outcome tables, the corner-rope model, rounded backpay, and grid/staggered coin arrangements, with checkable responses and written reasoning.
 
