@@ -67,6 +67,16 @@ export const hubEntries: HubEntry[] = [
   },
   {
     kind: 'app',
+    id: 'literacy-flashcards',
+    name: 'Literacy Flashcards',
+    description: 'Reading practice with EyeWords, UFLI Heart Words, and Reading Universe closed syllables.',
+    href: withBase('literacy-flashcards/'),
+    preview: withBase('images/LiteracyFlashcards-screenshot.png'),
+    tags: ['Classroom'],
+    accent: '#cbbfa8',
+  },
+  {
+    kind: 'app',
     id: 'read-along-highlighter',
     name: "ReadAlong Highlighter",
     description: "Highlights text as someone reads.",

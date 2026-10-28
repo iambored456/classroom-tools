@@ -523,6 +523,8 @@ a:focus-visible {
 }
 
 @media (max-width: 620px) {
+  .question-header .header-icon-button { width: 2.35rem; height: 2.35rem; }
+  .question-header-actions { gap: .3rem; }
   .landing-screen { padding: 4rem .8rem; }
   .landing-copy h1 { font-size: clamp(4.25rem, 18vw, 5.75rem); }
   .landing-actions { margin-top: 1.2rem; }

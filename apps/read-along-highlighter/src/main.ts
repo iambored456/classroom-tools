@@ -1,4 +1,5 @@
 import './style.css'
+import { ufliTexts } from './ufli-texts'
 
 const STORAGE = {
   lastText: 'readAlong:lastText',
@@ -56,6 +57,9 @@ const sidebarClose = byId<HTMLButtonElement>('sidebar-close')
 const fullscreenToggle = byId<HTMLButtonElement>('fullscreen-toggle')
 const fullscreenStatus = byId<HTMLParagraphElement>('fullscreen-status')
 const textInput = byId<HTMLTextAreaElement>('text-input')
+const ufliOpen = byId<HTMLButtonElement>('ufli-open')
+const ufliDialog = byId<HTMLDialogElement>('ufli-dialog')
+const ufliGrid = byId<HTMLDivElement>('ufli-grid')
 const textStatus = byId<HTMLParagraphElement>('text-status')
 const fontSizeRange = byId<HTMLInputElement>('font-size-range')
 const fontSizeNumber = byId<HTMLInputElement>('font-size-number')
@@ -775,6 +779,38 @@ function scrollFromMinimap(event: PointerEvent): void {
 sidebarToggle.addEventListener('click', () => setSidebarOpen(!sidebar.classList.contains('open')))
 sidebarClose.addEventListener('click', () => setSidebarOpen(false))
 
+for (const lesson of ufliTexts) {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.textContent = lesson.id
+  button.title = `Lesson ${lesson.id}: ${lesson.title}`
+  button.addEventListener('click', () => {
+    if (textProcessTimer !== null) clearTimeout(textProcessTimer)
+    if (textSaveTimer !== null) clearTimeout(textSaveTimer)
+    textProcessTimer = null
+    textSaveTimer = null
+    textInput.value = lesson.text
+    currentWordIndex = 0
+    currentCharacterCount = 0
+    saveText()
+    void processText(lesson.text)
+    ufliDialog.close()
+    setSidebarOpen(false)
+    textContainer.focus({ preventScroll: true })
+  })
+  ufliGrid.append(button)
+}
+ufliOpen.addEventListener('click', () => {
+  if (colourPopover.matches(':popover-open')) colourPopover.hidePopover()
+  ufliDialog.showModal()
+})
+byId<HTMLButtonElement>('ufli-close').addEventListener('click', () => ufliDialog.close())
+ufliDialog.addEventListener('click', (event) => {
+  if (event.target !== ufliDialog) return
+  const bounds = ufliDialog.getBoundingClientRect()
+  if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) ufliDialog.close()
+})
+
 function syncFullscreen(): void {
   const active = Boolean(document.fullscreenElement)
   const label = active ? 'Exit fullscreen' : 'Enter fullscreen'
@@ -806,7 +842,7 @@ document.addEventListener('pointerdown', (event) => {
   if (!sidebar.classList.contains('open')) return
   const target = event.target
   if (!(target instanceof Node)) return
-  if (sidebar.contains(target) || sidebarToggle.contains(target) || colourPopover.contains(target)) return
+  if (sidebar.contains(target) || sidebarToggle.contains(target) || colourPopover.contains(target) || ufliDialog.open) return
   setSidebarOpen(false)
 })
 
@@ -972,6 +1008,7 @@ function moveHighlightByCharacter(direction: -1 | 1): void {
 }
 
 document.addEventListener('keydown', (event) => {
+  if (ufliDialog.open) return
   const target = event.target as HTMLElement
   if (target.matches('input, textarea, select, button')) return
   if (!words[currentWordIndex]) return

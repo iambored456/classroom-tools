@@ -143,6 +143,15 @@ function buildTargets(rootBase) {
 `,
     },
     {
+      id: 'literacy-flashcards',
+      outputFile: 'LiteracyFlashcards-screenshot.png',
+      distDir: 'apps/literacy-flashcards/dist',
+      basePath: appendPath(rootBase, 'literacy-flashcards'),
+      route: appendPath(rootBase, 'literacy-flashcards'),
+      waitFor: '.set-card img',
+      delayMs: 250,
+    },
+    {
       id: 'book-of-questions',
       outputFile: 'BookOfQuestions-screenshot.png',
       distDir: 'apps/book-of-questions/dist',

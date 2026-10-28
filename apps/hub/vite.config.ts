@@ -29,6 +29,7 @@ export default defineConfig({
         target: 'http://localhost:5186',
         changeOrigin: true,
       },
+      '/literacy-flashcards': { target: 'http://localhost:5195', changeOrigin: true },
       '/book-of-questions': {
         target: 'http://localhost:5188',
         changeOrigin: true,

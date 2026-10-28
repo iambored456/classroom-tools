@@ -25,6 +25,7 @@ const servers: DevServer[] = [
   { name: 'class-schedule-widget', port: 5181, path: '/class-schedule-widget/' },
   { name: 'classroom-connections', port: 5186, path: '/classroom-connections/' },
   { name: 'book-of-questions', port: 5188, path: '/book-of-questions/' },
+  { name: 'literacy-flashcards', port: 5195, path: '/literacy-flashcards/' },
   { name: 'classroom-wordle', port: 5187, path: '/classroom-wordle/' },
   { name: 'read-along-highlighter', port: 5175, path: '/read-along-highlighter/' },
   { name: 'launchpad-whack-a-mole', port: 5176, path: '/launchpad-whack-a-mole/' },

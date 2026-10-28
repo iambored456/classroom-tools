@@ -51,7 +51,8 @@ button, select, input[type='range'], input[type='color'], input[type='checkbox']
 /* Isolate inline layout so highlighting does not reflow a novel-sized paragraph. */
 #text-container.large-document .word { display: inline-block; max-width: 100%; line-height: normal; }
 
-.word { border-radius: .12em; cursor: pointer; transition: color 80ms ease, background-color 80ms ease; }
+/* Partial-letter and full-word highlights must switch together, without a fade. */
+.word { border-radius: .12em; cursor: pointer; }
 .word:hover, .word.leading-word { outline: .08em solid color-mix(in srgb, var(--highlight-bg-color) 72%, transparent); }
 .highlighted { background: var(--highlight-bg-color); color: var(--highlight-text-color); }
 .character-highlighted { border-radius: .12em 0 0 .12em; background: var(--highlight-bg-color); color: var(--highlight-text-color); }
@@ -229,3 +230,45 @@ button, select, input[type='range'], input[type='color'], input[type='checkbox']
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+.ufli-section { padding-bottom: 0; }
+#ufli-open {
+  width: 100%;
+  min-height: 46px;
+  padding: .75rem 1rem;
+  border: 1px solid #52525b;
+  border-radius: 10px;
+  background: #27272a;
+  color: #fafafa;
+  font-weight: 700;
+}
+#ufli-open:hover, #ufli-grid button:hover { background: #3f3f46; }
+#ufli-dialog {
+  width: min(640px, calc(100vw - 24px));
+  max-height: calc(100dvh - 32px);
+  padding: 22px;
+  overflow-y: auto;
+  border: 1px solid #52525b;
+  border-radius: 16px;
+  background: #18181b;
+  color: #f4f4f5;
+  box-shadow: 0 24px 80px #0009;
+  color-scheme: dark;
+}
+#ufli-dialog::backdrop { background: #0009; }
+.ufli-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+#ufli-title { margin: 0; font-size: 1.15rem; }
+.ufli-header .icon-button { flex-shrink: 0; }
+#ufli-description { margin: .75rem 0 1.25rem; color: #a1a1aa; line-height: 1.4; }
+#ufli-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(48px, 1fr)); gap: 8px; }
+#ufli-grid button {
+  min-height: 44px;
+  padding: .4rem .15rem;
+  border: 1px solid #44444b;
+  border-radius: 8px;
+  background: #27272a;
+  color: #fafafa;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+#ufli-open:focus-visible, #ufli-grid button:focus-visible, #ufli-close:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+

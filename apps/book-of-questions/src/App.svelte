@@ -21,6 +21,7 @@
     saveSessions,
   } from './storage'
   import { fitQuestionText } from './text-fit'
+  import { previousCompletedQuestionId, reopenPreviousQuestion } from './session-history'
   import type { LibraryState, Question, QuestionSession, SensitiveTopic } from './types'
 
   type Screen = 'home' | 'session'
@@ -48,6 +49,7 @@
   let revealedFollowUps: string[] = []
   let hasMoreFollowUps = false
   let canChooseAnotherCard = false
+  let previousQuestionId: string | null = null
   let sortedSessions: QuestionSession[] = []
   let activeStats = { total: 0, answered: 0, inDeck: 0 }
   let wouldYouRatherOrientation: 'horizontal' | 'vertical' = 'horizontal'
@@ -84,6 +86,10 @@
 
   const sessionQuestions = (session: QuestionSession) =>
     library.questions.filter((question) => questionMatchesSession(question, session))
+
+  $: previousQuestionId = activeSession
+    ? previousCompletedQuestionId(activeSession, new Set(sessionQuestions(activeSession).map(question => question.id)))
+    : null
 
   const sessionStats = (session: QuestionSession) => {
     const questions = sessionQuestions(session)
@@ -455,6 +461,16 @@
     await animateFlipTo(nextSession, outgoingUsesOptionCards)
   }
 
+  const previousCard = async () => {
+    if (!activeSession || cardTransition !== 'idle') return
+    const previousSession = reopenPreviousQuestion(
+      activeSession,
+      new Set(sessionQuestions(activeSession).map(question => question.id)),
+    )
+    if (!previousSession) return
+    await animateFlipTo(previousSession, Boolean(currentQuestion && getWouldYouRatherOptions(currentQuestion)))
+  }
+
   const returnHome = () => {
     screen = 'home'
     activeSessionId = null
@@ -586,6 +602,9 @@
     } else if (event.key === 'ArrowRight' && !hasMoreFollowUps) {
       event.preventDefault()
       nextCard()
+    } else if (event.key === 'ArrowLeft' && previousQuestionId) {
+      event.preventDefault()
+      previousCard()
     } else if (event.key.toLocaleLowerCase() === 'c' && canChooseAnotherCard) {
       event.preventDefault()
       chooseAnotherCard()
@@ -799,6 +818,16 @@
             <path d="M9.6 3.1h4.8l.5 2.1 1.3.8 2-.6 2.4 4.2-1.5 1.5v1.8l1.5 1.5-2.4 4.2-2-.6-1.3.8-.5 2.1H9.6l-.5-2.1-1.3-.8-2 .6-2.4-4.2 1.5-1.5v-1.8L3.4 9.6l2.4-4.2 2 .6 1.3-.8.5-2.1Z"></path>
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
+        </button>
+        <button
+          class="header-icon-button previous-card-button"
+          type="button"
+          disabled={!previousQuestionId || cardTransition !== 'idle'}
+          aria-label="Previous card"
+          title={previousQuestionId ? 'Return to the previous card and remove it from Answered.' : 'No completed cards to return to.'}
+          on:click={previousCard}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4m7-7-7 7 7 7"></path></svg>
         </button>
       </div>
     </header>

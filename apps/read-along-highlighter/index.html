@@ -6,12 +6,21 @@
     <title>ReadAlong Highlighter</title>
   </head>
   <body>
-    <main id="text-container" aria-label="Read-along text"></main>
+    <main id="text-container" aria-label="Read-along text" tabindex="-1"></main>
 
     <aside id="minimap" class="right" aria-label="Document minimap" hidden>
       <div id="minimap-content" aria-hidden="true"></div>
       <div id="minimap-viewport" aria-hidden="true"></div>
     </aside>
+
+    <dialog id="ufli-dialog" aria-labelledby="ufli-title" aria-describedby="ufli-description">
+      <header class="ufli-header">
+        <h2 id="ufli-title">UFLI Decodable Texts</h2>
+        <button id="ufli-close" class="icon-button" type="button" aria-label="Close UFLI Decodable Texts">&times;</button>
+      </header>
+      <p id="ufli-description">Choose a lesson number to load its text.</p>
+      <div id="ufli-grid"></div>
+    </dialog>
 
     <button id="sidebar-toggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Open settings">
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -128,6 +137,9 @@
           </select>
         </label>
       </section>
+      <section class="settings-section ufli-section">
+        <button id="ufli-open" type="button" aria-haspopup="dialog" aria-controls="ufli-dialog">UFLI Decodable Texts</button>
+      </section>
     </aside>
 
     <div id="colour-popover" class="colour-popover" popover="auto" role="dialog" aria-labelledby="colour-popover-title">
@@ -159,3 +171,4 @@
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
+
