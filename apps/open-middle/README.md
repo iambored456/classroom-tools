@@ -8,6 +8,8 @@
 
 Run `pnpm --filter open-middle dev` from the repository root, then open `http://localhost:5194/open-middle/`. Use `pnpm --filter open-middle test` for the shared model and all activity tests, and `pnpm --filter open-middle build` for the production bundle.
 
+**#43 and #44 subtraction blocks:** one combined base 10 visualization sits beneath the equation. Shared amounts are grey, crossed-out blocks; the positive difference stays solid, and a negative difference uses bare strikes without a block behind them. The model updates while placing digits. The answer appears after `=` only when every digit space is filled; #44 keeps its goal of getting close to 39. Focused checks: `node --test apps/open-middle/src/subtraction-visual.test.js`.
+
 Landing-page links show a screenshot preview while the pointer hovers over them. The previews omit navigation controls, ignore pointer events, and use a fresh, empty activity state. After changing question layouts or styling, run `pnpm --filter open-middle capture:previews` to regenerate images for the available activities in `public/question-previews/` and rebuild the app.
 
 ## Question controls

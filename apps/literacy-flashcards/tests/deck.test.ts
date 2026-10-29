@@ -3,7 +3,8 @@ import test from 'node:test'
 import { readFileSync } from 'node:fs'
 import { cards } from '../src/cards.ts'
 import { eyeWordsCrop } from '../src/artwork.ts'
-import { cardSets, sessionStorageKey, setFromHash } from '../src/sets.ts'
+import { cardSets, createNonsenseSet, sessionStorageKey, setFromHash } from '../src/sets.ts'
+import { nonsenseGroups, normalizeNonsenseSelection } from '../src/nonsense-words.ts'
 import { CARD_COUNT, chooseAnotherCard, createSession, nextCard, previousCard, restoreSession } from '../src/deck.ts'
 
 test('every supplied PDF card has a word, a cue, and both original image sides', () => {
@@ -101,6 +102,17 @@ test('Heart Words contains all 94 original cards and their UFLI image files', ()
   }
 })
 
+test('every Heart Words sentence uses its target word and stays within three to five words', () => {
+  const set = setFromHash('#heart-words')!
+  for (const card of set.cards) {
+    assert.ok(card.sentence, `Missing sentence for ${card.word}`)
+    const words = card.sentence.match(/[a-z]+(?:['’][a-z]+)*/gi) ?? []
+    assert.ok(words.length >= 3 && words.length <= 5, `${card.word}: ${card.sentence}`)
+    assert.ok(words.some(word => word.toLowerCase() === card.word.toLowerCase()), `Missing target word: ${card.word}`)
+    assert.match(card.sentence, /^[A-Z].*[.!?]$/)
+  }
+})
+
 test('Reading Universe contains 308 single-sided original syllable cards', () => {
   const set = setFromHash('#closed-syllables')!
   assert.equal(set.name, 'Reading Universe - Closed Syllables')
@@ -117,7 +129,7 @@ test('Reading Universe contains 308 single-sided original syllable cards', () =>
     assert.equal(bytes.toString('ascii', 8, 12), 'WEBP')
     assert.equal(bytes.readUInt32LE(4) + 8, bytes.length)
   }
-  assert.ok(cardSets.filter(set => set.id !== 'closed-syllables').every(set => set.flippable))
+  assert.ok(cardSets.filter(set => set.frontKind === 'image' || set.frontKind === 'symbols').every(set => set.flippable))
   assert.equal(new Set(cardSets.map(set => sessionStorageKey(set.id))).size, cardSets.length)
 })
 
@@ -137,6 +149,57 @@ test('each set completes without repeats and Back reopens its own last card', ()
     assert.deepEqual(restoreSession(JSON.stringify(session), count), session)
     assert.equal(chooseAnotherCard(session), session)
   }
+})
+
+test('the supplied nonsense lists keep their words and skill descriptions', () => {
+  assert.deepEqual(nonsenseGroups.map(group => [group.id, group.words.length, group.syllables, group.rBlends, group.sBlends, group.lBlends]), [
+    ['A', 50, '1', false, false, false],
+    ['B', 100, '1', false, false, false],
+    ['C', 181, '1', true, true, false],
+    ['D', 30, '2, 3', true, true, true],
+  ])
+  assert.deepEqual(nonsenseGroups.map(group => [group.words[0], group.words.at(-1)]), [
+    ['som', 'yaf'], ['baf', 'twug'], ['banp', 'wusp'], ['balquim', 'zulmar'],
+  ])
+  for (const group of nonsenseGroups) {
+    assert.equal(new Set(group.words).size, group.words.length)
+    assert.ok(group.words.every(word => /^[a-z]+$/.test(word)))
+  }
+  // These supplied entries must not be removed by a real-word filter.
+  assert.ok(nonsenseGroups[1].words.includes('shop'))
+  assert.ok(nonsenseGroups[2].words.includes('crisp'))
+  assert.deepEqual(normalizeNonsenseSelection(['D', 'A', 'D', 'invalid', null]), ['A', 'D'])
+  assert.deepEqual(normalizeNonsenseSelection([]), [])
+})
+
+test('all 15 nonsense set combinations draw only selected words without repeats and save separately', () => {
+  const keys = new Set<string>()
+  for (let mask = 1; mask < 16; mask++) {
+    const groups = nonsenseGroups.filter((_, index) => mask & (1 << index))
+    const ids = groups.map(group => group.id)
+    const set = createNonsenseSet(ids)
+    const expected = new Set(groups.flatMap(group => group.words))
+    assert.equal(set.flippable, false)
+    assert.equal(set.frontKind, 'text')
+    assert.deepEqual(new Set(set.cards.map(card => card.word)), expected)
+    assert.equal(set.cards.length, expected.size)
+    assert.deepEqual(set.cards.map(card => card.id), Array.from({ length: expected.size }, (_, index) => index + 1))
+    const key = sessionStorageKey(set.id, ids)
+    keys.add(key)
+    assert.equal(sessionStorageKey(set.id, [...ids].reverse()), key)
+    const session = createSession(set.cards.length, () => .5)
+    const drawn = session.order.map(id => set.cards[id - 1].word)
+    assert.equal(new Set(drawn).size, expected.size)
+    const advanced = nextCard(session)
+    assert.deepEqual(restoreSession(JSON.stringify(advanced), expected.size), advanced)
+    assert.equal(previousCard(advanced).order[0], session.order[0])
+  }
+  assert.equal(keys.size, 15)
+  const mixed = createNonsenseSet(['A', 'B'])
+  assert.equal(mixed.cards.filter(card => card.word === 'hob').length, 1)
+  assert.equal(createNonsenseSet([]).cards.length, 0)
+  assert.equal(setFromHash('#nonsense-words')?.id, 'nonsense-words')
+  assert.equal(sessionStorageKey('eyewords', ['D']), 'literacy-flashcards.eyewords.v1')
 })
 
 test('EyeWords progress stays compatible and Heart Words uses a separate key and deck size', () => {

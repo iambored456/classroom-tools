@@ -1,21 +1,26 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte'
-  import { cardSets, cardImage, sessionStorageKey, setFromHash } from './sets'
-  import type { CardSetId } from './sets'
+  import { cardSets, cardImage, createNonsenseSet, sessionStorageKey, setFromHash } from './sets'
+  import type { CardSet, CardSetId } from './sets'
   import { chooseAnotherCard, createSession, nextCard, previousCard, restoreSession } from './deck'
   import type { DeckSession } from './deck'
   import { createTransitionQueue } from './transitions'
   import type { CardTransition } from './transitions'
   import CardArtwork from './CardArtwork.svelte'
   import { eyeWordsCrop } from './artwork'
+  import { nonsenseGroups, nonsenseCards, normalizeNonsenseSelection } from './nonsense-words'
+  import type { NonsenseGroupId } from './nonsense-words'
 
   type CardAction = 'flip' | 'next' | 'another' | 'back'
 
   const themeKey = 'literacy-flashcards.dark-mode'
+  const nonsenseSelectionKey = 'literacy-flashcards.nonsense-words.selection.v1'
   let activeSetId = $state<CardSetId>('eyewords')
-  let sessions = $state<Record<CardSetId, DeckSession>>(Object.fromEntries(
-    cardSets.map(set => [set.id, createSession(set.cards.length)]),
-  ) as Record<CardSetId, DeckSession>)
+  let nonsenseIds = $state<NonsenseGroupId[]>(['A'])
+  let draftNonsenseIds = $state<NonsenseGroupId[]>(['A'])
+  let sessions = $state<Record<string, DeckSession>>(Object.fromEntries(
+    cardSets.map(set => [sessionStorageKey(set.id), createSession(set.cards.length)]),
+  ))
   let screen = $state<'sets' | 'deck'>('sets')
   let darkMode = $state(true)
   let flipped = $state(false)
@@ -31,8 +36,13 @@
   let cardElement = $state<HTMLElement>(null!)
   let helpDialog = $state<HTMLDialogElement>(null!)
   let helpButton = $state<HTMLButtonElement>(null!)
-  const activeSet = $derived(cardSets.find(set => set.id === activeSetId)!)
-  const session = $derived(sessions[activeSetId])
+  let nonsenseDialog = $state<HTMLDialogElement>(null!)
+  let nonsenseButton = $state<HTMLButtonElement>(null!)
+  const nonsenseSet = $derived(createNonsenseSet(nonsenseIds))
+  const displaySets = $derived(cardSets.map(set => set.id === 'nonsense-words' ? nonsenseSet : set))
+  const draftWordCount = $derived(nonsenseCards(draftNonsenseIds).length)
+  const activeSet = $derived(displaySets.find(set => set.id === activeSetId)!)
+  const session = $derived(sessions[sessionStorageKey(activeSetId, nonsenseIds)])
   const cardCount = $derived(activeSet.cards.length)
   const currentId = $derived(session.order[session.position])
   const currentCard = $derived(activeSet.cards[currentId - 1])
@@ -51,9 +61,38 @@
   }, () => { notice = 'Card navigation couldn’t finish. Please try again.' })
 
   function saveSession(setId: CardSetId, updated: DeckSession) {
-    sessions[setId] = updated
-    try { localStorage.setItem(sessionStorageKey(setId), JSON.stringify(updated)) }
+    const key = sessionStorageKey(setId, nonsenseIds)
+    sessions[key] = updated
+    try { localStorage.setItem(key, JSON.stringify(updated)) }
     catch { storageUnavailable = true }
+  }
+
+  function loadSession(set: CardSet, ids = nonsenseIds) {
+    const key = sessionStorageKey(set.id, ids)
+    if (sessions[key]) return
+    let stored: string | null = null
+    try { stored = localStorage.getItem(key) }
+    catch { storageUnavailable = true }
+    sessions[key] = restoreSession(stored, set.cards.length) ?? createSession(set.cards.length)
+    try { localStorage.setItem(key, JSON.stringify(sessions[key])) }
+    catch { storageUnavailable = true }
+  }
+
+  function showNonsensePicker(button: HTMLButtonElement) {
+    nonsenseButton = button
+    draftNonsenseIds = [...nonsenseIds]
+    nonsenseDialog.showModal()
+  }
+
+  async function startNonsense() {
+    const selected = normalizeNonsenseSelection(draftNonsenseIds)
+    if (!selected.length) return
+    loadSession(createNonsenseSet(selected), selected)
+    nonsenseIds = selected
+    try { localStorage.setItem(nonsenseSelectionKey, JSON.stringify(selected)) }
+    catch { storageUnavailable = true }
+    nonsenseDialog.close()
+    await openDeck('nonsense-words')
   }
 
   function setScreenFromHash() {
@@ -177,7 +216,7 @@
 
   function onKeydown(event: KeyboardEvent) {
     const target = event.target as HTMLElement
-    if (screen !== 'deck' || helpDialog?.open || event.ctrlKey || event.metaKey || event.altKey ||
+    if (screen !== 'deck' || helpDialog?.open || nonsenseDialog?.open || event.ctrlKey || event.metaKey || event.altKey ||
       target.closest('input, select, textarea, dialog, [contenteditable="true"]')) return
     if (event.repeat && event.code !== 'ArrowRight' && event.code !== 'ArrowLeft') return
     if (event.code === 'Space' && activeSet.flippable && !target.closest('button, a')) { event.preventDefault(); void flipCard() }
@@ -186,11 +225,16 @@
   }
 
   onMount(() => {
-    for (const set of cardSets) {
+    try {
+      const savedSelection = JSON.parse(localStorage.getItem(nonsenseSelectionKey) ?? 'null')
+      const selected = normalizeNonsenseSelection(Array.isArray(savedSelection) ? savedSelection : [])
+      if (selected.length) nonsenseIds = selected
+    } catch { /* Invalid saved choices fall back to Set A. */ }
+    for (const set of displaySets) {
       let stored: string | null = null
-      try { stored = localStorage.getItem(sessionStorageKey(set.id)) }
+      try { stored = localStorage.getItem(sessionStorageKey(set.id, nonsenseIds)) }
       catch { storageUnavailable = true }
-      saveSession(set.id, restoreSession(stored, set.cards.length) ?? sessions[set.id])
+      saveSession(set.id, restoreSession(stored, set.cards.length) ?? createSession(set.cards.length))
     }
     try {
       darkMode = localStorage.getItem(themeKey) !== 'false'
@@ -200,7 +244,7 @@
   })
 
   $effect(() => {
-    if (!currentId || screen !== 'deck') return
+    if (!currentId || screen !== 'deck' || activeSet.frontKind === 'text') return
     if (activeSet.flippable) {
       const back = new Image()
       back.src = cardImage(activeSet, currentId, 'back')
@@ -216,8 +260,10 @@
 {#snippet cardFace(id: number, showBack: boolean, failed: boolean, reportError: boolean)}
   {@const card = activeSet.cards[id - 1]}
   <span class="card-label"><span>{activeSet.name}</span><span>{showBack ? activeSet.backLabel : activeSet.frontLabel}</span></span>
-  {#if activeSet.frontKind === 'symbols' && showBack}
-    <span class="plain-word" style={`--word-length: ${Math.max(card.word.length, 3)}`}>{card.word}</span>
+  {#if activeSet.frontKind === 'text'}
+    <span class="nonsense-word" style={`--word-length: ${Math.max(card.word.length, 3)}`}>{card.word}</span>
+  {:else if activeSet.frontKind === 'symbols' && showBack}
+    <span class="sentence">{card.sentence ?? card.word}</span>
   {:else if failed}
     <span class="image-fallback"><strong>{card.word}</strong><span>{card.cue}</span></span>
   {:else if activeSet.id === 'eyewords'}
@@ -249,21 +295,29 @@
     <main class="sets-main">
       <h1>Literacy Flashcards</h1>
       <div class="set-grid">
-        {#each cardSets as set (set.id)}
-          {@const progress = sessions[set.id].position}
-          <button class="set-card" onclick={() => openDeck(set.id)} aria-label={`Open ${set.name}. ${progress} of ${set.cards.length} cards completed.`}>
+        {#each displaySets as set (set.id)}
+          {@const progress = sessions[sessionStorageKey(set.id, nonsenseIds)]?.position ?? 0}
+          <button class="set-card" onclick={(event) => set.id === 'nonsense-words' ? showNonsensePicker(event.currentTarget) : openDeck(set.id)}
+            aria-label={set.id === 'nonsense-words' ? 'Nonsense Words. Choose sets A, B, C, and D.' : `Open ${set.name}. ${progress} of ${set.cards.length} cards completed.`}
+            aria-haspopup={set.id === 'nonsense-words' ? 'dialog' : undefined}>
             <span class="set-preview" style={`--preview-background: ${set.previewBackground}`}>
-              {#if set.id === 'eyewords'}
+              {#if set.frontKind === 'text'}
+                <span class="text-preview" aria-hidden="true">som</span>
+              {:else if set.id === 'eyewords'}
                 <CardArtwork src={cardImage(set, 1, 'front')} crop={eyeWordsCrop(1, 'front')}
                   label={`${set.name} card: ${set.cards[0].word}`} clipId="eyewords-preview" />
               {:else}
                 <img src={cardImage(set, 1, 'front')} alt={`${set.name} card: ${set.cards[0].word}`} width="946" height="633" />
               {/if}
             </span>
-            <span class="set-copy"><span class="set-count">{set.cards.length} cards</span>
+            <span class="set-copy"><span class="set-count">{set.id === 'nonsense-words' ? '4 sets · Single-sided' : `${set.cards.length} cards`}</span>
               <span class="set-title">{set.name} <span aria-hidden="true">↗</span></span>
-              <span class="set-progress"><span style={`width: ${progress / set.cards.length * 100}%`}></span></span>
-              <span class="set-bottom">{progress}/{set.cards.length} completed</span>
+              {#if set.id === 'nonsense-words'}
+                <span class="set-bottom">Choose sets A–D to practise</span>
+              {:else}
+                <span class="set-progress"><span style={`width: ${progress / set.cards.length * 100}%`}></span></span>
+                <span class="set-bottom">{progress}/{set.cards.length} completed</span>
+              {/if}
             </span>
           </button>
         {/each}
@@ -300,12 +354,12 @@
           {/if}
           {#if activeSet.flippable}
             <button class="flashcard" class:cue-side={flipped} bind:this={cardElement} onclick={flipCard} disabled={busy}
-              aria-label={`${currentCard.word}. ${flipped ? activeSet.backLabel : activeSet.frontLabel}. ${flipped ? activeSet.returnHint : activeSet.revealHint}.`}
+              aria-label={`${flipped && currentCard.sentence ? currentCard.sentence : `${currentCard.word}.`} ${flipped ? activeSet.backLabel : activeSet.frontLabel}. ${flipped ? activeSet.returnHint : activeSet.revealHint}.`}
               aria-pressed={flipped}>
               {@render cardFace(currentId, flipped, imageFailed, true)}
             </button>
           {:else}
-            <article class="flashcard single-sided" bind:this={cardElement} tabindex="-1" aria-label={`Closed syllable: ${currentCard.word}`}>
+            <article class="flashcard single-sided" bind:this={cardElement} tabindex="-1" aria-label={`${activeSet.frontLabel}: ${currentCard.word}`}>
               {@render cardFace(currentId, false, imageFailed, true)}
             </article>
           {/if}
@@ -324,6 +378,48 @@
   {#if notice}<button class="status-notice" onclick={() => notice = ''} aria-label={`${notice} Dismiss.`}>{notice} ×</button>{/if}
   <span class="sr-only" aria-live="polite">{screen === 'deck' ? complete ? `Set complete. All ${cardCount} cards practised.` : `Card ${session.position + 1} of ${cardCount}. ${flipped ? activeSet.backLabel : activeSet.frontLabel}.` : ''}</span>
 </div>
+
+<dialog bind:this={nonsenseDialog} class="nonsense-picker" class:light-dialog={!darkMode}
+  aria-labelledby="nonsense-picker-title" aria-describedby="nonsense-picker-description"
+  onclose={() => { if (nonsenseButton?.isConnected) nonsenseButton.focus() }}>
+  <div class="dialog-heading">
+    <h2 id="nonsense-picker-title">Nonsense Words</h2>
+    <button class="icon-button" aria-label="Close set picker" onclick={() => nonsenseDialog.close()}>×</button>
+  </div>
+  <p id="nonsense-picker-description">Choose one or more sets. Words from your chosen sets are shuffled together.</p>
+  <form onsubmit={(event) => { event.preventDefault(); void startNonsense() }}>
+    <div class="nonsense-table-scroll">
+      <table class="nonsense-table">
+        <caption class="sr-only">Select nonsense word sets by syllables and blends.</caption>
+        <thead><tr>
+          <th scope="col">Set</th>
+          {#each nonsenseGroups as group (group.id)}
+            <th scope="col"><label class="nonsense-choice"><input type="checkbox" bind:group={draftNonsenseIds} value={group.id} aria-label={`Include Set ${group.id}`} /><span>{group.id}</span></label></th>
+          {/each}
+        </tr></thead>
+        <tbody>
+          <tr><th scope="row">Syllables?</th>{#each nonsenseGroups as group (group.id)}<td>{group.syllables}</td>{/each}</tr>
+          <tr><th scope="row">R-Blends?</th>{#each nonsenseGroups as group (group.id)}<td>{group.rBlends ? 'Yes' : 'No'}</td>{/each}</tr>
+          <tr><th scope="row">S-Blends?</th>{#each nonsenseGroups as group (group.id)}<td>{group.sBlends ? 'Yes' : 'No'}</td>{/each}</tr>
+          <tr><th scope="row">L-Blends?</th>{#each nonsenseGroups as group (group.id)}<td>{group.lBlends ? 'Yes' : 'No'}</td>{/each}</tr>
+          <tr><th scope="row">Words</th>{#each nonsenseGroups as group (group.id)}<td>{group.words.length}</td>{/each}</tr>
+          <tr><th scope="row">Examples</th>{#each nonsenseGroups as group (group.id)}<td class="nonsense-examples">{#each group.words.slice(0, 3) as word}<span>{word}</span>{/each}</td>{/each}</tr>
+        </tbody>
+      </table>
+    </div>
+    <details class="nonsense-word-lists">
+      <summary>View all word lists</summary>
+      {#each nonsenseGroups as group (group.id)}
+        <section><h3>Set {group.id} · {group.words.length} words</h3><p>{group.words.join(' · ')}</p></section>
+      {/each}
+    </details>
+    <p class="help-note" role="status">{draftWordCount ? `${draftWordCount} words selected. Progress is saved for each combination of sets.` : 'Choose at least one set to begin.'}</p>
+    <div class="nonsense-picker-actions">
+      <button type="button" class="secondary-button" onclick={() => nonsenseDialog.close()}>Cancel</button>
+      <button type="submit" class="primary-button" disabled={!draftWordCount}>{draftWordCount ? `Practise ${draftWordCount} words` : 'Choose a set'}</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog bind:this={helpDialog} class:light-dialog={!darkMode} onclose={() => helpButton?.focus()}>
   <div class="dialog-heading"><h2>Help & settings</h2><button class="icon-button" aria-label="Close help" onclick={() => helpDialog.close()}>×</button></div>

@@ -1,9 +1,11 @@
 import { cards as eyeWords } from './cards'
 import heartWords from './heart-words.json'
 import closedSyllables from './closed-syllables.json'
+import { nonsenseCards, normalizeNonsenseSelection } from './nonsense-words'
+import type { NonsenseGroupId } from './nonsense-words'
 
-export type CardSetId = 'eyewords' | 'heart-words' | 'closed-syllables'
-export type Flashcard = { id: number; word: string; cue?: string }
+export type CardSetId = 'eyewords' | 'heart-words' | 'closed-syllables' | 'nonsense-words'
+export type Flashcard = { id: number; word: string; cue?: string; sentence?: string }
 export type CardSet = {
   id: CardSetId
   name: string
@@ -11,7 +13,7 @@ export type CardSet = {
   description: string
   cards: Flashcard[]
   imageDirectory: string
-  frontKind: 'image' | 'symbols' | 'single'
+  frontKind: 'image' | 'symbols' | 'single' | 'text'
   flippable: boolean
   frontLabel: string
   backLabel: string
@@ -35,11 +37,11 @@ export const cardSets: CardSet[] = [
   },
   {
     id: 'heart-words', name: 'Heart Words', category: 'UFLI Foundations',
-    description: 'Read with hearts and sound boxes, then flip to the plain word.',
+    description: 'Read with hearts and sound boxes, then practise the word in a short sentence.',
     cards: heartWords, imageDirectory: 'cards/heart-words', frontKind: 'symbols', flippable: true,
-    frontLabel: 'Hearts & sounds', backLabel: 'Word side',
-    revealHint: 'Tap to show the word', returnHint: 'Tap to reveal hearts & sounds',
-    instructions: 'Read the original UFLI card with its hearts and sound boxes, then tap to practise the plain word. Hearts mark the irregular parts; blue boxes mark regular sounds.',
+    frontLabel: 'Hearts & sounds', backLabel: 'Sentence side',
+    revealHint: 'Tap to read a sentence', returnHint: 'Tap to reveal hearts & sounds',
+    instructions: 'Read the original UFLI card with its hearts and sound boxes, then tap to read a short sentence using the word. Hearts mark the irregular parts; blue boxes mark regular sounds.',
     credit: 'Original cards from Flashcards - UFLI Heart Words. © 2022 University of Florida Literacy Institute. Original word, heart, sound-box, and logo artwork preserved.',
     previewBackground: '#dbe6ef',
   },
@@ -52,11 +54,27 @@ export const cardSets: CardSet[] = [
     credit: 'Original cards from Reading Universe, Closed Syllable Flash Cards. © WETA. Support provided by the American Federation of Teachers, AFL-CIO.',
     previewBackground: '#deedf5',
   },
+  createNonsenseSet(['A']),
 ]
 
-export function sessionStorageKey(id: CardSetId) {
-  // Preserve the existing EyeWords key and saved sessions.
-  return `literacy-flashcards.${id}.v1`
+export function createNonsenseSet(ids: readonly NonsenseGroupId[]): CardSet {
+  const selected = normalizeNonsenseSelection(ids)
+  return {
+    id: 'nonsense-words', name: 'Nonsense Words', category: 'Phonics',
+    description: 'Choose sets A–D and practise a shuffled deck of single-sided words.',
+    cards: nonsenseCards(selected), imageDirectory: '', frontKind: 'text', flippable: false,
+    frontLabel: `${selected.length === 1 ? 'Set' : 'Sets'} ${selected.join(', ')}`,
+    backLabel: '', revealHint: '', returnHint: '',
+    instructions: 'Read each word aloud. Use Next when finished, Reshuffle to save it for later, or the back arrow to revisit the previous word. Return to card sets to choose a different combination of sets A–D.',
+    credit: 'Word lists and syllable/blend descriptions supplied for sets A–D.',
+    previewBackground: '#e6ddf2',
+  }
+}
+
+export function sessionStorageKey(id: CardSetId, nonsenseIds: readonly NonsenseGroupId[] = ['A']) {
+  // Each nonsense selection has independent progress; existing set keys stay compatible.
+  const selection = id === 'nonsense-words' ? `.${normalizeNonsenseSelection(nonsenseIds).join('-')}` : ''
+  return `literacy-flashcards.${id}${selection}.v1`
 }
 
 export function setFromHash(hash: string) {

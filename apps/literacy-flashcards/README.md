@@ -7,13 +7,21 @@ A card-set library for literacy practice with independent saved progress:
   the black print border and copyright footer from the displayed crop.
 - **Heart Words:** all 94 word cards from *Flashcards - UFLI Heart Words.pdf*.
   The front shows the original UFLI card with hearts and sound boxes; flipping
-  reveals the plain word. The introductory page and cover panels are excluded.
+  reveals an original short sentence using the word: usually three words, with
+  a maximum of five. The introductory page and cover panels are excluded.
 - **Reading Universe - Closed Syllables:** all 308 single-sided cards from
   *flash-card-deck-closed-syllables.pdf*. The original syllable artwork is rotated
   to read horizontally. Cards do not flip, and no flip prompts are shown.
+- **Nonsense Words:** single-sided text cards using the supplied sets A (50 words),
+  B (100), C (181), and D (30). The landing-page button opens a picker with the
+  supplied syllable and R/S/L blend information, word counts, and examples. Choose
+  one set or mix several; shared words appear only once in a combined deck.
+  Set choices and progress for each combination are saved independently. Supplied
+  word lists and skill descriptions are preserved as given.
 
 - Open `/literacy-flashcards/` to select a set; `#eyewords`, `#heart-words`, and `#closed-syllables`
   link directly to the corresponding decks.
+- `#nonsense-words` resumes the last chosen nonsense combination (Set A initially).
 - Tap a two-sided card or press Space to switch between its front and its cue side.
 - Next completes a card; Reshuffle keeps it available for later.
 - Progress and the shuffled order are stored locally; completed cards do not repeat.

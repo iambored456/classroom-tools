@@ -87,3 +87,20 @@
 /* Numeric activities share a measured scale for classroom displays. */
 .numeric-question .collection-workspace { max-width: none; }
 .numeric-question #interactive-question { display: flow-root; margin-inline: auto; }
+
+/* One shared subtraction model, using the existing base 10 block shapes. */
+.nm-subtraction-visual { flex-wrap: wrap; align-content: flex-start; gap: 18px; margin: 20px auto 0; max-width: 920px; }
+.nm-subtraction-visual .hundreds { max-width: min(100%, 520px); justify-content: center; }
+.nm-subtraction-visual .rods { max-width: 250px; }
+.nm-subtraction-visual :is(.nm-sub-cancelled, .nm-sub-negative) { position: relative; }
+.nm-subtraction-visual .nm-sub-cancelled { border: 1px dashed #555; background: #fafafa; }
+.nm-subtraction-visual .nm-sub-cancelled i { background: transparent; border-color: #bbb; }
+.nm-subtraction-visual .nm-sub-negative { border: 0; background: none; }
+.nm-subtraction-visual .nm-sub-negative.rod { height: 100px; }
+.nm-subtraction-visual :is(.nm-sub-cancelled, .nm-sub-negative)::after { content: ''; position: absolute; inset: -1px; background: linear-gradient(to bottom right, transparent calc(50% - 1px), #555 calc(50% - 1px), #555 calc(50% + 1px), transparent calc(50% + 1px)); pointer-events: none; }
+@media (max-width: 650px) {
+ .nm-centered-subtraction .nm-row { column-gap: 4px; }
+ .nm-centered-subtraction .nm-slot { --nm-digit-size: clamp(22px, 5.8vw, 36px); font-size: clamp(1rem, 4vw, 1.5rem); }
+ .nm-centered-subtraction .nm-output { min-width: 44px; padding: 4px; font-size: 1.2rem; }
+ .nm-subtraction-visual .nm-sub-negative.rod { height: 80px; }
+}

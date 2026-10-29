@@ -3,6 +3,7 @@ import {mountDigitDrag} from './drag-assist.js'
 import {evaluateNumeric,isUnique,placeNumeric} from './numeric-catalog.js'
 import {numberAt} from '@classroom-tools/open-middle-core'
 import {baseTenBlocks} from '@classroom-tools/open-middle-core/blocks'
+import {subtractionModel,subtractionVisual} from './subtraction-visual.js'
 
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
 export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=()=>false}={}) {
@@ -21,7 +22,10 @@ export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=(
  function token(t,result,values=slots,readOnly=false) {
   if(typeof t==='string')return `<span class="nm-symbol">${esc(t)}</span>`
   if(t.type==='label')return `<span class="nm-label">${esc(t.text)}</span>`
-  if(t.type==='output')return `<output class="nm-output" aria-label="Calculated result">${esc(result.value??'')}</output>`
+  if(t.type==='output'){
+   const value=q.visual==='subtraction'?subtractionModel(values).value:result.value
+   return `<output class="nm-output" aria-label="Calculated result">${esc(value??'')}</output>`
+  }
   if(t.type==='group')return `<span class="nm-group">${t.parts.map(v=>token(v,result,values,readOnly)).join('')}</span>`
   if(t.type==='fraction')return `<span class="nm-fraction"><span>${token(t.top,result,values,readOnly)}</span><span>${token(t.bottom,result,values,readOnly)}</span></span>`
   const digits=`<span class="nm-number ${t.indices.length>1?'nm-multi':''}">${t.indices.map(i=>readOnly?`<span class="nm-history-digit">${values[i]}</span>`:`<button class="nm-slot ${values[i]!==null?'filled':''}" data-nslot="${i}" aria-label="Space ${i+1}: ${values[i]??'empty'}"><svg class="nm-slot-outline" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47"/></svg><span>${values[i]??''}</span></button>`).join('')}</span>`
@@ -29,6 +33,7 @@ export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=(
  }
  function visuals(){
   if(!q.visual)return ''
+  if(q.visual==='subtraction')return subtractionVisual(slots)
   if(q.visual==='marbles'){
    const red=slots[0],blue=slots[1],redB=slots[2],green=slots[3]===null||slots[4]===null?null:slots[3]*10+slots[4]
    return `<div class="nm-bags">${[[red,blue,'A','blue'],[redB,green,'B','green']].map(([r,c,name,color])=>`<div class="nm-bag"><strong>Bag ${name}</strong><div class="nm-marbles" role="img" aria-label="${r??'Unknown'} red and ${c??'unknown'} ${color} marbles">${r===null||c===null?'<span>Fill the spaces to see the marbles.</span>':Array.from({length:r+c},(_,i)=>`<i class="${i<r?'red':color}"></i>`).join('')}</div></div>`).join('')}</div>`
@@ -42,7 +47,7 @@ export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=(
   const positive=result.state==='success'||(q.encourageAttempts&&result.state==='progress')
   view.innerHTML=`<section class="nm-task"><p class="nm-instruction">${esc(q.instruction)}</p>${q.modes?`<label class="nm-mode">Challenge <select data-nmode>${q.modes.map(([value,label])=>`<option value="${value}" ${mode===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>`:''}
   <div class="nm-bank" aria-label="Digit bank; drop a digit here to return it">${q.digits.map(d=>`<button data-nbank="${d}" class="nm-digit ${selected===d?'selected':''}" ${isUnique(q,mode)&&slots.includes(d)?'disabled':''} aria-label="Digit ${d}" aria-pressed="${selected===d}">${d}</button>`).join('')}</div>
-  <div class="nm-board ${q.baseTen?'nm-base-ten':''} ${result.state==='incomplete'?'':positive?'equal':'unequal'}" data-state="${result.state}"><div class="nm-equations ${q.rule==='equal-sums'?'nm-chain':''}">${q.rows.map(row=>`<div class="nm-row">${row.map(t=>token(t,result)).join('')}</div>`).join('')}</div>${visuals()}</div>
+  <div class="nm-board ${q.baseTen?'nm-base-ten':''} ${q.visual==='subtraction'?'nm-centered-subtraction':''} ${result.state==='incomplete'?'':positive?'equal':'unequal'}" data-state="${result.state}"><div class="nm-equations ${q.rule==='equal-sums'?'nm-chain':''}">${q.rows.map(row=>`<div class="nm-row">${row.map(t=>token(t,result)).join('')}</div>`).join('')}</div>${visuals()}</div>
   </section>`
   const message=result.state==='incomplete'?'':result.message
   if(status.textContent!==message)status.textContent=message
