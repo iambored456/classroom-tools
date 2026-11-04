@@ -104,3 +104,11 @@
  .nm-centered-subtraction .nm-output { min-width: 44px; padding: 4px; font-size: 1.2rem; }
  .nm-subtraction-visual .nm-sub-negative.rod { height: 80px; }
 }
+
+.nm-pairs { display: grid; gap: 28px; }
+.nm-pair { min-width: 0; }
+.nm-pair h2 { font-size: 1.15rem; font-weight: 400; text-align: center; margin: 16px 0 8px; }
+.nm-pair .nm-instruction { font-size: 1rem; margin-bottom: 4px; }
+.nm-pair .nm-bank { margin: 8px auto 12px; }
+.nm-pair .nm-feedback { margin-top: 10px; }
+.nm-pairs-feedback[data-state="success"] { color: #346738; font-weight: 700; }

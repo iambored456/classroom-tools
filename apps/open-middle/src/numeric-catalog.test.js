@@ -1,6 +1,6 @@
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
-import {numericQuestions, evaluateNumeric, placeNumeric, diceWays} from './numeric-catalog.js'
+import {numericQuestions, evaluateNumeric, placeNumeric, diceWays, subtractionDigits, evaluateNumericPairs} from './numeric-catalog.js'
 
 const question = id => {
   const q = numericQuestions.find(q => q.id === id)
@@ -16,8 +16,13 @@ const examples = [
   [43, [3,0,1,2,9,8], [3,0,2,1,9,8]],
   [44, [5,2,1,3], [5,1,2,3]],
   [47, [1,3,2,8,5,9], [9,3,2,8,5,1]],
+  [56, [6,3,1,4,2,9], [6,3,1,4,2,8]],
+  [57, [7,3,8,5,4,2,1,9,6], [7,3,8,5,4,1,2,9,6]],
   [53, [8,7,9], [9,7,8]],
   [58, [1,3,2,6], [1,2,3,4], 'both'],
+  [68, [3,2,9,9], [8,7,2,1], 'free'],
+  [84, [6,4,8,3,5,7], [6,4,8,3,7,5]],
+  [85, [8,7,1,5,4,2], [8,7,1,5,4,3]],
   [69, [2,3,5,4,9], [2,3,4,5,9], 'any'],
   [71, [8,7,5,6,0], [8,7,6,5,0], 'greater'],
   [94, [4,5,7,9,1,2,3,6], [7,9,4,5,1,2,3,6]],
@@ -217,4 +222,58 @@ test('dice probability counts match explicit pairs for every supported die and s
     for (let first=1;first<=sides;first++) for (let second=1;second<=sides;second++) if (first+second===sum) pairs++
     assert.equal(diceWays(sum,sides), pairs, `${sides}-sided dice sum ${sum}`)
   }
+})
+
+test('closest differences to 200 are optimal under each digit rule', () => {
+  let best56 = Infinity, best57 = Infinity
+  const answers56 = new Set(), answers57 = new Set()
+  for (let left = 123; left <= 987; left++) {
+    for (let right = 123; right <= 987; right++) {
+      const operands = String(left) + String(right)
+      if (operands.includes('0') || new Set(operands).size !== 6) continue
+      const difference = left - right, distance = Math.abs(difference - 200)
+      if (distance < best56) {best56 = distance; answers56.clear()}
+      if (distance === best56) answers56.add(difference)
+      const equation = operands + String(difference)
+      if (difference < 100 || equation.includes('0') || new Set(equation).size !== 9) continue
+      if (distance < best57) {best57 = distance; answers57.clear()}
+      if (distance === best57) answers57.add(difference)
+    }
+  }
+  assert.equal(best56, 2)
+  assert.deepEqual([...answers56].sort((a,b)=>a-b), [198,202])
+  assert.equal(best57, 4)
+  assert.deepEqual([...answers57], [196])
+  assert.equal(evaluate(56,[8,2,9,6,3,1]).state,'success')
+  assert.equal(evaluate(56,[4,2,9,6,3,1]).state,'progress')
+  assert.equal(evaluate(57,[7,3,8,5,4,2,1,6,9]).state,'progress')
+  assert.equal(evaluate(57,[7,3,8,5,4,2,1,9,0]).state,'invalid')
+})
+
+test('Missing Digits preserves fixed prefixes, repetition rules and strict distance comparison', () => {
+  assert.deepEqual(subtractionDigits(question(68),[3,2,9,9]),[4,3,2,1,9,9])
+  assert.equal(evaluate(68,[3,2,9,9],'free').value,'233')
+  assert.equal(evaluate(68,[3,2,9,9],'unique').state,'invalid')
+  assert.equal(evaluate(68,[1,2,6,9],'unique').state,'success')
+  assert.equal(evaluate(68,[1,2,6,2],'free').state,'progress') // 412 - 162 = 250: tie
+  assert.equal(evaluate(68,[1,1,6,2],'free').state,'success') // 249
+  assert.equal(evaluate(68,[1,3,6,2],'free').state,'progress') // 251
+  assert.equal(evaluate(68,[0,2,6,9],'free').state,'invalid')
+  for(let a=1;a<=9;a++)for(let b=1;b<=9;b++)for(let c=1;c<=9;c++)for(let d=1;d<=9;d++) {
+    const values=[a,b,c,d],difference=300+10*a+b-10*c-d
+    assert.equal(evaluate(68,values,'free').state,difference<250?'success':'progress')
+  }
+})
+
+test('fixed 291 is excluded from the movable bank and both pairs must be true and different', () => {
+  const q=question(84),first=[6,4,8,3,5,7],second=[9,4,3,6,5,2]
+  assert.deepEqual(subtractionDigits(q,first),[6,4,8,2,9,1])
+  assert.equal(evaluateNumericPairs(q,[first,second]).state,'success')
+  assert.equal(evaluateNumericPairs(q,[first,first]).state,'progress')
+  assert.equal(evaluateNumericPairs(q,[first,[9,4,3,6,2,5]]).state,'progress')
+  assert.equal(evaluateNumericPairs(q,[first,Array(6).fill(null)]).state,'incomplete')
+  assert.equal(evaluate(84,[8,7,4,5,8,3]).state,'invalid') // repeated movable 8
+  assert.equal(evaluate(84,[9,4,3,6,5,2]).state,'success') // fixed 9/2 do not consume digits
+  assert.equal(evaluate(85,[8,7,1,5,4,2]).value,'329')
+  assert.equal(evaluate(85,[5,4,2,8,7,1]).state,'progress')
 })

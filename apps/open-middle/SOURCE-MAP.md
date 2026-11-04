@@ -82,3 +82,15 @@ All 38 supplied files map to 37 activities. The two #180 archives contain the sa
 ## Optional teacher preferences
 
 The student wording does not explicitly restrict smallest differences to positive results or prohibit repeated digits in #53. The user was asked during implementation; absent a reply, positive differences and unique digits were adopted and stated in the activity instructions.
+
+## Question bank additions: #56 and #57
+
+Read from the teacher Drive's ..Open Middle Questions Bank on October 29, 2026. #56: https://www.openmiddle.com/closest-difference-to-200/ (Jessica Goree), six distinct operand digits; calculated result is unconstrained. #57: https://www.openmiddle.com/closest-difference-to-200-problem-2/ (Tara Trifiletti and Jessica Goree), all nine digits used across three three-digit numbers. The original #57 image URL currently returns 404; the nine-space equation follows the exact-once instruction and the supplied 738 − 542 = 196 solution. Optima independently enumerated in numeric-catalog.test.js.
+
+## Question bank additions: #68, #84, #85
+
+Teacher Drive bank and original pages checked October 29, 2026. #68: https://www.openmiddle.com/missing-digits/ (Marilyn Burns and Graham Fletcher), diagram 4□□ − 1□□; digits 1–9 may repeat in the base task, with optional unique movable digits. The answer must be strictly closer to 200 than 300, so 250 fails. Printed prefixes do not consume bank digits.
+
+#84: https://www.openmiddle.com/subtracting-3-digit-numbers-1/ (Robert Kaplinsky), diagram □□□ − 291 = □□□. Show two independently saved equations, enforcing distinct movable digits within each equation and a different second pair. Fixed 291 is excluded from uniqueness. The source's example 874 − 291 = 583 repeats 8 across movable spaces and is therefore rejected under its stated at-most-once rule; verified alternatives include 648 − 291 = 357 and 943 − 291 = 652.
+
+#85: https://www.openmiddle.com/subtracting-3-digit-numbers-2/ (Robert Kaplinsky), six movable operand digits 1–9, all distinct, and calculated output. 871 − 542 = 329 proves the target can be reached exactly.

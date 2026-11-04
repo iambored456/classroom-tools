@@ -1,6 +1,6 @@
 # Open Middle questions
 
-37 activities are available, including #59 Fractions on a Number Line and #109 Comparing Fractions from Open Middle. The September 2026 worksheet collection originally supplied 37 activities from 38 files; the ladybug and cutouts-board activities are currently hidden. The two #180 files have identical content and share one activity. Source coverage and mathematical corrections are documented in [SOURCE-MAP.md](SOURCE-MAP.md).
+42 activities are available, including #59 Fractions on a Number Line and #109 Comparing Fractions from Open Middle. The September 2026 worksheet collection originally supplied 37 activities from 38 files; the ladybug and cutouts-board activities are currently hidden. The two #180 files have identical content and share one activity. Source coverage and mathematical corrections are documented in [SOURCE-MAP.md](SOURCE-MAP.md).
 
 **#59 Fractions on a Number Line** is available at `#59`. Use digits 0–5 at most once in five numerators over the fixed denominators 2, 3, 4, 6, and 8. Drag the completed fractions onto the number line, then move them to show the correct order and spacing. Equivalent fractions share a point, and improper fractions are allowed. Tap placement, keyboard movement, optional tick snapping, checking, reset, and saved progress support the same activity.
 
@@ -11,6 +11,10 @@ Run `pnpm --filter open-middle dev` from the repository root, then open `http://
 **#43 and #44 subtraction blocks:** one combined base 10 visualization sits beneath the equation. Shared amounts are grey, crossed-out blocks; the positive difference stays solid, and a negative difference uses bare strikes without a block behind them. The model updates while placing digits. The answer appears after `=` only when every digit space is filled; #44 keeps its goal of getting close to 39. Focused checks: `node --test apps/open-middle/src/subtraction-visual.test.js`.
 
 Landing-page links show a screenshot preview while the pointer hovers over them. The previews omit navigation controls, ignore pointer events, and use a fresh, empty activity state. After changing question layouts or styling, run `pnpm --filter open-middle capture:previews` to regenerate images for the available activities in `public/question-previews/` and rebuild the app.
+
+**#56 and #57 Closest Difference to 200:** both reuse the circular digit controls, centered subtraction equation, live base-ten cancellation blocks, keyboard/drag/tap placement, reset, and saved attempts from #43/#44. #56 chooses six distinct digits from 1–9 and calculates the answer; the closest possible differences are 198 and 202. #57 uses 1–9 exactly once across both operands and the entered three-digit answer; 196 is optimal. Feedback checks the equation before the distance from 200.
+
+**#68, #84 and #85 subtraction activities:** #68 keeps the printed 4 and 1 in 4□□ − 1□□ and accepts answers strictly closer to 200 than 300; repeating digits are allowed, with an optional unique-digit challenge. #84 has two independent equations of □□□ − 291 = □□□, each with its own digit bank and live blocks; both equations must be true and different. The printed 291 does not use bank digits. #85 uses six distinct input digits and a calculated answer, aiming for 329 exactly. All three share the existing paper theme, input controls, reset and saved attempts.
 
 ## Question controls
 

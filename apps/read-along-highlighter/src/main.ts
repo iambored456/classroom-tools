@@ -1,5 +1,6 @@
 import './style.css'
 import { ufliTexts } from './ufli-texts'
+import { ufliSupplementalTexts } from './ufli-supplemental-texts'
 
 const STORAGE = {
   lastText: 'readAlong:lastText',
@@ -58,6 +59,7 @@ const fullscreenToggle = byId<HTMLButtonElement>('fullscreen-toggle')
 const fullscreenStatus = byId<HTMLParagraphElement>('fullscreen-status')
 const textInput = byId<HTMLTextAreaElement>('text-input')
 const ufliOpen = byId<HTMLButtonElement>('ufli-open')
+const supplementalOpen = byId<HTMLButtonElement>('ufli-supplemental-open')
 const ufliDialog = byId<HTMLDialogElement>('ufli-dialog')
 const ufliGrid = byId<HTMLDivElement>('ufli-grid')
 const textStatus = byId<HTMLParagraphElement>('text-status')
@@ -779,10 +781,16 @@ function scrollFromMinimap(event: PointerEvent): void {
 sidebarToggle.addEventListener('click', () => setSidebarOpen(!sidebar.classList.contains('open')))
 sidebarClose.addEventListener('click', () => setSidebarOpen(false))
 
-for (const lesson of ufliTexts) {
+function populatePassages(passages: readonly { id: string; title: string; text: string }[], supplemental = false): void {
+  ufliGrid.replaceChildren()
+  ufliGrid.classList.toggle('supplemental-grid', supplemental)
+  byId('ufli-title').textContent = supplemental ? 'UFLI Supplemental Passages' : 'UFLI Decodable Texts'
+  byId('ufli-description').textContent = supplemental ? 'Choose a passage to load its text. Some lessons have more than one passage.' : 'Choose a lesson number to load its text.'
+  byId('ufli-close').setAttribute('aria-label', supplemental ? 'Close UFLI Supplemental Passages' : 'Close UFLI Decodable Texts')
+  for (const lesson of passages) {
   const button = document.createElement('button')
   button.type = 'button'
-  button.textContent = lesson.id
+  button.textContent = supplemental ? `Lesson ${lesson.id}: ${lesson.title}` : lesson.id
   button.title = `Lesson ${lesson.id}: ${lesson.title}`
   button.addEventListener('click', () => {
     if (textProcessTimer !== null) clearTimeout(textProcessTimer)
@@ -799,8 +807,16 @@ for (const lesson of ufliTexts) {
     textContainer.focus({ preventScroll: true })
   })
   ufliGrid.append(button)
+  }
 }
+populatePassages(ufliTexts)
 ufliOpen.addEventListener('click', () => {
+  populatePassages(ufliTexts)
+  if (colourPopover.matches(':popover-open')) colourPopover.hidePopover()
+  ufliDialog.showModal()
+})
+supplementalOpen.addEventListener('click', () => {
+  populatePassages(ufliSupplementalTexts, true)
   if (colourPopover.matches(':popover-open')) colourPopover.hidePopover()
   ufliDialog.showModal()
 })

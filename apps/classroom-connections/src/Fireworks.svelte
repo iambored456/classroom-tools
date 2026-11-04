@@ -1,137 +1,129 @@
 <script lang="ts">
+  import { onMount } from 'svelte'
+
   export let scope: 'screen' | 'board' = 'screen'
+  export let animated = true
+  let canvas: HTMLCanvasElement
+  let refresh = () => {}
+  $: { scope; animated; refresh() }
 
-  const screenFireworks = [
-    { x: 12, y: 26, color: '#ffd568', delay: 0 },
-    { x: 33, y: 14, color: '#76dcff', delay: 0.45 },
-    { x: 78, y: 26, color: '#ff8fc8', delay: 0.9 },
-    { x: 91, y: 55, color: '#b3a0ff', delay: 1.35 },
-    { x: 23, y: 74, color: '#87efb4', delay: 1.8 },
-    { x: 70, y: 79, color: '#ffd568', delay: 2.25 },
-  ]
-  const boardFireworks = [
-    { x: 26, y: 22, color: '#76dcff', delay: 0.2 },
-    { x: 70, y: 35, color: '#ffd568', delay: 0.8 },
-    { x: 48, y: 62, color: '#ff8fc8', delay: 1.4 },
-    { x: 76, y: 82, color: '#87efb4', delay: 2 },
-  ]
-  $: fireworks = scope === 'board' ? boardFireworks : screenFireworks
+  const screenBursts = [
+    [12, 26, '#ffd568', 0], [33, 14, '#76dcff', 450],
+    [78, 26, '#ff8fc8', 900], [91, 55, '#b3a0ff', 1350],
+    [23, 74, '#87efb4', 1800], [70, 79, '#ffd568', 2250],
+  ] as const
+  const boardBursts = [
+    [26, 22, '#76dcff', 200], [70, 35, '#ffd568', 800],
+    [48, 62, '#ff8fc8', 1400], [76, 82, '#87efb4', 2000],
+  ] as const
 
-  const sparks = Array.from({ length: 40 }, (_, index) => {
-    const angle = (index / 40) * Math.PI * 2
-    const radius = index % 2 === 0 ? 1 : 0.65
-    return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius }
+  onMount(() => {
+    const context = canvas.getContext('2d')
+    if (!context) return
+    let frame = 0
+    let width = 0
+    let height = 0
+    let elapsed = 800 // Show a burst immediately, without a blank opening delay.
+    let previousTime: number | null = null
+
+    const draw = () => {
+      context.clearRect(0, 0, width, height)
+      const radius = scope === 'board'
+        ? Math.max(48, Math.min(width * 0.25, 112))
+        : Math.max(80, Math.min(width * 0.15, 160))
+      for (const [x, y, color, delay] of scope === 'board' ? boardBursts : screenBursts) {
+        const phase = animated ? ((elapsed - delay + 3600) % 3600) / 3600 : 0.4
+        const centerX = width * x / 100
+        const centerY = height * y / 100
+        context.fillStyle = color
+        context.strokeStyle = color
+        context.shadowColor = color
+        context.shadowBlur = 7
+        if (phase < 0.16) {
+          const launch = phase / 0.16
+          context.globalAlpha = Math.sin(launch * Math.PI)
+          context.lineWidth = 3
+          context.beginPath()
+          context.moveTo(centerX, centerY + (1 - launch) * radius)
+          context.lineTo(centerX, centerY + (1 - launch) * radius + 24)
+          context.stroke()
+        } else if (phase < 0.76) {
+          const age = (phase - 0.16) / 0.6
+          const spread = 1 - Math.pow(1 - age, 3)
+          context.globalAlpha = Math.min(1, (1 - age) * 2.5)
+          for (let index = 0; index < 40; index++) {
+            const angle = index / 40 * Math.PI * 2
+            const distance = radius * spread * (index % 2 === 0 ? 1 : 0.65)
+            context.beginPath()
+            context.arc(
+              centerX + Math.cos(angle) * distance,
+              centerY + Math.sin(angle) * distance + age * age * 28,
+              Math.max(1, 3 * (1 - age * 0.65)), 0, Math.PI * 2,
+            )
+            context.fill()
+          }
+        }
+      }
+      context.globalAlpha = 1
+      context.shadowBlur = 0
+    }
+
+    // Canvas drawing does not depend on CSS animations or reduced-motion rules.
+    const tick = (time: number) => {
+      frame = 0
+      if (document.hidden || !animated) return
+      if (previousTime !== null) elapsed += Math.min(time - previousTime, 64)
+      previousTime = time
+      draw()
+      frame = requestAnimationFrame(tick)
+    }
+    const update = () => {
+      cancelAnimationFrame(frame)
+      frame = 0
+      previousTime = null
+      draw()
+      if (animated && !document.hidden) frame = requestAnimationFrame(tick)
+    }
+    const resize = () => {
+      const bounds = canvas.getBoundingClientRect()
+      width = bounds.width
+      height = bounds.height
+      const scale = Math.min(window.devicePixelRatio || 1, 2)
+      canvas.width = Math.max(1, Math.round(width * scale))
+      canvas.height = Math.max(1, Math.round(height * scale))
+      context.setTransform(scale, 0, 0, scale, 0, 0)
+      update()
+    }
+    const observer = new ResizeObserver(resize)
+    observer.observe(canvas)
+    window.addEventListener('resize', resize)
+    document.addEventListener('visibilitychange', update)
+    refresh = update
+    resize()
+    return () => {
+      refresh = () => {}
+      cancelAnimationFrame(frame)
+      observer.disconnect()
+      window.removeEventListener('resize', resize)
+      document.removeEventListener('visibilitychange', update)
+    }
   })
 </script>
 
-  <div class={scope === 'board' ? 'board-fireworks' : 'success-fireworks'} aria-hidden="true">
-    {#each fireworks as firework}
-      <div
-        class="firework"
-        style={`left: ${firework.x}%; top: ${firework.y}%; --firework-color: ${firework.color}; --firework-delay: ${firework.delay}s;`}
-      >
-        {#each sparks as spark}
-          <span class="firework-spark" style={`--spark-x: ${spark.x}; --spark-y: ${spark.y};`}></span>
-        {/each}
-      </div>
-    {/each}
-    <span class="celebration-star star-one">✦</span>
-    <span class="celebration-star star-two">✧</span>
-    <span class="celebration-star star-three">✦</span>
-  </div>
+<div class={scope === 'board' ? 'board-fireworks' : 'success-fireworks'} aria-hidden="true">
+  <canvas bind:this={canvas}></canvas>
+</div>
 
 <style>
-.success-fireworks,
-.board-fireworks {
-  --burst-size: clamp(5rem, 15vw, 10rem);
-  position: fixed;
-  inset: 0;
-  z-index: 8;
-  overflow: hidden;
-  background: transparent;
-  pointer-events: none;
-}
-
-.board-fireworks {
-  --burst-size: clamp(3rem, 10vw, 7rem);
-  position: absolute;
-  inset: 0;
-  z-index: 9;
-}
-
-.firework {
-  position: absolute;
-  color: var(--firework-color);
-}
-
-.firework::before {
-  content: '';
-  position: absolute;
-  width: 3px;
-  height: 2.5rem;
-  border-radius: 50%;
-  background: linear-gradient(transparent, currentColor);
-  animation: firework-launch 3.6s ease-out infinite;
-  animation-delay: var(--firework-delay);
-  opacity: 0;
-}
-
-.firework-spark {
-  position: absolute;
-  width: clamp(4px, 0.65vw, 7px);
-  height: clamp(4px, 0.65vw, 7px);
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 9px currentColor, 0 0 18px currentColor;
-  animation: firework-burst 3.6s cubic-bezier(0.15, 0.6, 0.4, 1) infinite;
-  animation-delay: var(--firework-delay);
-  opacity: 0;
-}
-
-.celebration-star {
-  position: absolute;
-  color: #ffe59c;
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
-  text-shadow: 0 0 12px #ffd568aa, 0 0 30px #ffd56866;
-  animation: star-twinkle 2.4s ease-in-out infinite alternate;
-}
-
-.star-one { left: 8%; top: 22%; }
-.star-two { right: 8%; top: 72%; animation-delay: 0.6s; }
-.star-three { left: 53%; top: 13%; animation-delay: 1.2s; }
-
-@keyframes firework-launch {
-  0% { opacity: 0; transform: translateY(10rem) scaleY(1); }
-  8% { opacity: 1; }
-  16% { opacity: 0; transform: translateY(0) scaleY(0.1); }
-  100% { opacity: 0; transform: translateY(0); }
-}
-
-@keyframes firework-burst {
-  0%, 14% { opacity: 0; transform: translate(0, 0) scale(0.2); }
-  18% { opacity: 1; }
-  48% { opacity: 1; }
-  72%, 100% {
-    opacity: 0;
-    transform: translate(calc(var(--spark-x) * var(--burst-size)), calc(var(--spark-y) * var(--burst-size) + 1.8rem)) scale(0.25);
+  .success-fireworks,
+  .board-fireworks {
+    position: fixed;
+    inset: 0;
+    z-index: 8;
+    overflow: hidden;
+    background: transparent;
+    pointer-events: none;
   }
-}
-
-@keyframes star-twinkle {
-  from { opacity: 0.4; transform: scale(0.75) rotate(-12deg); }
-  to { opacity: 1; transform: scale(1.1) rotate(12deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .success-fireworks .firework::before,
-  .board-fireworks .firework::before { display: none; }
-  .success-fireworks .firework-spark,
-  .board-fireworks .firework-spark {
-    animation: none;
-    opacity: 0.85;
-    transform: translate(calc(var(--spark-x) * var(--burst-size)), calc(var(--spark-y) * var(--burst-size)));
-  }
-  .success-fireworks .celebration-star,
-  .board-fireworks .celebration-star { animation: none; }
-}
+  .board-fireworks { position: absolute; z-index: 9; }
+  canvas { display: block; width: 100%; height: 100%; pointer-events: none; }
 </style>

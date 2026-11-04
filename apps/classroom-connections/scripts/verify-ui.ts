@@ -488,25 +488,19 @@ try {
 
   const fireworks = page.locator('.success-fireworks, .board-fireworks')
   assert.equal(await fireworks.count(), 2)
-  assert.equal(await page.locator('.celebration-star').count(), 6)
-  assert.equal(await page.locator('.firework-spark').count(), 400)
+  assert.equal(await page.locator('.success-fireworks canvas, .board-fireworks canvas').count(), 2)
   assert.ok(await fireworks.evaluateAll((layers) => layers.every((layer) =>
     layer.getAttribute('aria-hidden') === 'true' && getComputedStyle(layer).pointerEvents === 'none',
   )))
   await page.waitForTimeout(1000)
   await page.screenshot({ path: celebrationShot, fullPage: false })
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.waitForFunction(() => [...document.querySelectorAll('.firework-spark')].every((spark) => {
-    const style = getComputedStyle(spark)
-    return style.animationName === 'none' && Number(style.opacity) > 0
-  }))
-  assert.ok(await page.locator('.firework-spark').evaluateAll((sparks) => sparks.every((spark) => {
-    const style = getComputedStyle(spark)
-    return style.animationName === 'none' && Number(style.opacity) > 0
-  })))
-  assert.ok(await page.locator('.celebration-star').evaluateAll((stars) =>
-    stars.every((star) => getComputedStyle(star).animationName === 'none'),
-  ))
+  const canvases = page.locator('.success-fireworks canvas, .board-fireworks canvas')
+  const before = await canvases.evaluateAll((nodes) => nodes.map((node) => (node as HTMLCanvasElement).toDataURL()))
+  await page.waitForTimeout(350)
+  const after = await canvases.evaluateAll((nodes) => nodes.map((node) => (node as HTMLCanvasElement).toDataURL()))
+  assert.equal(after.length, 2)
+  assert.ok(after.every((pixels, index) => pixels !== before[index]), 'Both fireworks canvases must keep drawing under reduced motion')
   await page.emulateMedia({ reducedMotion: 'no-preference' })
 
   const completionTime = page.locator('.completion-time')

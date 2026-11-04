@@ -230,8 +230,8 @@ button, select, input[type='range'], input[type='color'], input[type='checkbox']
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
-.ufli-section { padding-bottom: 0; }
-#ufli-open {
+.ufli-section:last-child { padding-bottom: 0; }
+#ufli-open, #ufli-supplemental-open {
   width: 100%;
   min-height: 46px;
   padding: .75rem 1rem;
@@ -241,7 +241,7 @@ button, select, input[type='range'], input[type='color'], input[type='checkbox']
   color: #fafafa;
   font-weight: 700;
 }
-#ufli-open:hover, #ufli-grid button:hover { background: #3f3f46; }
+#ufli-open:hover, #ufli-supplemental-open:hover, #ufli-grid button:hover { background: #3f3f46; }
 #ufli-dialog {
   width: min(640px, calc(100vw - 24px));
   max-height: calc(100dvh - 32px);
@@ -270,5 +270,7 @@ button, select, input[type='range'], input[type='color'], input[type='checkbox']
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-#ufli-open:focus-visible, #ufli-grid button:focus-visible, #ufli-close:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+#ufli-grid.supplemental-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
+#ufli-grid.supplemental-grid button { padding: .75rem; text-align: left; line-height: 1.4; }
+#ufli-open:focus-visible, #ufli-supplemental-open:focus-visible, #ufli-grid button:focus-visible, #ufli-close:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
 

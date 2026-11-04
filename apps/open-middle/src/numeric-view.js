@@ -1,15 +1,16 @@
 import {fitToWindow} from './fit-to-window.js'
 import {mountDigitDrag} from './drag-assist.js'
-import {evaluateNumeric,isUnique,placeNumeric} from './numeric-catalog.js'
+import {evaluateNumeric,evaluateNumericPairs,isUnique,placeNumeric,subtractionDigits} from './numeric-catalog.js'
 import {numberAt} from '@classroom-tools/open-middle-core'
 import {baseTenBlocks} from '@classroom-tools/open-middle-core/blocks'
 import {subtractionModel,subtractionVisual} from './subtraction-visual.js'
 
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
-export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=()=>false}={}) {
+export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=()=>false,nested=false,onChange=()=>{}}={}) {
+ if(q.pairCount===2)return mountNumericPairs(container,q,{secondaryContainer,dragAssistEnabled})
  container.innerHTML='<div class="nm-view"></div><p class="nm-feedback" role="status" aria-live="polite" aria-atomic="true"></p>'
  const view=container.querySelector('.nm-view'),status=container.querySelector('.nm-feedback')
- const windowFit=fitToWindow(container)
+ const windowFit=nested?{fit(){},cleanup(){}}:fitToWindow(container)
  const storageKey=`open-middle-work-v1-${q.id}`
  let slots=Array(q.slotCount).fill(null),mode=q.modes?.[0][0],attempts=[],selected=null
  try {const saved=JSON.parse(localStorage.getItem(storageKey));if(saved){
@@ -18,12 +19,13 @@ export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=(
   if(Array.isArray(saved.attempts))attempts=saved.attempts.filter(x=>Array.isArray(x.slots)&&x.slots.length===q.slotCount&&x.slots.every(v=>q.digits.includes(v))).slice(-20)
  }}catch{}
  const save=()=>{try{localStorage.setItem(storageKey,JSON.stringify({slots,mode,attempts}))}catch{}}
+ const savedTitle=`nm-saved-title-${String(q.id).replace(/[^a-z0-9-]/gi,'-')}`
  const focus=selector=>container.querySelector(selector)?.focus()
  function token(t,result,values=slots,readOnly=false) {
   if(typeof t==='string')return `<span class="nm-symbol">${esc(t)}</span>`
   if(t.type==='label')return `<span class="nm-label">${esc(t.text)}</span>`
   if(t.type==='output'){
-   const value=q.visual==='subtraction'?subtractionModel(values).value:result.value
+   const value=q.visual==='subtraction'&&!values.includes(null)?subtractionModel(subtractionDigits(q,values)).value:result.value
    return `<output class="nm-output" aria-label="Calculated result">${esc(value??'')}</output>`
   }
   if(t.type==='group')return `<span class="nm-group">${t.parts.map(v=>token(v,result,values,readOnly)).join('')}</span>`
@@ -33,7 +35,7 @@ export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=(
  }
  function visuals(){
   if(!q.visual)return ''
-  if(q.visual==='subtraction')return subtractionVisual(slots)
+  if(q.visual==='subtraction')return subtractionVisual(slots.every(v=>v===null)?Array(6).fill(null):subtractionDigits(q,slots))
   if(q.visual==='marbles'){
    const red=slots[0],blue=slots[1],redB=slots[2],green=slots[3]===null||slots[4]===null?null:slots[3]*10+slots[4]
    return `<div class="nm-bags">${[[red,blue,'A','blue'],[redB,green,'B','green']].map(([r,c,name,color])=>`<div class="nm-bag"><strong>Bag ${name}</strong><div class="nm-marbles" role="img" aria-label="${r??'Unknown'} red and ${c??'unknown'} ${color} marbles">${r===null||c===null?'<span>Fill the spaces to see the marbles.</span>':Array.from({length:r+c},(_,i)=>`<i class="${i<r?'red':color}"></i>`).join('')}</div></div>`).join('')}</div>`
@@ -51,9 +53,10 @@ export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=(
   </section>`
   const message=result.state==='incomplete'?'':result.message
   if(status.textContent!==message)status.textContent=message
-  if(secondaryContainer)secondaryContainer.innerHTML=`<section class="nm-saved-work" aria-labelledby="nm-saved-title"><h3 id="nm-saved-title">Saved attempts</h3><p>Save an arrangement to compare later. Your current work is saved automatically.</p><button type="button" data-naction="save" ${slots.includes(null)?'disabled':''}>Save current arrangement</button><p class="nm-save-status" role="status"></p>${attempts.length?`<ol class="nm-attempts">${attempts.map(a=>{const r=evaluateNumeric(q,a.slots,a.mode);return `<li>${q.modes?`<p>${esc(q.modes.find(m=>m[0]===a.mode)?.[1]??'')}</p>`:''}<div class="nm-history-equation">${q.rows.map(row=>`<span>${row.map(t=>token(t,r,a.slots,true)).join('')}</span>`).join('')}</div><p>${esc(r.message)}</p></li>`}).join('')}</ol><button type="button" data-naction="clear-history">Clear saved attempts</button>`:'<p>No saved attempts yet.</p>'}</section>`
+  if(secondaryContainer)secondaryContainer.innerHTML=`<section class="nm-saved-work" aria-labelledby="${savedTitle}"><h3 id="${savedTitle}">Saved attempts</h3><p>Save an arrangement to compare later. Your current work is saved automatically.</p><button type="button" data-naction="save" ${slots.includes(null)?'disabled':''}>Save current arrangement</button><p class="nm-save-status" role="status"></p>${attempts.length?`<ol class="nm-attempts">${attempts.map(a=>{const r=evaluateNumeric(q,a.slots,a.mode);return `<li>${q.modes?`<p>${esc(q.modes.find(m=>m[0]===a.mode)?.[1]??'')}</p>`:''}<div class="nm-history-equation">${q.rows.map(row=>`<span>${row.map(t=>token(t,r,a.slots,true)).join('')}</span>`).join('')}</div><p>${esc(r.message)}</p></li>`}).join('')}</ol><button type="button" data-naction="clear-history">Clear saved attempts</button>`:'<p>No saved attempts yet.</p>'}</section>`
   windowFit.fit()
   if(restore)focus(restore)
+  onChange([...slots])
  }
  function changed(restore){save();render(restore)}
  function reset(){digitDrag.cancel();slots=Array(q.slotCount).fill(null);selected=null;changed('[data-nslot="0"]')}
@@ -95,5 +98,21 @@ export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=(
  const cleanup=()=>{digitDrag.destroy();windowFit.cleanup();secondaryContainer?.removeEventListener('click',click);for(const [name,fn] of handlers)container.removeEventListener(name,fn)}
  cleanup.cancelDrag=digitDrag.cancel
  cleanup.reset=reset
+ return cleanup
+}
+
+function mountNumericPairs(container,q,{secondaryContainer,dragAssistEnabled}) {
+ container.innerHTML=`<p class="nm-instruction">${esc(q.instruction)}</p><div class="nm-pairs">${['First pair','Second pair'].map((label,i)=>`<section class="nm-pair" aria-label="${label}"><h2>${label}</h2><div data-pair="${i}"></div></section>`).join('')}</div><p class="nm-feedback nm-pairs-feedback" role="status" aria-live="polite" aria-atomic="true"></p>`
+ if(secondaryContainer)secondaryContainer.innerHTML='<section aria-label="First pair saved attempts"><h3>First pair</h3><div data-pair-history="0"></div></section><section aria-label="Second pair saved attempts"><h3>Second pair</h3><div data-pair-history="1"></div></section>'
+ const states=Array.from({length:2},()=>Array(q.slotCount).fill(null))
+ const status=container.querySelector('.nm-pairs-feedback')
+ const windowFit=fitToWindow(container)
+ const children=[0,1].map(i=>mountNumeric(container.querySelector(`[data-pair="${i}"]`),{...q,pairCount:undefined,id:`${q.id}-pair-${i+1}`,instruction:'Use each movable digit at most once. Complete the equation.'},{
+  secondaryContainer:secondaryContainer?.querySelector(`[data-pair-history="${i}"]`),dragAssistEnabled,nested:true,
+  onChange(values){states[i]=values;const result=evaluateNumericPairs(q,states);status.textContent=result.message;status.dataset.state=result.state;windowFit.fit()},
+ }))
+ const cleanup=()=>{children.forEach(child=>child());windowFit.cleanup()}
+ cleanup.cancelDrag=()=>children.forEach(child=>child.cancelDrag())
+ cleanup.reset=()=>children.forEach(child=>child.reset())
  return cleanup
 }
