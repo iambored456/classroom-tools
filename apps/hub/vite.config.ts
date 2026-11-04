@@ -15,6 +15,7 @@ export default defineConfig({
     // because all classroom-tool URLs are intentionally rooted at localhost:5173.
     strictPort: true,
     proxy: {
+      '/numberle': { target: 'http://localhost:5196', changeOrigin: true },
       '/paper-airplane-visualizer': { target: 'http://localhost:5193', changeOrigin: true },
       '/open-middle': { target: 'http://localhost:5194', changeOrigin: true },
       '/class-clock': {

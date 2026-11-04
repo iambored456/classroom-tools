@@ -19,6 +19,7 @@ type DevServer = {
 }
 
 const servers: DevServer[] = [
+  { name: 'numberle', port: 5196, path: '/numberle/' },
   { name: 'paper-airplane-visualizer', port: 5193, path: '/paper-airplane-visualizer/' },
   { name: 'open-middle', port: 5194, path: '/open-middle/' },
   { name: 'class-clock', port: 5174, path: '/class-clock/' },

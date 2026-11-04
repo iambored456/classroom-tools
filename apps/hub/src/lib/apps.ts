@@ -17,6 +17,16 @@ const withBase = (path: string) => `${baseUrl}${path.replace(/^\/+/, '')}`
 export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
+    id: 'numberle',
+    name: 'Numberle',
+    description: 'Guess the hidden equation in six tries. Daily, unlimited, and teacher-set math puzzles.',
+    href: withBase('numberle/'),
+    preview: withBase('images/Numberle-preview.svg'),
+    tags: ['Math'],
+    accent: '#398875',
+  },
+  {
+    kind: 'app',
     id: 'paper-airplane-visualizer',
     name: "Paper Airplanes",
     description: "Animated instructions to fold paper airplanes.",
