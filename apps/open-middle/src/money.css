@@ -1,0 +1,40 @@
+.mc-workspace { max-width: 1100px; margin: auto; }
+.mc-bank { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin: 22px auto 10px; padding: 12px; border-radius: 14px; }
+.mc-bank-coin { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100px; padding: 4px; border: 0; background: transparent; color: var(--ink); cursor: grab; touch-action: none; user-select: none; }
+.mc-bank-coin .mc-art { display: block; flex: none; width: 86px; height: auto; aspect-ratio: 1; margin: 0 auto; }
+.mc-bank-coin > span { display: block; font-size: .9rem; }
+.mc-art { --coin-face: #ddd9cf; --coin-edge: #94918c; width: 100%; height: 100%; color: #535650; filter: drop-shadow(0 2px 1px #392e2530); }
+.mc-copper { --coin-face: #d49a68; --coin-edge: #9c643c; color: #714225; }
+.mc-gold { --coin-face: #e5c46a; --coin-edge: #ae8635; color: #765719; }
+.mc-rim { fill: var(--coin-face); stroke: var(--coin-edge); stroke-width: 3; }
+.mc-face { fill: var(--coin-face); stroke: var(--coin-edge); stroke-width: 1; stroke-dasharray: 1 2; }
+.mc-bimetal .mc-face { fill: #ddc56c; }
+.mc-art text { fill: currentColor; font: 9px var(--app-font,Arial); font-weight: 700; letter-spacing: 1px; }
+.mc-art .mc-value { font-size: 13px; letter-spacing: 0; }
+.mc-motif { fill: currentColor; }
+.mc-note { margin: 0 0 20px; text-align: center; color: var(--muted-ink); font-size: .85rem; line-height: 1.5; }
+.mc-totals { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; padding: 16px 22px; background: var(--paper); border: 1px solid var(--paper-edge); border-radius: 14px; }
+.mc-totals > div { display: flex; flex-direction: column; justify-content: center; gap: 5px; }
+.mc-totals span { color: var(--muted-ink); font-size: .85rem; }
+.mc-totals output { font-size: 1.65rem; font-variant-numeric: tabular-nums; }
+.mc-totals strong { font-size: 1rem; font-weight: 500; }
+.mc-canvas { --mc-size: 64px; position: relative; height: 380px; border: 2px dashed var(--paper-edge); border-radius: 18px; background: #fffaf2d9; isolation: isolate; }
+.mc-empty { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 20px; text-align: center; color: var(--muted-ink); pointer-events: none; }
+.mc-placed { position: absolute; width: var(--mc-size); height: var(--mc-size); padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: grab; touch-action: none; user-select: none; }
+.mc-selected { outline: 2px solid #795536; outline-offset: 3px; z-index: 2; }
+.mc-counts { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 22px; margin: 16px 0; font-size: .9rem; }
+.mc-actions { justify-content: center; }
+.mc-actions button:disabled { opacity: .5; }
+.mc-workspace[data-state="success"] .mc-canvas { border-color: #6d8a63; box-shadow: 0 0 0 3px #6d8a6320; }
+.mc-workspace .drop-target { outline: 3px solid #9c7951; outline-offset: 4px; }
+.om-drag-ghost.mc-ghost { width: 76px!important; height: 76px!important; background: transparent; border: 0; box-shadow: none; padding: 0; }
+@media (max-width:650px) {
+ .mc-bank { gap: 5px; padding: 0; }
+ .mc-bank-coin { width: 82px; }
+ .mc-bank-coin .mc-art { width: 68px; }
+ .mc-canvas { --mc-size: 48px; height: 420px; }
+ .mc-totals { padding: 14px; gap: 12px; }
+ .mc-totals output { font-size: 1.4rem; }
+ .mc-totals strong { font-size: .9rem; }
+ .mc-actions button { padding: 10px; }
+}

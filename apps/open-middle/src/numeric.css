@@ -1,8 +1,8 @@
 .numeric-question .collection-workspace { padding-top: 92px; }
 .nm-task { max-width: 1200px; margin: auto; }
 .nm-instruction { font-size: clamp(1rem, 2vw, 1.5rem); line-height: 1.7; text-align: center; margin: 6px auto 18px; max-width: 900px; }
-.nm-mode { display: flex; justify-content: center; gap: 12px; align-items: center; margin: 20px 0; }
-.nm-mode select { font: inherit; background: #fff; color: #111; border: 1px solid #aaa; padding: 9px 12px; border-radius: 6px; max-width: 75%; }
+.nm-mode { display: inline-block; max-width: 100%; vertical-align: baseline; }
+.nm-mode select { font: inherit; field-sizing: content; background: #fff; color: #111; border: 1px solid #aaa; padding: .1em .25em; border-radius: 6px; max-width: 100%; min-width: 0; vertical-align: baseline; }
 .nm-bank { display: flex; justify-content: center; gap: clamp(6px, 1.5vw, 18px); flex-wrap: wrap; margin: 24px auto 40px; padding: 12px; border-radius: 12px; }
 .nm-digit, .nm-slot { position: relative; display: inline-grid; place-items: center; width: var(--nm-digit-size, clamp(36px, 5.6vw, 76px)); height: var(--nm-digit-size, clamp(36px, 5.6vw, 76px)); font-size: clamp(1.4rem, 3.6vw, 3.4rem); line-height: 1; border: 2px solid #111; border-radius: 50%; padding: 0; touch-action: none; user-select: none; flex: none; background: #fff; }
 .nm-digit { cursor: grab; }
@@ -66,7 +66,7 @@
   .nm-number { padding: 2px; }
   .nm-instruction { text-align: center; }
   .nm-fraction { gap: 4px; }
-  .nm-mode { gap: 8px; font-size: .95rem; }
+  .nm-mode select { font-size: 1em; }
   .nm-label { max-width: 110px; }
   .nm-feedback { font-size: .9rem; margin-top: 22px; }
 }
@@ -101,6 +101,7 @@
 @media (max-width: 650px) {
  .nm-centered-subtraction .nm-row { column-gap: 4px; }
  .nm-centered-subtraction .nm-slot { --nm-digit-size: clamp(22px, 5.8vw, 36px); font-size: clamp(1rem, 4vw, 1.5rem); }
+ .nm-task[data-question="85"] .nm-slot { --nm-digit-size: clamp(30px, 5.8vw, 36px); }
  .nm-centered-subtraction .nm-output { min-width: 44px; padding: 4px; font-size: 1.2rem; }
  .nm-subtraction-visual .nm-sub-negative.rod { height: 80px; }
 }
@@ -112,3 +113,9 @@
 .nm-pair .nm-bank { margin: 8px auto 12px; }
 .nm-pair .nm-feedback { margin-top: 10px; }
 .nm-pairs-feedback[data-state="success"] { color: #346738; font-weight: 700; }
+
+.nm-decimal-line { margin: 28px auto 0; max-width: 850px; text-align: center; }
+.nm-decimal-line svg { display: block; width: 100%; height: auto; font-size: 24px; }
+.nm-decimal-line figcaption { font-size: .85rem; color: var(--muted-ink, #666); }
+.nm-task[data-question="118"] .nm-equations { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 16px; }
+.nm-task[data-question="118"] .nm-row { flex-direction: column; margin: 12px 0; }

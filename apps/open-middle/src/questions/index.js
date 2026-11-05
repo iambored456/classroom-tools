@@ -4,11 +4,12 @@ import { question40 } from './40.js'
 import { numericQuestions } from '../numeric-catalog.js'
 import { explorationQuestions } from '../explorations.js'
 import { manipulativeQuestions } from '../manipulatives.js'
+import { moneyQuestions } from '../money-model.js'
 
 // Keep the ladybug activity available for later restoration; omit the retired cutouts board.
 const unavailableQuestionIds = new Set(['13-ladybugs', '20-21-boards'])
 
-export const questions = [question34, question38, question40, ...numericQuestions, ...explorationQuestions, ...manipulativeQuestions].filter(question => !unavailableQuestionIds.has(String(question.id))).sort((a,b)=>{
+export const questions = [question34, question38, question40, ...numericQuestions, ...explorationQuestions, ...manipulativeQuestions, ...moneyQuestions].filter(question => !unavailableQuestionIds.has(String(question.id))).sort((a,b)=>{
  const numberA=parseInt(a.id),numberB=parseInt(b.id)
  return (Number.isNaN(numberA)?1000:numberA)-(Number.isNaN(numberB)?1000:numberB) || String(a.id).localeCompare(String(b.id),undefined,{numeric:true})
 })

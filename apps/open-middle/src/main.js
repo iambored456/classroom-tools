@@ -5,6 +5,7 @@ import './numeric.css'
 import './explorations.css'
 import './manipulatives.css'
 import './fraction-line.css'
+import './money.css'
 import './collection.css'
 import './theme.css'
 import './question-previews.css'
@@ -21,12 +22,13 @@ import {fitToWindow} from './fit-to-window.js'
 import {mountNumeric} from './numeric-view.js'
 import {mountExploration} from './explorations.js'
 import {mountManipulative} from './manipulatives.js'
+import {mountMoney} from './money.js'
 const app = document.querySelector('#app')
 let slots = emptySlots(), selected = null
 let digitDrag = null
 let dragAssistEnabled = false
 try { dragAssistEnabled = localStorage.getItem('open-middle-drag-assist') === 'true' } catch {}
-const supportsDragAssist = problem => problem && (!customQuestion(problem) || problem.layout === 'digit-task' || ['495','59'].includes(String(problem.id)))
+const supportsDragAssist = problem => problem && (!customQuestion(problem) || problem.layout === 'digit-task' || problem.kind === 'money' || ['495','59'].includes(String(problem.id)))
 function bindDragAssist(problem) {
  if (!supportsDragAssist(problem)) return
  const label = document.createElement('label')
@@ -38,14 +40,14 @@ function bindDragAssist(problem) {
   dragAssistEnabled = event.target.checked
   try { localStorage.setItem('open-middle-drag-assist', String(dragAssistEnabled)) } catch {}
  }
- document.querySelector('.help-copy').append(' With Drag Assist on below, briefly lift and touch near the number to keep dragging. You can also tap a digit, then tap a space.')
+ document.querySelector('.help-copy').append(problem.kind==='money'?' With Drag Assist on below, briefly lift and touch near the coin to keep dragging. You can also tap a coin to add it.':' With Drag Assist on below, briefly lift and touch near the number to keep dragging. You can also tap a digit, then tap a space.')
 }
 let showSums = [false, false]
 let activeQuestionId = null
 let cleanupCustom = null
 let windowFit = null
 let landingPreviews = null
-const customQuestion = problem => problem && (problem.layout === 'digit-task' || problem.layout === 'exploration' || problem.kind === 'manipulative')
+const customQuestion = problem => problem && (problem.layout === 'digit-task' || problem.layout === 'exploration' || problem.kind === 'manipulative' || problem.kind === 'money')
 const escapeHtml = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
 let doubleSpace = false
 try { doubleSpace = localStorage.getItem('open-middle-double-space') === 'true' } catch {}
@@ -71,7 +73,7 @@ document.addEventListener('fullscreenchange', () => {
  bindFullscreen()
 })
 function questionTools(problem) {
- return `<nav class="corner-tools" aria-label="Problem controls">${!customQuestion(problem)||problem.layout==='digit-task'?icon('refresh','Reset problem'):''}${icon('help','Help and settings')}${fullscreenControl()}</nav>`
+ return `<nav class="corner-tools" aria-label="Problem controls">${!customQuestion(problem)||problem.layout==='digit-task'||problem.kind==='money'?icon('refresh','Reset problem'):''}${icon('help','Help and settings')}${fullscreenControl()}</nav>`
 }
 function helpDialog(copy, numeric = false) {
  return `<dialog id="help-dialog" aria-labelledby="help-title"><form method="dialog"><div class="dialog-heading"><h2 id="help-title">How to play</h2><button aria-label="Close help" class="close" autofocus>×</button></div><p class="help-copy">${copy}</p><section class="help-settings" aria-labelledby="settings-title"><h3 id="settings-title">Settings</h3><label><input id="spacing" type="checkbox" ${doubleSpace?'checked':''}> Double-space between words</label>${numeric?'<div id="numeric-secondary"></div>':''}</section></form></dialog>`
@@ -131,9 +133,9 @@ function render() {
   app.innerHTML=`${homeControls(problem)}${questionTools(problem)}<main class="workspace collection-workspace ${numeric?'':'fitted-question'}" aria-label="${escapeHtml(questionLabel(problem))}">${numeric?'':`<div class="window-fit-content"><h1 class="question-title">${escapeHtml(questionLabel(problem))}</h1>`}<div id="interactive-question"></div>${numeric?'':'</div>'}</main>${helpDialog(helpCopy,numeric)}`
   bindQuestionControls(problem)
   const target=document.querySelector('#interactive-question')
-  cleanupCustom=problem.layout==='digit-task'?mountNumeric(target,problem,{secondaryContainer:document.querySelector('#numeric-secondary'),dragAssistEnabled:()=>dragAssistEnabled}):problem.layout==='exploration'?mountExploration(target,problem):mountManipulative(target,problem,{dragAssistEnabled:()=>dragAssistEnabled})
+  cleanupCustom=problem.kind==='money'?mountMoney(target,problem,{dragAssistEnabled:()=>dragAssistEnabled}):problem.layout==='digit-task'?mountNumeric(target,problem,{secondaryContainer:document.querySelector('#numeric-secondary'),dragAssistEnabled:()=>dragAssistEnabled}):problem.layout==='exploration'?mountExploration(target,problem):mountManipulative(target,problem,{dragAssistEnabled:()=>dragAssistEnabled})
   bindDragAssist(problem)
-  if(numeric)document.querySelector('#refresh').onclick=()=>cleanupCustom.reset()
+  if(numeric||problem.kind==='money')document.querySelector('#refresh').onclick=()=>cleanupCustom.reset()
   else windowFit=fitToWindow(document.querySelector('.window-fit-content'),{allowVerticalScroll:true})
   return
  }

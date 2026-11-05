@@ -12,25 +12,37 @@ const examples = [
   ['13-blanks', [1,9,2,8,3,7,4,6,5,5], [1,8,2,8,3,7,4,6,5,5]],
   [16, [2,3,5], [2,5,3]],
   [22, [0,9,1,8,2,7,3,6,4,5], [0,8,1,9,2,7,3,6,4,5]],
+  [29, [1,2,4,0,5,6,7,8,9,3], [1,2,4,0,7,8,5,6,9,3]],
   [33, [3,1,2,9], [9,8,1,2], 'smallest'],
   [43, [3,0,1,2,9,8], [3,0,2,1,9,8]],
   [44, [5,2,1,3], [5,1,2,3]],
   [47, [1,3,2,8,5,9], [9,3,2,8,5,1]],
   [56, [6,3,1,4,2,9], [6,3,1,4,2,8]],
   [57, [7,3,8,5,4,2,1,9,6], [7,3,8,5,4,1,2,9,6]],
+  [51, [9,8,7,6,5,4], [1,2,9,4,5,3], 'greater'],
   [53, [8,7,9], [9,7,8]],
   [58, [1,3,2,6], [1,2,3,4], 'both'],
   [68, [3,2,9,9], [8,7,2,1], 'free'],
+  [73, [3,2,4], [4,2,3]],
+  [81, [4,6,9,5,3,2], [4,0,6,5,2,3]],
+  [82, [5,4,9], [5,4,8]],
   [84, [6,4,8,3,5,7], [6,4,8,3,7,5]],
   [85, [8,7,1,5,4,2], [8,7,1,5,4,3]],
   [69, [2,3,5,4,9], [2,3,4,5,9], 'any'],
   [71, [8,7,5,6,0], [8,7,6,5,0], 'greater'],
+  [86, [1,3,4,2,6,5,8], [1,3,4,2,6,8,5], 'greatest'],
+  [89, [1,2,3,5,4,7], [1,2,3,7,4,5]],
+  [90, [1,5,2,6,4,3], [1,2,3,5,4,7]],
   [94, [4,5,7,9,1,2,3,6], [7,9,4,5,1,2,3,6]],
+  [107, [4,9,8,7,5,0,1,2], [4,9,8,7,3,0,1,2]],
+  [108, [4,9,8,7,5,0,1,3], [4,9,8,6,5,0,1,3]],
   [109, [1,4,2,8,9,3,6], [1,4,2,8,9,6,3]],
   ['109-comparing-fractions', [1,4,8,9], [8,9,1,4]],
   [113, [1,2,3,6,7,8], [3,2,1,6,7,8]],
   [114, [1,2,3,4,6,5], [6,2,3,4,1,5]],
   [116, [1,2,0,5], [1,2,5,0]],
+  [117, [1,9,2,8,3,7,4,6], [1,9,2,8,4,6,3,7]],
+  [118, [7,3,4,6,8,9,1,2,5,0], [7,3,4,6,8,9,1,0,5,2]],
   [119, [1,2,3,5,0], [1,2,6,3,0]],
   [180, [6,1,8,2], [6,1,2,8]],
   [219, [1,9,0,8], [1,0,9,8], '60'],
@@ -276,4 +288,78 @@ test('fixed 291 is excluded from the movable bank and both pairs must be true an
   assert.equal(evaluate(84,[9,4,3,6,5,2]).state,'success') // fixed 9/2 do not consume digits
   assert.equal(evaluate(85,[8,7,1,5,4,2]).value,'329')
   assert.equal(evaluate(85,[5,4,2,8,7,1]).state,'progress')
+})
+
+test('new questions preserve strict comparison goals and shared digit restrictions', () => {
+  assert.equal(evaluate(29, [3,5,4,0,6,2,7,8,9,1]).state, 'progress', '35 is a strict printed boundary')
+  assert.equal(evaluate(29, [0,2,4,1,5,6,7,8,9,3]).state, 'invalid', 'two-digit numbers cannot start with zero')
+  for (const mode of ['greater','less']) assert.equal(evaluate(51, [1,2,4,5,7,6], mode).state, 'progress', '700 does not meet either strict goal')
+  assert.equal(evaluate(51, [1,2,9,4,5,3], 'less').state, 'success')
+  assert.equal(evaluate(51, [9,8,7,6,5,4], 'less').state, 'progress')
+  assert.equal(evaluate(81, [4,6,0,5,3,2]).state, 'success')
+  assert.equal(evaluate(81, [4,6,9,4,8,7]).state, 'invalid', 'digits are shared across both numbers')
+  assert.equal(evaluate(82, [4,5,0]).value, '500', 'the lower rounding boundary is inclusive')
+  assert.equal(evaluate(82, [5,6,0]).value, '600', 'numbers beyond the upper boundary round up')
+  assert.equal(evaluate(84, [4,2,6,1,3,5]).state, 'success', 'printed 291 does not consume movable 1 or 2')
+  assert.equal(evaluate(84, [4,2,7,1,3,6]).state, 'success', 'a second distinct arrangement works')
+  assert.equal(evaluate(85, [9,1,6,5,8,7]).state, 'success', 'every exact difference of 329 is accepted')
+  assert.equal(evaluate(86, [1,6,5,8,3,4,2], 'smallest').state, 'success')
+  assert.equal(evaluate(86, [1,6,5,8,3,4,2], 'greatest').state, 'progress')
+  assert.equal(evaluate(86, [1,3,4,2,6,5,8], 'smallest').state, 'progress')
+})
+
+test('independent exhaustive searches verify the new maximum and subtraction goals', () => {
+  let maximumProduct = -Infinity
+  visitPermutations([1,2,3,4], 3, a => { maximumProduct = Math.max(maximumProduct, (10*a[0]+a[1])*a[2]) })
+  assert.equal(maximumProduct, 128)
+  let largestRoundingNumber = -Infinity
+  visitPermutations(Array.from({length:10}, (_,i)=>i), 3, a => {
+    const value=100*a[0]+10*a[1]+a[2]
+    if (value>=450&&value<550) largestRoundingNumber=Math.max(largestRoundingNumber,value)
+  })
+  assert.equal(largestRoundingNumber, 549)
+  let fixedSubtractionSolutions=0
+  visitPermutations([1,2,3,4,5,6,7,8,9], 6, a => {
+    const exact=100*a[0]+10*a[1]+a[2]-291===100*a[3]+10*a[4]+a[5]
+    assert.equal(evaluate(84,a).state==='success',exact)
+    if (exact) fixedSubtractionSolutions++
+  })
+  assert.equal(fixedSubtractionSolutions,64)
+  let minimum=Infinity,maximum=-Infinity,solutions=0
+  visitPermutations([1,2,3,4,5,6,7,8,9], 7, a => {
+    const difference=1000*a[0]-(100*a[1]+10*a[2]+a[3])
+    if (difference!==100*a[4]+10*a[5]+a[6]) {
+      assert.notEqual(evaluate(86,a,'greatest').state,'success')
+      return
+    }
+    minimum=Math.min(minimum,difference);maximum=Math.max(maximum,difference);solutions++
+    assert.equal(evaluate(86,a,'greatest').state==='success',difference===658)
+    assert.equal(evaluate(86,a,'smallest').state==='success',difference===342)
+  })
+  assert.deepEqual({minimum,maximum,solutions},{minimum:342,maximum:658,solutions:16})
+})
+
+test('mixed-number, decimal, and pattern additions preserve their exact source goals',()=>{
+ assert.equal(evaluate(89,[1,8,2,3,4,5]).state,'invalid','mixed-number fractional parts must be proper')
+ assert.equal(evaluate(89,[3,5,1,2,4,7]).state,'success','addition is commutative')
+ assert.equal(evaluate(108,[5,0,1,3,4,9,8,7]).state,'success','decimals may be in either order')
+ assert.equal(evaluate(108,[4,8,9,7,5,1,0,3]).state,'progress','equal distances of .103 are not the closest possible')
+ const digitsOf=value=>String(value).padStart(4,'0').split('').map(Number)
+ let closest=null
+ for(let distance=1;distance<=13;distance++){
+  const digits=[...digitsOf(5000-distance),...digitsOf(5000+distance)]
+  if(new Set(digits).size===8){closest=distance;break}
+ }
+ assert.equal(closest,13)
+ let smallest=Infinity
+ visitPermutations([1,2,3,4,5,6,7,8,9],6,a=>{
+  if([1,3,5].some(i=>a[i]>=8))return
+  const sum=8*a[0]+a[1]+8*a[2]+a[3]
+  if(sum===8*a[4]+a[5])smallest=Math.min(smallest,sum)
+ })
+ assert.equal(smallest,35)
+ assert.equal(evaluate(117,[7,3,6,2,5,1,4,0]).state,'success','decreasing patterns are accepted')
+ assert.equal(evaluate(118,[7,3,4,6,8,9,1,0,5,2]).state,'progress','right tick must exceed the middle decimal')
+ assert.equal(evaluate(118,[7,3,4,6,8,9,0,1,5,2]).state,'invalid','right tick has two whole-number digits')
+ assert.equal(evaluate(119,[1,2,3,5,0]).state,'success','existing #119 remains available')
 })

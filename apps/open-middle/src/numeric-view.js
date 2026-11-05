@@ -36,6 +36,11 @@ export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=(
  function visuals(){
   if(!q.visual)return ''
   if(q.visual==='subtraction')return subtractionVisual(slots.every(v=>v===null)?Array(6).fill(null):subtractionDigits(q,slots))
+  if(q.visual==='decimal-line'){
+   const values=[slots.slice(0,4),slots.slice(4,6),slots.slice(6,10)]
+   const labels=values.map((a,i)=>a.includes(null)?['Left tick','Middle tick','Right tick'][i]:i===0?`${a[0]}.${a.slice(1).join('')}`:i===1?`10.${a.join('')}`:`${a.slice(0,2).join('')}.${a.slice(2).join('')}`)
+   return `<figure class="nm-decimal-line"><svg viewBox="0 0 700 110" role="img" aria-label="Number line: ${labels.map(esc).join(', ')}. Not drawn to scale."><path d="M15 65H685M28 56L15 65 28 74M672 56L685 65 672 74" fill="none" stroke="currentColor" stroke-width="2"/>${[90,350,610].map((x,i)=>`<path d="M${x} 53V77" stroke="currentColor" stroke-width="2"/><text x="${x}" y="35" text-anchor="middle">${esc(labels[i])}</text>`).join('')}</svg><figcaption>Number line not drawn to scale.</figcaption></figure>`
+  }
   if(q.visual==='marbles'){
    const red=slots[0],blue=slots[1],redB=slots[2],green=slots[3]===null||slots[4]===null?null:slots[3]*10+slots[4]
    return `<div class="nm-bags">${[[red,blue,'A','blue'],[redB,green,'B','green']].map(([r,c,name,color])=>`<div class="nm-bag"><strong>Bag ${name}</strong><div class="nm-marbles" role="img" aria-label="${r??'Unknown'} red and ${c??'unknown'} ${color} marbles">${r===null||c===null?'<span>Fill the spaces to see the marbles.</span>':Array.from({length:r+c},(_,i)=>`<i class="${i<r?'red':color}"></i>`).join('')}</div></div>`).join('')}</div>`
@@ -47,7 +52,7 @@ export function mountNumeric(container,q,{secondaryContainer,dragAssistEnabled=(
  function render(restore){
   const result=evaluateNumeric(q,slots,mode)
   const positive=result.state==='success'||(q.encourageAttempts&&result.state==='progress')
-  view.innerHTML=`<section class="nm-task"><p class="nm-instruction">${esc(q.instruction)}</p>${q.modes?`<label class="nm-mode">Challenge <select data-nmode>${q.modes.map(([value,label])=>`<option value="${value}" ${mode===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>`:''}
+  view.innerHTML=`<section class="nm-task" data-question="${esc(q.id)}"><p class="nm-instruction">${q.modes?q.instruction.split('{mode}').map(esc).join(`<label class="nm-mode"><select data-nmode aria-label="Challenge">${q.modes.map(([value,label])=>`<option value="${value}" ${mode===value?'selected':''}>${esc(label)}</option>`).join('')}</select></label>`):esc(q.instruction)}</p>
   <div class="nm-bank" aria-label="Digit bank; drop a digit here to return it">${q.digits.map(d=>`<button data-nbank="${d}" class="nm-digit ${selected===d?'selected':''}" ${isUnique(q,mode)&&slots.includes(d)?'disabled':''} aria-label="Digit ${d}" aria-pressed="${selected===d}">${d}</button>`).join('')}</div>
   <div class="nm-board ${q.baseTen?'nm-base-ten':''} ${q.visual==='subtraction'?'nm-centered-subtraction':''} ${result.state==='incomplete'?'':positive?'equal':'unequal'}" data-state="${result.state}"><div class="nm-equations ${q.rule==='equal-sums'?'nm-chain':''}">${q.rows.map(row=>`<div class="nm-row">${row.map(t=>token(t,result)).join('')}</div>`).join('')}</div>${visuals()}</div>
   </section>`
