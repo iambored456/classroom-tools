@@ -39,6 +39,7 @@ export default defineConfig({
         target: 'http://localhost:5187',
         changeOrigin: true,
       },
+      '/blending-board': { target: 'http://localhost:5197', changeOrigin: true },
       '/read-along-highlighter': {
         target: 'http://localhost:5175',
         changeOrigin: true,

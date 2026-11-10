@@ -21,6 +21,18 @@ importers:
         specifier: ~5.9.3
         version: 5.9.3
 
+  apps/blending-board:
+    devDependencies:
+      '@types/node':
+        specifier: ^24.10.1
+        version: 24.10.13
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.2.4
+        version: 7.3.1(@types/node@24.10.13)(tsx@4.21.0)
+
   apps/book-of-questions:
     dependencies:
       '@chenglou/pretext':

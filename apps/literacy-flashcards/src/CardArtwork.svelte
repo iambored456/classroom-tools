@@ -6,13 +6,22 @@
     crop: ArtworkCrop
     label: string
     clipId: string
+    consistentScale?: boolean
     onerror?: () => void
   }
-  let { src, crop, label, clipId, onerror = () => {} }: Props = $props()
+  let { src, crop, label, clipId, consistentScale = false, onerror = () => {} }: Props = $props()
+
+  // Centre the clipped artwork in a common canvas instead of enlarging each
+  // tight crop to fill the card. Normalise by source width to allow for scans
+  // at different resolutions. Landing previews keep their compact crops.
+  const frameWidth = $derived(consistentScale ? crop.sourceWidth : crop.width)
+  const frameHeight = $derived(consistentScale ? Math.max(crop.height, crop.sourceWidth * 2 / 3) : crop.height)
+  const frameX = $derived(crop.x + (crop.width - frameWidth) / 2)
+  const frameY = $derived(crop.y + (crop.height - frameHeight) / 2)
 </script>
 
 <svg class="card-art" width={crop.width} height={crop.height}
-  viewBox={`${crop.x} ${crop.y} ${crop.width} ${crop.height}`}
+  viewBox={`${frameX} ${frameY} ${frameWidth} ${frameHeight}`}
   preserveAspectRatio="xMidYMid meet" role="img" aria-label={label}>
   <defs>
     <clipPath id={`${clipId}-clip`} clipPathUnits="userSpaceOnUse">

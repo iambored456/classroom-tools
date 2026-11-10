@@ -2,47 +2,47 @@
   {
     "id": 1,
     "word": "the",
-    "sentence": "The dog ran."
+    "sentence": "The dog chased a ball."
   },
   {
     "id": 2,
     "word": "said",
-    "sentence": "Dad said yes."
+    "sentence": "Dad said it was bedtime."
   },
   {
     "id": 3,
     "word": "to",
-    "sentence": "Go to bed."
+    "sentence": "We went to the park."
   },
   {
     "id": 4,
     "word": "do",
-    "sentence": "We do puzzles."
+    "sentence": "We do puzzles after lunch."
   },
   {
     "id": 5,
     "word": "of",
-    "sentence": "Think of cats."
+    "sentence": "Have a glass of water."
   },
   {
     "id": 6,
     "word": "from",
-    "sentence": "Sam runs from bugs."
+    "sentence": "This gift is from Grandma."
   },
   {
     "id": 7,
     "word": "are",
-    "sentence": "We are happy."
+    "sentence": "My socks are wet."
   },
   {
     "id": 8,
     "word": "was",
-    "sentence": "It was fun."
+    "sentence": "The bath was too hot."
   },
   {
     "id": 9,
     "word": "what",
-    "sentence": "What is that?"
+    "sentence": "What is for lunch?"
   },
   {
     "id": 10,
@@ -52,62 +52,62 @@
   {
     "id": 11,
     "word": "goes",
-    "sentence": "She goes home."
+    "sentence": "This book goes on top."
   },
   {
     "id": 12,
     "word": "says",
-    "sentence": "Mom says yes."
+    "sentence": "The sign says stop."
   },
   {
     "id": 13,
     "word": "their",
-    "sentence": "Their dog barks."
+    "sentence": "Their dog dug a hole."
   },
   {
     "id": 14,
     "word": "were",
-    "sentence": "We were singing."
+    "sentence": "My shoes were too small."
   },
   {
     "id": 15,
     "word": "talk",
-    "sentence": "We talk softly."
+    "sentence": "Please talk quietly during lunch."
   },
   {
     "id": 16,
     "word": "walk",
-    "sentence": "We walk home."
+    "sentence": "We walk to school."
   },
   {
     "id": 17,
     "word": "could",
-    "sentence": "I could help."
+    "sentence": "Could you tie my shoes?"
   },
   {
     "id": 18,
     "word": "would",
-    "sentence": "I would help."
+    "sentence": "Would you like some milk?"
   },
   {
     "id": 19,
     "word": "should",
-    "sentence": "We should share."
+    "sentence": "We should share these crayons."
   },
   {
     "id": 20,
     "word": "there",
-    "sentence": "There it is."
+    "sentence": "There are three red apples."
   },
   {
     "id": 21,
     "word": "where",
-    "sentence": "Where is Dad?"
+    "sentence": "Where is my lunch box?"
   },
   {
     "id": 22,
     "word": "who",
-    "sentence": "Who is there?"
+    "sentence": "Who wants to play tag?"
   },
   {
     "id": 23,
@@ -117,22 +117,22 @@
   {
     "id": 24,
     "word": "once",
-    "sentence": "I jumped once."
+    "sentence": "Read the word once more."
   },
   {
     "id": 25,
     "word": "two",
-    "sentence": "Two dogs ran."
+    "sentence": "I have two pet cats."
   },
   {
     "id": 26,
     "word": "does",
-    "sentence": "She does flips."
+    "sentence": "Does this pen work?"
   },
   {
     "id": 27,
     "word": "many",
-    "sentence": "Many birds sing."
+    "sentence": "How many blocks are there?"
   },
   {
     "id": 28,
@@ -142,127 +142,127 @@
   {
     "id": 29,
     "word": "been",
-    "sentence": "We have been swimming."
+    "sentence": "I've been to the zoo."
   },
   {
     "id": 30,
     "word": "into",
-    "sentence": "Jump into bed."
+    "sentence": "Put your toys into boxes."
   },
   {
     "id": 31,
     "word": "friend",
-    "sentence": "My friend smiles."
+    "sentence": "My friend plays with me."
   },
   {
     "id": 32,
     "word": "because",
-    "sentence": "I smile because you laugh."
+    "sentence": "She smiled because we won."
   },
   {
     "id": 33,
     "word": "woman",
-    "sentence": "The woman smiles."
+    "sentence": "The woman walked her dog."
   },
   {
     "id": 34,
     "word": "women",
-    "sentence": "The women wave."
+    "sentence": "Two women walked their dogs."
   },
   {
     "id": 35,
     "word": "move",
-    "sentence": "We move slowly."
+    "sentence": "Please move your chair closer."
   },
   {
     "id": 36,
     "word": "both",
-    "sentence": "Both cats purr."
+    "sentence": "Both shoes are wet."
   },
   {
     "id": 37,
     "word": "four",
-    "sentence": "Four hens cluck."
+    "sentence": "Our dog has four legs."
   },
   {
     "id": 38,
     "word": "fourth",
-    "sentence": "I came fourth."
+    "sentence": "I am fourth in line."
   },
   {
     "id": 39,
     "word": "people",
-    "sentence": "People can help."
+    "sentence": "People lined up for lunch."
   },
   {
     "id": 40,
     "word": "pretty",
-    "sentence": "You look pretty."
+    "sentence": "Those flowers are pretty."
   },
   {
     "id": 41,
     "word": "nothing",
-    "sentence": "Nothing is missing."
+    "sentence": "My bag has nothing inside."
   },
   {
     "id": 42,
     "word": "other",
-    "sentence": "Try the other door."
+    "sentence": "Put on your other sock."
   },
   {
     "id": 43,
     "word": "another",
-    "sentence": "Take another turn."
+    "sentence": "Can we read another book?"
   },
   {
     "id": 44,
     "word": "mother",
-    "sentence": "My mother sings."
+    "sentence": "My mother reads to me."
   },
   {
     "id": 45,
     "word": "brother",
-    "sentence": "My brother runs."
+    "sentence": "My brother rides a bike."
   },
   {
     "id": 46,
     "word": "today",
-    "sentence": "We play today."
+    "sentence": "We have music class today."
   },
   {
     "id": 47,
     "word": "very",
-    "sentence": "It is very hot."
+    "sentence": "This soup is very hot."
   },
   {
     "id": 48,
     "word": "above",
-    "sentence": "Look above us."
+    "sentence": "Birds flew above the trees."
   },
   {
     "id": 49,
     "word": "among",
-    "sentence": "Sit among friends."
+    "sentence": "A rabbit hid among flowers."
   },
   {
     "id": 50,
     "word": "again",
-    "sentence": "Try it again."
+    "sentence": "Read that funny story again."
   },
   {
     "id": 51,
     "word": "against",
-    "sentence": "Lean against me."
+    "sentence": "Lean against the wall."
   },
   {
     "id": 52,
     "word": "always",
-    "sentence": "I always try."
+    "sentence": "I always brush my teeth."
   },
   {
     "id": 53,
     "word": "almost",
-    "sentence": "We almost won."
+    "sentence": "The cup is almost full."
   },
   {
     "id": 54,
@@ -272,7 +272,7 @@
   {
     "id": 55,
     "word": "poor",
-    "sentence": "The poor pup shivers."
+    "sentence": "The poor puppy is lost."
   },
   {
     "id": 56,
@@ -282,22 +282,22 @@
   {
     "id": 57,
     "word": "won",
-    "sentence": "Our team won."
+    "sentence": "Our team won the game."
   },
   {
     "id": 58,
     "word": "son",
-    "sentence": "Her son laughs."
+    "sentence": "Her son is in kindergarten."
   },
   {
     "id": 59,
     "word": "month",
-    "sentence": "The month ends."
+    "sentence": "My birthday is next month."
   },
   {
     "id": 60,
     "word": "hour",
-    "sentence": "An hour passed."
+    "sentence": "We played for an hour."
   },
   {
     "id": 61,
@@ -307,87 +307,87 @@
   {
     "id": 62,
     "word": "Monday",
-    "sentence": "Monday was fun."
+    "sentence": "We have gym on Monday."
   },
   {
     "id": 63,
     "word": "Wednesday",
-    "sentence": "Wednesday was rainy."
+    "sentence": "We swim on Wednesday."
   },
   {
     "id": 64,
     "word": "February",
-    "sentence": "February is cold."
+    "sentence": "My birthday is in February."
   },
   {
     "id": 65,
     "word": "eye",
-    "sentence": "My eye hurts."
+    "sentence": "Dust got in my eye."
   },
   {
     "id": 66,
     "word": "heart",
-    "sentence": "My heart beats."
+    "sentence": "My heart is beating fast."
   },
   {
     "id": 67,
     "word": "about",
-    "sentence": "Ask about frogs."
+    "sentence": "This book is about frogs."
   },
   {
     "id": 68,
     "word": "answer",
-    "sentence": "Find the answer."
+    "sentence": "Write your answer here."
   },
   {
     "id": 69,
     "word": "honest",
-    "sentence": "Please be honest."
+    "sentence": "Be honest about what happened."
   },
   {
     "id": 70,
     "word": "honor",
-    "sentence": "We honor you."
+    "sentence": "We honor soldiers with poppies."
   },
   {
     "id": 71,
     "word": "truth",
-    "sentence": "Tell the truth."
+    "sentence": "Please tell me the truth."
   },
   {
     "id": 72,
     "word": "truly",
-    "sentence": "I truly care."
+    "sentence": "I am truly sorry."
   },
   {
     "id": 73,
     "word": "busy",
-    "sentence": "Dad is busy."
+    "sentence": "Dad is busy making lunch."
   },
   {
     "id": 74,
     "word": "build",
-    "sentence": "We build forts."
+    "sentence": "We can build a snowman."
   },
   {
     "id": 75,
     "word": "built",
-    "sentence": "We built forts."
+    "sentence": "We built a sand castle."
   },
   {
     "id": 76,
     "word": "sure",
-    "sentence": "I am sure."
+    "sentence": "Are you sure it fits?"
   },
   {
     "id": 77,
     "word": "laugh",
-    "sentence": "We laugh together."
+    "sentence": "Your jokes make me laugh."
   },
   {
     "id": 78,
     "word": "whom",
-    "sentence": "Whom did you ask?"
+    "sentence": "With whom are you playing?"
   },
   {
     "id": 79,
@@ -397,57 +397,57 @@
   {
     "id": 80,
     "word": "toward",
-    "sentence": "Walk toward me."
+    "sentence": "The dog ran toward me."
   },
   {
     "id": 81,
     "word": "through",
-    "sentence": "Look through here."
+    "sentence": "We walked through the park."
   },
   {
     "id": 82,
     "word": "learn",
-    "sentence": "We learn together."
+    "sentence": "We learn to count."
   },
   {
     "id": 83,
     "word": "earth",
-    "sentence": "The earth spins."
+    "sentence": "We live on planet Earth."
   },
   {
     "id": 84,
     "word": "early",
-    "sentence": "We arrived early."
+    "sentence": "We got to school early."
   },
   {
     "id": 85,
     "word": "buy",
-    "sentence": "We buy apples."
+    "sentence": "We need to buy milk."
   },
   {
     "id": 86,
     "word": "guy",
-    "sentence": "That guy waved."
+    "sentence": "That guy drives our bus."
   },
   {
     "id": 87,
     "word": "guess",
-    "sentence": "Take a guess."
+    "sentence": "Can you guess my name?"
   },
   {
     "id": 88,
     "word": "guest",
-    "sentence": "Our guest smiled."
+    "sentence": "Our guest stayed for dinner."
   },
   {
     "id": 89,
     "word": "guide",
-    "sentence": "Please guide us."
+    "sentence": "The map will guide us."
   },
   {
     "id": 90,
     "word": "young",
-    "sentence": "You are young."
+    "sentence": "The young bird cannot fly."
   },
   {
     "id": 91,
@@ -457,16 +457,16 @@
   {
     "id": 92,
     "word": "enough",
-    "sentence": "We have enough."
+    "sentence": "We have enough chairs."
   },
   {
     "id": 93,
     "word": "tough",
-    "sentence": "This is tough."
+    "sentence": "This puzzle is tough."
   },
   {
     "id": 94,
     "word": "rough",
-    "sentence": "It feels rough."
+    "sentence": "The tree bark feels rough."
   }
 ]

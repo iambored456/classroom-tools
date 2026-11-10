@@ -7,7 +7,7 @@
   import { createTransitionQueue } from './transitions'
   import type { CardTransition } from './transitions'
   import CardArtwork from './CardArtwork.svelte'
-  import { eyeWordsCrop } from './artwork'
+  import { eyeWordsCrop, heartWordsCrop } from './artwork'
   import { nonsenseGroups, nonsenseCards, normalizeNonsenseSelection } from './nonsense-words'
   import type { NonsenseGroupId } from './nonsense-words'
 
@@ -50,6 +50,51 @@
   const hubUrl = import.meta.env.DEV
     ? `${window.location.protocol}//${window.location.hostname}:5173/`
     : new URL('../', new URL(import.meta.env.BASE_URL, window.location.origin)).pathname
+
+  function fitCards(grid: HTMLElement) {
+    function update() {
+      const count = grid.childElementCount
+      if (!count) return
+
+      const style = getComputedStyle(grid)
+      const bounds = grid.getBoundingClientRect()
+      const width = bounds.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
+      const height = bounds.height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)
+      const gap = parseFloat(style.columnGap)
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+      const maxColumns = Math.min(count, Math.max(1, Math.floor((width + gap) / (8.5 * rem + gap))))
+      let columns = maxColumns
+      let bestSize = 0
+
+      for (let candidate = 1; candidate <= maxColumns; candidate++) {
+        const rows = Math.ceil(count / candidate)
+        const cardWidth = (width - (candidate - 1) * gap) / candidate
+        const cardHeight = (height - (rows - 1) * gap) / rows
+        if (cardHeight < 8 * rem) continue
+
+        // Prefer the layout with the most room for previews and labels.
+        const size = Math.min(cardWidth / 1.4, cardHeight)
+        if (size > bestSize) {
+          columns = candidate
+          bestSize = size
+        }
+      }
+
+      grid.style.setProperty('--columns', String(columns))
+    }
+
+    update()
+    const resize = new ResizeObserver(update)
+    resize.observe(grid)
+    const cards = new MutationObserver(update)
+    cards.observe(grid, { childList: true })
+    return {
+      destroy() {
+        resize.disconnect()
+        cards.disconnect()
+      },
+    }
+  }
 
   const navigation = createTransitionQueue<CardAction>(performCardAction, value => {
     busy = value
@@ -266,9 +311,14 @@
     <span class="sentence">{card.sentence ?? card.word}</span>
   {:else if failed}
     <span class="image-fallback"><strong>{card.word}</strong><span>{card.cue}</span></span>
+  {:else if activeSet.id === 'heart-words'}
+    <CardArtwork src={cardImage(activeSet, id, 'front')} crop={heartWordsCrop} consistentScale
+      label={`${card.word}. Original UFLI word with hearts and sound boxes.`}
+      clipId={`heart-words-${id}-${reportError ? 'main' : 'underlay'}`}
+      onerror={() => { if (reportError) imageFailed = true }} />
   {:else if activeSet.id === 'eyewords'}
     <CardArtwork src={cardImage(activeSet, id, showBack ? 'back' : 'front')}
-      crop={eyeWordsCrop(id, showBack ? 'back' : 'front')}
+      crop={eyeWordsCrop(id, showBack ? 'back' : 'front')} consistentScale
       label={showBack ? `${card.word}. ${card.cue}` : `Illustrated sight word: ${card.word}`}
       clipId={`eyewords-${id}-${showBack ? 'back' : 'front'}-${reportError ? 'main' : 'underlay'}`}
       onerror={() => { if (reportError) imageFailed = true }} />
@@ -277,12 +327,9 @@
       alt={activeSet.frontKind === 'symbols' ? `${card.word}. Original UFLI card with hearts and sound boxes.` : `Closed syllable: ${card.word}`}
       onerror={() => { if (reportError) imageFailed = true }} draggable="false" />
   {/if}
-  {#if activeSet.flippable}
-    <span class="flip-hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-9a4 4 0 0 0-4 4v2m13-6-3-3m3 3-3 3M4 17h9a4 4 0 0 0 4-4v-2M4 17l3 3m-3-3 3-3" /></svg>{showBack ? activeSet.returnHint : activeSet.revealHint}</span>
-  {/if}
 {/snippet}
 
-<div class="app" class:dark-mode={darkMode}>
+<div class="app" class:dark-mode={darkMode} class:landing={screen === 'sets'}>
   {#if screen === 'sets'}
     <header class="sets-header">
       <a class="icon-button" href={hubUrl} aria-label="Return to Classroom Tools" title="Classroom Tools">
@@ -293,8 +340,8 @@
       </button>
     </header>
     <main class="sets-main">
-      <h1>Literacy Flashcards</h1>
-      <div class="set-grid">
+      <h1>Literacy Tools</h1>
+      <div class="set-grid" use:fitCards>
         {#each displaySets as set (set.id)}
           {@const progress = sessions[sessionStorageKey(set.id, nonsenseIds)]?.position ?? 0}
           <button class="set-card" onclick={(event) => set.id === 'nonsense-words' ? showNonsensePicker(event.currentTarget) : openDeck(set.id)}
@@ -303,6 +350,9 @@
             <span class="set-preview" style={`--preview-background: ${set.previewBackground}`}>
               {#if set.frontKind === 'text'}
                 <span class="text-preview" aria-hidden="true">som</span>
+              {:else if set.id === 'heart-words'}
+                <CardArtwork src={cardImage(set, 1, 'front')} crop={heartWordsCrop}
+                  label={`${set.name} card: ${set.cards[0].word}`} clipId="heart-words-preview" />
               {:else if set.id === 'eyewords'}
                 <CardArtwork src={cardImage(set, 1, 'front')} crop={eyeWordsCrop(1, 'front')}
                   label={`${set.name} card: ${set.cards[0].word}`} clipId="eyewords-preview" />
@@ -321,6 +371,16 @@
             </span>
           </button>
         {/each}
+        <a class="set-card" href={`${hubUrl}blending-board/`} aria-label="Open Blending Board">
+          <span class="set-preview" style="--preview-background: #d7ebf0">
+            <img src={`${import.meta.env.BASE_URL}BlendingBoard-preview.svg`} alt="" width="960" height="600" />
+          </span>
+          <span class="set-copy">
+            <span class="set-count">UFLI Lessons</span>
+            <span class="set-title">Blending Board <span aria-hidden="true">↗</span></span>
+            <span class="set-bottom">Build words with colour-coded segments</span>
+          </span>
+        </a>
       </div>
     </main>
   {:else}
@@ -348,7 +408,7 @@
       {:else if currentCard}
         <div class="card-stack" aria-busy={busy}>
           {#if queuedId}
-            <div class="flashcard underlay" class:returning aria-hidden="true">
+            <div class="flashcard underlay" class:single-sided={!activeSet.flippable} class:returning aria-hidden="true">
               {@render cardFace(queuedId, queuedFlipped, false, false)}
             </div>
           {/if}

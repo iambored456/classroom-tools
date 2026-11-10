@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="Build and blend words with colour-coded grapheme banks and UFLI lesson presets."><title>Blending Board</title></head>
+<body>
+  <header class="topbar">
+    <div class="board-heading">
+      <a id="home-link" class="icon-button" href="../" aria-label="Classroom Tools home" title="Classroom Tools home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
+      </a>
+      <div><h1>Blending Board</h1><span id="lesson-label">Custom board</span></div>
+    </div>
+    <div class="board-toolbar">
+      <button id="clear-word">Clear Word</button>
+      <button id="choose-tiles">Choose Tiles</button>
+      <button id="sidebar-toggle" class="icon-button" aria-label="Open settings" aria-controls="sidebar" aria-expanded="false" title="Settings">☰</button>
+    </div>
+  </header>
+  <main id="board">
+    <section class="word-stage" aria-label="Blended word"><div id="word" role="status" aria-live="polite" aria-atomic="true"></div><p id="empty-hint">Choose segments to build a word.</p></section>
+    <div class="board-content"><div id="banks" aria-label="Segment banks"></div><aside id="history" aria-label="Previous words"><h2>Previous</h2><div id="history-list"></div></aside></div>
+  </main>
+  <aside id="sidebar" aria-label="Settings" inert>
+    <div class="sidebar-header"><h2>Blending Board</h2><button class="icon-button" id="sidebar-close" aria-label="Close settings">×</button></div>
+    <section class="settings-section"><button id="ufli-open" class="wide">UFLI Lessons</button><p id="lesson-details" class="muted">Choose a lesson to load its segment banks.</p></section>
+    <section class="settings-section"><h3>Board</h3><label class="highlight-option"><input id="highlight-segments" type="checkbox"> Highlight segments in the word</label><button id="customize" class="wide">Choose tiles</button><button id="basic-board" class="wide">Reset to basic tiles</button><button id="fullscreen" class="wide">Enter fullscreen</button><p id="status" role="status" class="muted" hidden></p></section>
+    <section class="settings-section"><h3>Edit segments</h3><p class="muted">Separate tiles with commas. Letter groups stay together on one tile.</p><form id="segments-form"><label>Initial<textarea id="edit-initial" rows="2" spellcheck="false"></textarea></label><label>Middle<textarea id="edit-middle" rows="2" spellcheck="false"></textarea></label><label>Final<textarea id="edit-final" rows="2" spellcheck="false"></textarea></label><label>+ Ending<textarea id="edit-ending" rows="2" spellcheck="false"></textarea></label><button class="wide" type="submit">Apply segments</button></form></section>
+    <section class="settings-section" id="chain-section" hidden><h3>Lesson word chain</h3><p id="chain" class="muted"></p></section>
+    <section class="settings-section"><h3>How to use</h3><p class="muted">Tap a tile to use that segment. Tap it again to remove it. Tap a previous word to bring it back. Escape closes settings and pop-ups.</p><p class="muted">Inspired by the <a href="https://ufli.education.ufl.edu/tdr/file/bca9ju45kvvrvoan@research.dwi.ufl.edu_op.n?embed" target="_blank" rel="noopener noreferrer">UFLI Blending Board</a>.</p></section>
+  </aside>
+  <dialog id="ufli-dialog" aria-labelledby="ufli-title" aria-describedby="ufli-description"><div class="dialog-header"><h2 id="ufli-title">UFLI Lessons</h2><button id="ufli-close" class="icon-button" aria-label="Close UFLI Lessons">×</button></div><p id="ufli-description" class="muted">Choose a lesson to load its segments. Crossed-out lessons have no blending drill.</p><div id="ufli-grid"></div></dialog>
+  <dialog id="tiles-dialog" aria-labelledby="tiles-title"><div class="dialog-header"><h2 id="tiles-title">Choose tiles</h2><button id="tiles-close" class="icon-button" aria-label="Cancel tile changes">×</button></div><p class="muted">Select the segments you want available on the board.</p><div id="tile-picker"></div><div class="dialog-footer"><button id="tiles-cancel">Cancel</button><button id="tiles-apply">Use selected tiles</button></div></dialog>
+  <script type="module" src="/src/main.ts"></script>
+</body></html>

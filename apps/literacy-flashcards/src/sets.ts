@@ -42,7 +42,7 @@ export const cardSets: CardSet[] = [
     frontLabel: 'Hearts & sounds', backLabel: 'Sentence side',
     revealHint: 'Tap to read a sentence', returnHint: 'Tap to reveal hearts & sounds',
     instructions: 'Read the original UFLI card with its hearts and sound boxes, then tap to read a short sentence using the word. Hearts mark the irregular parts; blue boxes mark regular sounds.',
-    credit: 'Original cards from Flashcards - UFLI Heart Words. © 2022 University of Florida Literacy Institute. Original word, heart, sound-box, and logo artwork preserved.',
+    credit: 'Original cards from Flashcards - UFLI Heart Words. © 2022 University of Florida Literacy Institute. Original word, heart, and sound-box artwork preserved; the display crops out the footer logo.',
     previewBackground: '#dbe6ef',
   },
   {

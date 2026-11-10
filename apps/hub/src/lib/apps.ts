@@ -78,8 +78,8 @@ export const hubEntries: HubEntry[] = [
   {
     kind: 'app',
     id: 'literacy-flashcards',
-    name: 'Literacy Flashcards',
-    description: 'Reading practice with EyeWords, UFLI Heart Words, and Reading Universe closed syllables.',
+    name: 'Literacy Tools',
+    description: 'Reading practice with flashcard decks and a Blending Board for UFLI lessons.',
     href: withBase('literacy-flashcards/'),
     preview: withBase('images/LiteracyFlashcards-screenshot.png'),
     tags: ['Classroom'],

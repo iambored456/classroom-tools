@@ -1,0 +1,2603 @@
+[
+  {
+    "lesson": "7",
+    "pdfPage": 14,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "m",
+          "e",
+          "p",
+          "s"
+        ],
+        "pdf": [
+          "m",
+          "t",
+          "p",
+          "s"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "11",
+    "pdfPage": 22,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "f",
+          "s",
+          "n",
+          "f",
+          "p"
+        ],
+        "pdf": [
+          "f",
+          "s",
+          "n",
+          "t",
+          "p"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "n",
+          "fi",
+          "p",
+          "t"
+        ],
+        "pdf": [
+          "n",
+          "f",
+          "p",
+          "t"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "12",
+    "pdfPage": 24,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "ll",
+          "n",
+          "m",
+          "s",
+          "n",
+          "t"
+        ],
+        "pdf": [
+          "f",
+          "p",
+          "m",
+          "s",
+          "n",
+          "t"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "13",
+    "pdfPage": 26,
+    "changes": {
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "i",
+          "oa"
+        ],
+        "pdf": [
+          "a",
+          "i",
+          "o"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "14",
+    "pdfPage": 28,
+    "changes": {
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "i",
+          "e"
+        ],
+        "pdf": [
+          "a",
+          "i",
+          "o"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "16",
+    "pdfPage": 32,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "c",
+          "d",
+          "s",
+          "m"
+        ],
+        "pdf": [
+          "c",
+          "p",
+          "d",
+          "s",
+          "m"
+        ]
+      },
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "o",
+          "u"
+        ],
+        "pdf": [
+          "a",
+          "i",
+          "o",
+          "u"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "18",
+    "pdfPage": 36,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "n",
+          "cc",
+          "s",
+          "d",
+          "t"
+        ],
+        "pdf": [
+          "b",
+          "n",
+          "c",
+          "s",
+          "d",
+          "t"
+        ]
+      },
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "i",
+          "o",
+          "it"
+        ],
+        "pdf": [
+          "a",
+          "i",
+          "o",
+          "u"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "b",
+          "id",
+          "g",
+          "s"
+        ],
+        "pdf": [
+          "b",
+          "t",
+          "g",
+          "s"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "22",
+    "pdfPage": 44,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "d",
+          "ft",
+          "g",
+          "n"
+        ],
+        "pdf": [
+          "d",
+          "t",
+          "g",
+          "n"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "24",
+    "pdfPage": 48,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "b",
+          "t",
+          "i",
+          "g",
+          "nt",
+          "m"
+        ],
+        "pdf": [
+          "b",
+          "t",
+          "g",
+          "nt",
+          "m"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "25",
+    "pdfPage": 50,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "g",
+          "sc",
+          "r",
+          "sp",
+          "cs"
+        ],
+        "pdf": [
+          "c",
+          "sc",
+          "r",
+          "sp",
+          "s"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "26",
+    "pdfPage": 52,
+    "changes": {
+      "chain": {
+        "spreadsheet": [
+          "brag",
+          "bag",
+          "tag",
+          "tap",
+          "trap",
+          "trip",
+          "grip",
+          "rip",
+          "rep",
+          "prep",
+          "prop",
+          "drop",
+          "crop",
+          "cop",
+          "cog",
+          "fog",
+          "frog"
+        ],
+        "pdf": [
+          "rag",
+          "brag",
+          "bag",
+          "tag",
+          "tap",
+          "trap",
+          "trip",
+          "grip",
+          "rip",
+          "rep",
+          "prep",
+          "prop",
+          "drop",
+          "crop",
+          "cop",
+          "cog",
+          "fog",
+          "frog"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "28",
+    "pdfPage": 56,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "l",
+          "bi",
+          "f",
+          "r",
+          "fl",
+          "h",
+          "sl",
+          "pl"
+        ],
+        "pdf": [
+          "b",
+          "l",
+          "bl",
+          "f",
+          "r",
+          "fl",
+          "h",
+          "sl",
+          "pl"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "id",
+          "tc",
+          "ip",
+          "it"
+        ],
+        "pdf": [
+          "d",
+          "ld",
+          "t",
+          "lp",
+          "lt"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "29",
+    "pdfPage": 58,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "k",
+          "sw",
+          "tw",
+          "w"
+        ],
+        "pdf": [
+          "k",
+          "sw",
+          "l",
+          "tw",
+          "w"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "t",
+          "id",
+          "g",
+          "it",
+          "n",
+          "pt"
+        ],
+        "pdf": [
+          "d",
+          "t",
+          "ld",
+          "g",
+          "lt",
+          "n",
+          "pt"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "31",
+    "pdfPage": 62,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "m",
+          "t",
+          "id",
+          "p",
+          "it",
+          "ip",
+          "s",
+          "st"
+        ],
+        "pdf": [
+          "m",
+          "t",
+          "ld",
+          "p",
+          "lt",
+          "lp",
+          "s",
+          "st"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "32",
+    "pdfPage": 64,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "f",
+          "n",
+          "w",
+          "j",
+          "p",
+          "y",
+          "s"
+        ],
+        "pdf": [
+          "f",
+          "n",
+          "w",
+          "j",
+          "p",
+          "y",
+          "l",
+          "s"
+        ]
+      },
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "e",
+          "i",
+          "oo"
+        ],
+        "pdf": [
+          "a",
+          "e",
+          "i",
+          "o"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "33",
+    "pdfPage": 66,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "k",
+          "au",
+          "w",
+          "y"
+        ],
+        "pdf": [
+          "k",
+          "qu",
+          "w",
+          "y"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "t",
+          "p",
+          "it",
+          "is",
+          "st"
+        ],
+        "pdf": [
+          "d",
+          "t",
+          "p",
+          "lt",
+          "s",
+          "st"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "35a",
+    "pdfPage": 70,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "d",
+          "ft"
+        ],
+        "pdf": [
+          "p",
+          "t"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "35b",
+    "pdfPage": 72,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "d",
+          "ft",
+          "g",
+          "x",
+          "p"
+        ],
+        "pdf": [
+          "d",
+          "t",
+          "g",
+          "x",
+          "p"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "35c",
+    "pdfPage": 74,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "cc",
+          "m",
+          "t",
+          "f",
+          "r",
+          "w",
+          "h",
+          "s"
+        ],
+        "pdf": [
+          "c",
+          "m",
+          "t",
+          "f",
+          "r",
+          "w",
+          "h",
+          "s"
+        ]
+      },
+      "middle": {
+        "spreadsheet": [
+          "da"
+        ],
+        "pdf": [
+          "a"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "p",
+          "bd",
+          "t",
+          "g",
+          "xx"
+        ],
+        "pdf": [
+          "b",
+          "p",
+          "d",
+          "t",
+          "g",
+          "x"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "36a",
+    "pdfPage": 76,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "f",
+          "n",
+          "t",
+          "r",
+          "sn",
+          "m",
+          "s",
+          "sl"
+        ],
+        "pdf": [
+          "f",
+          "n",
+          "t",
+          "l",
+          "r",
+          "sn",
+          "m",
+          "s",
+          "sl"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "37a",
+    "pdfPage": 80,
+    "changes": {
+      "ending": {
+        "spreadsheet": [
+          "is"
+        ],
+        "pdf": [
+          "s"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "37b",
+    "pdfPage": 82,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "f",
+          "is",
+          "sn",
+          "k",
+          "t",
+          "n",
+          "sk"
+        ],
+        "pdf": [
+          "f",
+          "s",
+          "sn",
+          "k",
+          "t",
+          "n",
+          "sk"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "p",
+          "m",
+          "ft",
+          "n"
+        ],
+        "pdf": [
+          "d",
+          "p",
+          "m",
+          "t",
+          "n"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "38b",
+    "pdfPage": 86,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "ic",
+          "m",
+          "t",
+          "n"
+        ],
+        "pdf": [
+          "c",
+          "s",
+          "m",
+          "t",
+          "n"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "39a",
+    "pdfPage": 88,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "m",
+          "d",
+          "r",
+          "h",
+          "it"
+        ],
+        "pdf": [
+          "b",
+          "m",
+          "d",
+          "r",
+          "h",
+          "t"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "m",
+          "t"
+        ],
+        "pdf": [
+          "d",
+          "p",
+          "m",
+          "t"
+        ]
+      },
+      "ending": {
+        "spreadsheet": [
+          "is"
+        ],
+        "pdf": [
+          "s"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "39b",
+    "pdfPage": 90,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "p",
+          "sp",
+          "s",
+          "m",
+          "sl"
+        ],
+        "pdf": [
+          "c",
+          "p",
+          "sp",
+          "l",
+          "s",
+          "m",
+          "sl"
+        ]
+      },
+      "chain": {
+        "spreadsheet": [
+          "pot",
+          "spot",
+          "slot",
+          "slob",
+          "sob",
+          "cob",
+          "cot",
+          "cost",
+          "lost",
+          "last",
+          "list",
+          "mist",
+          "mint",
+          "lint",
+          "lit",
+          "lot",
+          "loft"
+        ],
+        "pdf": [
+          "pot",
+          "spot",
+          "slot",
+          "slob",
+          "sob",
+          "cob",
+          "cot",
+          "cost",
+          "lost",
+          "last",
+          "list",
+          "mist",
+          "mint",
+          "lint",
+          "lit",
+          "lot",
+          "loft",
+          "soft"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "40a",
+    "pdfPage": 92,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "h",
+          "s",
+          "g",
+          "p",
+          "t",
+          "g",
+          "r"
+        ],
+        "pdf": [
+          "b",
+          "h",
+          "s",
+          "c",
+          "p",
+          "t",
+          "g",
+          "r"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "40b",
+    "pdfPage": 94,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "gl",
+          "g",
+          "m",
+          "pl",
+          "h",
+          "r"
+        ],
+        "pdf": [
+          "b",
+          "l",
+          "gl",
+          "g",
+          "m",
+          "pl",
+          "h",
+          "r"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "is",
+          "st",
+          "m",
+          "t",
+          "n",
+          "nt"
+        ],
+        "pdf": [
+          "g",
+          "s",
+          "st",
+          "m",
+          "t",
+          "n",
+          "nt"
+        ]
+      },
+      "chain": {
+        "spreadsheet": [
+          "must",
+          "rust",
+          "runt",
+          "bunt",
+          "bun",
+          "bug",
+          "lug",
+          "plug",
+          "plum",
+          "glum",
+          "gum",
+          "hum",
+          "him",
+          "his",
+          "has",
+          "hat"
+        ],
+        "pdf": [
+          "must",
+          "rust",
+          "runt",
+          "bunt",
+          "bun",
+          "bug",
+          "lug",
+          "plug",
+          "plum",
+          "glum",
+          "gum",
+          "hum",
+          "him",
+          "his",
+          "has",
+          "hat",
+          "hot"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "41a",
+    "pdfPage": 96,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "m",
+          "h",
+          "t"
+        ],
+        "pdf": [
+          "b",
+          "m",
+          "h",
+          "t",
+          "l"
+        ]
+      },
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "i",
+          "fe"
+        ],
+        "pdf": [
+          "a",
+          "i",
+          "o"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "41b",
+    "pdfPage": 98,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "sl",
+          "fl",
+          "p",
+          "sp",
+          "ol",
+          "r",
+          "cl"
+        ],
+        "pdf": [
+          "l",
+          "sl",
+          "fl",
+          "p",
+          "sp",
+          "pl",
+          "r",
+          "cl"
+        ]
+      },
+      "chain": {
+        "spreadsheet": [
+          "spit",
+          "slit",
+          "slid",
+          "slip",
+          "lip",
+          "lap",
+          "clap",
+          "flap",
+          "flag",
+          "lag",
+          "rag",
+          "rags",
+          "rats",
+          "rots",
+          "pots",
+          "plots",
+          "slots"
+        ],
+        "pdf": [
+          "spit",
+          "slit",
+          "slid",
+          "slip",
+          "lip",
+          "lap",
+          "clap",
+          "flap",
+          "flag",
+          "lag",
+          "rag",
+          "rags",
+          "rats",
+          "rots",
+          "pots",
+          "plots",
+          "slots",
+          "spots"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "41c",
+    "pdfPage": 100,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "t",
+          "sn",
+          "n",
+          "sk",
+          "so",
+          "s",
+          "st"
+        ],
+        "pdf": [
+          "l",
+          "t",
+          "sn",
+          "n",
+          "sk",
+          "sp",
+          "s",
+          "sl",
+          "st"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "42",
+    "pdfPage": 102,
+    "changes": {
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "i"
+        ],
+        "pdf": [
+          "a",
+          "i",
+          "u"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "43",
+    "pdfPage": 104,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "t",
+          "bl",
+          "f",
+          "w",
+          "du",
+          "y",
+          "s",
+          "st"
+        ],
+        "pdf": [
+          "b",
+          "t",
+          "bl",
+          "f",
+          "w",
+          "qu",
+          "l",
+          "y",
+          "s",
+          "st"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "45",
+    "pdfPage": 108,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "k",
+          "s",
+          "sl",
+          "au",
+          "t",
+          "tr",
+          "p",
+          "w",
+          "str"
+        ],
+        "pdf": [
+          "k",
+          "s",
+          "sl",
+          "qu",
+          "l",
+          "t",
+          "tr",
+          "p",
+          "w",
+          "str"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "m",
+          "il",
+          "ck"
+        ],
+        "pdf": [
+          "m",
+          "ll",
+          "ck"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "46",
+    "pdfPage": 110,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "h",
+          "s",
+          "sm",
+          "sh",
+          "r",
+          "sl"
+        ],
+        "pdf": [
+          "h",
+          "s",
+          "sm",
+          "l",
+          "sh",
+          "r",
+          "sl"
+        ]
+      },
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "fe",
+          "u"
+        ],
+        "pdf": [
+          "a",
+          "o",
+          "u"
+        ]
+      },
+      "ending": {
+        "spreadsheet": [
+          "cs"
+        ],
+        "pdf": [
+          "s"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "47",
+    "pdfPage": 112,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "g",
+          "h",
+          "sh"
+        ],
+        "pdf": [
+          "g",
+          "th",
+          "h",
+          "sh"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "m",
+          "s",
+          "sh",
+          "n",
+          "e"
+        ],
+        "pdf": [
+          "m",
+          "s",
+          "sh",
+          "n",
+          "t"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "49",
+    "pdfPage": 116,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "r",
+          "cr",
+          "cnr",
+          "s",
+          "pr",
+          "sp",
+          "spl"
+        ],
+        "pdf": [
+          "r",
+          "cr",
+          "spr",
+          "s",
+          "pr",
+          "sp",
+          "spl"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "55",
+    "pdfPage": 128,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "d",
+          "p",
+          "k",
+          "m"
+        ],
+        "pdf": [
+          "d",
+          "p",
+          "k",
+          "l",
+          "m"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "56",
+    "pdfPage": 130,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "d",
+          "ch",
+          "sh",
+          "r",
+          "sl"
+        ],
+        "pdf": [
+          "d",
+          "ch",
+          "l",
+          "sh",
+          "r",
+          "sl"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "t",
+          "m",
+          "v",
+          "e"
+        ],
+        "pdf": [
+          "d",
+          "t",
+          "m",
+          "v"
+        ]
+      },
+      "ending": {
+        "spreadsheet": [
+          "s"
+        ],
+        "pdf": [
+          "e",
+          "s"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "58",
+    "pdfPage": 134,
+    "changes": {
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "i",
+          "e",
+          "oo"
+        ],
+        "pdf": [
+          "a",
+          "i",
+          "e",
+          "o"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "m",
+          "s",
+          "n"
+        ],
+        "pdf": [
+          "m",
+          "s",
+          "n",
+          "l"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "59",
+    "pdfPage": 136,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "d",
+          "sh",
+          "st",
+          "k",
+          "th",
+          "au",
+          "s",
+          "wh"
+        ],
+        "pdf": [
+          "d",
+          "sh",
+          "st",
+          "k",
+          "th",
+          "qu",
+          "s",
+          "wh"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "60",
+    "pdfPage": 138,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "d",
+          "s",
+          "n"
+        ],
+        "pdf": [
+          "d",
+          "s",
+          "n",
+          "l"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "61",
+    "pdfPage": 140,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "sl",
+          "p",
+          "sp",
+          "w",
+          "tw"
+        ],
+        "pdf": [
+          "l",
+          "sl",
+          "p",
+          "sp",
+          "w",
+          "tw"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "n",
+          "na",
+          "c",
+          "nk"
+        ],
+        "pdf": [
+          "n",
+          "ng",
+          "c",
+          "nk"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "62",
+    "pdfPage": 142,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "cc",
+          "r",
+          "ch",
+          "cr",
+          "h",
+          "s",
+          "sm",
+          "m",
+          "t",
+          "st"
+        ],
+        "pdf": [
+          "c",
+          "r",
+          "ch",
+          "cr",
+          "h",
+          "s",
+          "sm",
+          "m",
+          "t",
+          "st"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "p",
+          "s",
+          "v",
+          "ic"
+        ],
+        "pdf": [
+          "p",
+          "l",
+          "s",
+          "v",
+          "t"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "64",
+    "pdfPage": 146,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "ff",
+          "sh",
+          "s"
+        ],
+        "pdf": [
+          "ff",
+          "sh",
+          "ss"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "65",
+    "pdfPage": 148,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "cc",
+          "ll",
+          "ng",
+          "g",
+          "sk",
+          "nk",
+          "ck"
+        ],
+        "pdf": [
+          "c",
+          "ll",
+          "ng",
+          "g",
+          "sk",
+          "nk",
+          "l",
+          "ck"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "66",
+    "pdfPage": 150,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "c",
+          "r",
+          "f",
+          "t",
+          "fl"
+        ],
+        "pdf": [
+          "c",
+          "r",
+          "f",
+          "t",
+          "l",
+          "fl"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "cc",
+          "m",
+          "k",
+          "mp"
+        ],
+        "pdf": [
+          "c",
+          "m",
+          "k",
+          "mp"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "67b",
+    "pdfPage": 154,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "m",
+          "it",
+          "c",
+          "s"
+        ],
+        "pdf": [
+          "b",
+          "m",
+          "t",
+          "c",
+          "s"
+        ]
+      },
+      "chain": {
+        "spreadsheet": [
+          "sub",
+          "tub",
+          "tab",
+          "cab",
+          "can",
+          "con",
+          "bon",
+          "Ben",
+          "ben",
+          "sent",
+          "ment",
+          "met",
+          "set",
+          "sent",
+          "tent",
+          "test",
+          "text"
+        ],
+        "pdf": [
+          "sub",
+          "tub",
+          "tab",
+          "cab",
+          "can",
+          "con",
+          "bon",
+          "Ben",
+          "bent",
+          "sent",
+          "ment",
+          "met",
+          "set",
+          "sent",
+          "tent",
+          "test",
+          "text"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "68",
+    "pdfPage": 156,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "s",
+          "g",
+          "w",
+          "m",
+          "sl",
+          "n",
+          "al"
+        ],
+        "pdf": [
+          "b",
+          "s",
+          "g",
+          "w",
+          "m",
+          "sl",
+          "n",
+          "gl"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "69",
+    "pdfPage": 158,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "n",
+          "zz",
+          "f",
+          "ck",
+          "x",
+          "nk"
+        ],
+        "pdf": [
+          "n",
+          "zz",
+          "t",
+          "ck",
+          "x",
+          "nk"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "70",
+    "pdfPage": 160,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "sw",
+          "d",
+          "w",
+          "fl",
+          "h",
+          "sh"
+        ],
+        "pdf": [
+          "b",
+          "l",
+          "sw",
+          "d",
+          "w",
+          "fl",
+          "h",
+          "sh"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "72",
+    "pdfPage": 164,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "g",
+          "p",
+          "or",
+          "h",
+          "r",
+          "n",
+          "br"
+        ],
+        "pdf": [
+          "g",
+          "p",
+          "pr",
+          "h",
+          "r",
+          "n",
+          "br"
+        ]
+      },
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "i"
+        ],
+        "pdf": [
+          "a",
+          "i",
+          "o"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "73",
+    "pdfPage": 166,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "p",
+          "it",
+          "id",
+          "t",
+          "it",
+          "x",
+          "st"
+        ],
+        "pdf": [
+          "p",
+          "ll",
+          "ld",
+          "t",
+          "lt",
+          "x",
+          "st"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "74",
+    "pdfPage": 168,
+    "changes": {
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "i",
+          "v",
+          "e",
+          "u"
+        ],
+        "pdf": [
+          "a",
+          "i",
+          "y",
+          "e",
+          "u"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "p",
+          "s"
+        ],
+        "pdf": [
+          "p",
+          "l",
+          "s"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "76",
+    "pdfPage": 172,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "n",
+          "nt",
+          "tt",
+          "ck",
+          "c",
+          "ng"
+        ],
+        "pdf": [
+          "n",
+          "nt",
+          "t",
+          "ck",
+          "c",
+          "ng"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "77",
+    "pdfPage": 174,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "n",
+          "sn",
+          "f",
+          "r",
+          "sw",
+          "w"
+        ],
+        "pdf": [
+          "b",
+          "n",
+          "sn",
+          "f",
+          "r",
+          "sw",
+          "l",
+          "w"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "78",
+    "pdfPage": 176,
+    "changes": {
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "i",
+          "v",
+          "e",
+          "o"
+        ],
+        "pdf": [
+          "a",
+          "i",
+          "y",
+          "e",
+          "o"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "id",
+          "r",
+          "nd"
+        ],
+        "pdf": [
+          "d",
+          "ld",
+          "r",
+          "nd"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "79",
+    "pdfPage": 178,
+    "changes": {
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "i",
+          "e"
+        ],
+        "pdf": [
+          "a",
+          "i",
+          "o"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "ff",
+          "st",
+          "s",
+          "ft",
+          "t",
+          "it"
+        ],
+        "pdf": [
+          "d",
+          "ff",
+          "st",
+          "s",
+          "ft",
+          "t",
+          "lt"
+        ]
+      },
+      "chain": {
+        "spreadsheet": [
+          "molt",
+          "most",
+          "host",
+          "hot",
+          "not",
+          "no",
+          "nod",
+          "node",
+          "nose",
+          "rose",
+          "rise",
+          "ride",
+          "rid",
+          "riff",
+          "rift",
+          "drift"
+        ],
+        "pdf": [
+          "molt",
+          "most",
+          "host",
+          "hot",
+          "not",
+          "no",
+          "nod",
+          "node",
+          "nose",
+          "rose",
+          "rise",
+          "ride",
+          "rid",
+          "riff",
+          "rift",
+          "drift",
+          "draft"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "80",
+    "pdfPage": 180,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "c",
+          "p",
+          "sl",
+          "m",
+          "pl"
+        ],
+        "pdf": [
+          "c",
+          "p",
+          "l",
+          "sl",
+          "m",
+          "pl"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "ch",
+          "be",
+          "nt"
+        ],
+        "pdf": [
+          "d",
+          "ch",
+          "t",
+          "nt"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "81",
+    "pdfPage": 182,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "sp",
+          "p",
+          "fl",
+          "sl"
+        ],
+        "pdf": [
+          "l",
+          "sp",
+          "p",
+          "fl",
+          "sl"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "82",
+    "pdfPage": 184,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "d",
+          "id",
+          "tch",
+          "t",
+          "sh",
+          "ll",
+          "dge"
+        ],
+        "pdf": [
+          "d",
+          "ld",
+          "tch",
+          "t",
+          "sh",
+          "ll",
+          "dge"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "83",
+    "pdfPage": 186,
+    "changes": {
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "fe",
+          "u"
+        ],
+        "pdf": [
+          "a",
+          "o",
+          "u"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "b",
+          "it",
+          "tch",
+          "d",
+          "id",
+          "it",
+          "dge"
+        ],
+        "pdf": [
+          "b",
+          "lt",
+          "tch",
+          "d",
+          "ld",
+          "t",
+          "dge"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "85",
+    "pdfPage": 190,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "s",
+          "tr",
+          "h",
+          "sw",
+          "tw",
+          "fr",
+          "br"
+        ],
+        "pdf": [
+          "b",
+          "s",
+          "tr",
+          "h",
+          "sw",
+          "tw",
+          "r",
+          "br"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "n",
+          "m",
+          "i"
+        ],
+        "pdf": [
+          "d",
+          "n",
+          "m",
+          "ll"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "86",
+    "pdfPage": 192,
+    "changes": {
+      "middle": {
+        "spreadsheet": [
+          "i",
+          "u",
+          "ea",
+          "fe",
+          "ai",
+          "ee"
+        ],
+        "pdf": [
+          "i",
+          "u",
+          "ea",
+          "o",
+          "ai",
+          "ee"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "87",
+    "pdfPage": 194,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "m",
+          "al",
+          "g",
+          "n",
+          "fl"
+        ],
+        "pdf": [
+          "b",
+          "m",
+          "gl",
+          "g",
+          "n",
+          "l",
+          "fl"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "t",
+          "dae",
+          "n",
+          "c"
+        ],
+        "pdf": [
+          "d",
+          "t",
+          "dge",
+          "n",
+          "c"
+        ]
+      },
+      "chain": {
+        "spreadsheet": [
+          "low",
+          "flow",
+          "flee",
+          "fleet",
+          "float",
+          "gloat",
+          "goat",
+          "moat",
+          "mat",
+          "mate",
+          "late",
+          "lace",
+          "lane",
+          "Ian",
+          "ban",
+          "bun",
+          "bud",
+          "budge",
+          "nudge"
+        ],
+        "pdf": [
+          "low",
+          "flow",
+          "flee",
+          "fleet",
+          "float",
+          "gloat",
+          "goat",
+          "moat",
+          "mat",
+          "mate",
+          "late",
+          "lace",
+          "lane",
+          "lan",
+          "ban",
+          "bun",
+          "bud",
+          "budge",
+          "nudge"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "89",
+    "pdfPage": 198,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "w",
+          "p",
+          "bl",
+          "t",
+          "fl"
+        ],
+        "pdf": [
+          "l",
+          "w",
+          "p",
+          "bl",
+          "t",
+          "fl"
+        ]
+      },
+      "middle": {
+        "spreadsheet": [
+          "e",
+          "ur",
+          "ie",
+          "oe",
+          "i",
+          "ai",
+          "oa",
+          "av",
+          "o",
+          "ea",
+          "igh"
+        ],
+        "pdf": [
+          "e",
+          "ur",
+          "ie",
+          "oe",
+          "i",
+          "ai",
+          "oa",
+          "ay",
+          "o",
+          "ea",
+          "igh"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "90",
+    "pdfPage": 200,
+    "changes": {
+      "final": {
+        "spreadsheet": [
+          "d",
+          "il",
+          "sh",
+          "t",
+          "st"
+        ],
+        "pdf": [
+          "d",
+          "ll",
+          "sh",
+          "t",
+          "st"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "91",
+    "pdfPage": 202,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "p",
+          "wh",
+          "h",
+          "s",
+          "sw",
+          "m",
+          "w"
+        ],
+        "pdf": [
+          "g",
+          "p",
+          "wh",
+          "h",
+          "s",
+          "sw",
+          "m",
+          "w"
+        ]
+      },
+      "middle": {
+        "spreadsheet": [
+          "i",
+          "u",
+          "er",
+          "fete"
+        ],
+        "pdf": [
+          "i",
+          "u",
+          "er",
+          "oo"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "t",
+          "v",
+          "n",
+          "is",
+          "il"
+        ],
+        "pdf": [
+          "d",
+          "t",
+          "v",
+          "n",
+          "l",
+          "s",
+          "ll"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "92",
+    "pdfPage": 204,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "r",
+          "tr",
+          "h",
+          "st",
+          "str",
+          "br"
+        ],
+        "pdf": [
+          "b",
+          "r",
+          "tr",
+          "h",
+          "st",
+          "str",
+          "l",
+          "br"
+        ]
+      },
+      "middle": {
+        "spreadsheet": [
+          "i",
+          "ai",
+          "ew"
+        ],
+        "pdf": [
+          "i",
+          "ai",
+          "oo",
+          "ew"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "93",
+    "pdfPage": 206,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "gr",
+          "bl",
+          "r",
+          "gl"
+        ],
+        "pdf": [
+          "b",
+          "gr",
+          "l",
+          "bl",
+          "r",
+          "gl"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "95",
+    "pdfPage": 210,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "b",
+          "r",
+          "tr",
+          "f",
+          "s",
+          "fl",
+          "br"
+        ],
+        "pdf": [
+          "b",
+          "r",
+          "tr",
+          "f",
+          "s",
+          "fl",
+          "l",
+          "br"
+        ]
+      },
+      "middle": {
+        "spreadsheet": [
+          "e",
+          "ea",
+          "ui",
+          "o"
+        ],
+        "pdf": [
+          "e",
+          "ea",
+          "ui",
+          "o",
+          "oo"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "96",
+    "pdfPage": 212,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "h",
+          "r",
+          "fr",
+          "m",
+          "is",
+          "n",
+          "t"
+        ],
+        "pdf": [
+          "h",
+          "r",
+          "fr",
+          "m",
+          "s",
+          "n",
+          "t"
+        ]
+      },
+      "middle": {
+        "spreadsheet": [
+          "o",
+          "augh",
+          "ov",
+          "oi",
+          "igh"
+        ],
+        "pdf": [
+          "o",
+          "augh",
+          "oy",
+          "oi",
+          "igh"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "d",
+          "it",
+          "id",
+          "t",
+          "st"
+        ],
+        "pdf": [
+          "d",
+          "lt",
+          "ld",
+          "t",
+          "st"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "97",
+    "pdfPage": 214,
+    "changes": {
+      "initial": {
+        "spreadsheet": [
+          "t",
+          "p",
+          "gr",
+          "r",
+          "thr"
+        ],
+        "pdf": [
+          "l",
+          "t",
+          "p",
+          "gr",
+          "r",
+          "thr"
+        ]
+      }
+    }
+  },
+  {
+    "lesson": "98",
+    "pdfPage": 216,
+    "changes": {
+      "middle": {
+        "spreadsheet": [
+          "a",
+          "ur",
+          "ov",
+          "y",
+          "ay"
+        ],
+        "pdf": [
+          "a",
+          "ur",
+          "oy",
+          "y",
+          "ay"
+        ]
+      },
+      "final": {
+        "spreadsheet": [
+          "g",
+          "t",
+          "nk",
+          "n",
+          "cc",
+          "tch"
+        ],
+        "pdf": [
+          "g",
+          "t",
+          "nk",
+          "n",
+          "c",
+          "tch"
+        ]
+      }
+    }
+  }
+]

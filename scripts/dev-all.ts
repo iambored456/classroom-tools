@@ -28,6 +28,7 @@ const servers: DevServer[] = [
   { name: 'book-of-questions', port: 5188, path: '/book-of-questions/' },
   { name: 'literacy-flashcards', port: 5195, path: '/literacy-flashcards/' },
   { name: 'classroom-wordle', port: 5187, path: '/classroom-wordle/' },
+  { name: 'blending-board', port: 5197, path: '/blending-board/' },
   { name: 'read-along-highlighter', port: 5175, path: '/read-along-highlighter/' },
   { name: 'launchpad-whack-a-mole', port: 5176, path: '/launchpad-whack-a-mole/' },
   { name: 'launchpad-snake', port: 5189, path: '/launchpad-snake/' },

@@ -1,14 +1,15 @@
-# Literacy Flashcards
+# Literacy Tools
 
-A card-set library for literacy practice with independent saved progress:
+The homepage offers Blending Board for UFLI blending drills and a card-set library with independent saved progress:
 
 - **EyeWords:** all 100 two-sided cards from *Eye Sight Words Flashcards 100 Words.pdf*.
   Each side is fitted individually to its artwork, word, and cue text, excluding
   the black print border and copyright footer from the displayed crop.
 - **Heart Words:** all 94 word cards from *Flashcards - UFLI Heart Words.pdf*.
-  The front shows the original UFLI card with hearts and sound boxes; flipping
-  reveals an original short sentence using the word: usually three words, with
-  a maximum of five. The introductory page and cover panels are excluded.
+  The front crops the original UFLI artwork to show the word, hearts, and sound boxes
+  without the footer logo. Source images remain intact. Flipping
+  reveals an original sentence using the word in a familiar, everyday situation.
+  Sentences use three to five words, with clarity guiding the length. The introductory page and cover panels are excluded.
 - **Reading Universe - Closed Syllables:** all 308 single-sided cards from
   *flash-card-deck-closed-syllables.pdf*. The original syllable artwork is rotated
   to read horizontally. Cards do not flip, and no flip prompts are shown.
@@ -19,7 +20,7 @@ A card-set library for literacy practice with independent saved progress:
   Set choices and progress for each combination are saved independently. Supplied
   word lists and skill descriptions are preserved as given.
 
-- Open `/literacy-flashcards/` to select a set; `#eyewords`, `#heart-words`, and `#closed-syllables`
+- Open `/literacy-flashcards/` to select a tool or card set; `#eyewords`, `#heart-words`, and `#closed-syllables`
   link directly to the corresponding decks.
 - `#nonsense-words` resumes the last chosen nonsense combination (Set A initially).
 - Tap a two-sided card or press Space to switch between its front and its cue side.
@@ -47,3 +48,8 @@ by the American Federation of Teachers, AFL-CIO).
 the route on its usual port 5173. Run `pnpm --filter literacy-flashcards typecheck`,
 `pnpm --filter literacy-flashcards test`, and `pnpm --filter literacy-flashcards build`
 for focused validation. The existing Pages scripts discover and assemble this app.
+
+EyeWords and Heart Words use a shared display scale within each set, based on
+the original image width rather than the tight artwork crop. Artwork is centred
+in a 3:2 canvas, limited to 80% of the card width and 48rem, and shrinks to fit
+short or narrow screens. Landing previews retain their compact crops.
