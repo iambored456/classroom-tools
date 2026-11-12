@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600" viewBox="0 0 960 600">
+<rect width="960" height="600" fill="#090909"/>
+<g font-family="Arial,sans-serif" fill="#fff"><text x="48" y="84" font-size="44" font-weight="700">Numeracy Tools</text></g>
+<g stroke="#454545"><rect x="48" y="125" width="272" height="420" rx="18" fill="#151515"/><rect x="344" y="125" width="272" height="420" rx="18" fill="#151515"/><rect x="640" y="125" width="272" height="420" rx="18" fill="#151515"/></g>
+<path d="M70 153h228v260H70z" fill="#d7ebf0"/><path d="M366 153h228v260H366z" fill="#f0e1d1"/><path d="M662 153h228v260H662z" fill="#d6e9e2"/>
+<g stroke="#8aabb0" stroke-width="1"><path d="M100 185v195m40-195v195m40-195v195m40-195v195m40-195v195M90 200h190M90 240h190M90 280h190M90 320h190M90 360h190"/></g>
+<path d="M90 280h190M180 185v195" stroke="#24525b" stroke-width="3"/><circle cx="220" cy="240" r="9" fill="#1b8d98"/>
+<path d="M393 370V210m0 160h180" fill="none" stroke="#76502e" stroke-width="3"/><path d="M410 350h25v20h-25zm42-40h25v60h-25zm42-50h25v110h-25zm42-65h25v175h-25z" fill="#b6793f"/>
+<g fill="#0c7f7a"><circle cx="720" cy="220" r="13"/><circle cx="765" cy="220" r="13"/><circle cx="810" cy="220" r="13"/><circle cx="742" cy="260" r="13"/><circle cx="787" cy="260" r="13"/></g><path d="M690 310v60h45v-60m20 0v60h45v-60m20 0v60h45v-60" fill="none" stroke="#0c7f7a" stroke-width="6"/>
+<g fill="#fff" font-family="Arial,sans-serif" font-size="25" font-weight="700"><text x="68" y="466">Coordinates</text><text x="364" y="460">Simple &amp;</text><text x="364" y="495">Compound Interest</text><text x="660" y="466">Tax Brackets</text></g></svg>

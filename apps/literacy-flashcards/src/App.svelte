@@ -373,7 +373,22 @@
         {/each}
         <a class="set-card" href={`${hubUrl}blending-board/`} aria-label="Open Blending Board">
           <span class="set-preview" style="--preview-background: #d7ebf0">
-            <img src={`${import.meta.env.BASE_URL}BlendingBoard-preview.svg`} alt="" width="960" height="600" />
+            <svg class="card-art" width="960" height="600" viewBox="0 0 960 600" aria-hidden="true">
+              <text x="40" y="48" font-size="20" fill="#56636b">Blending Board</text>
+              <text x="480" y="250" text-anchor="middle" font-size="170">ship</text>
+              <g stroke="#fff" stroke-width="3">
+                <rect x="170" y="320" width="170" height="130" rx="20" fill="#9fceda" />
+                <rect x="355" y="320" width="115" height="130" rx="20" fill="#fce4aa" />
+                <rect x="485" y="320" width="115" height="130" rx="20" fill="#9fdbcf" />
+                <rect x="615" y="320" width="115" height="130" rx="20" fill="#efbddd" />
+              </g>
+              <g font-size="64" text-anchor="middle">
+                <text x="255" y="405">sh</text>
+                <text x="412" y="405">i</text>
+                <text x="542" y="405">p</text>
+              </g>
+              <text x="480" y="530" text-anchor="middle" font-size="22" fill="#64717a">UFLI lesson segment banks</text>
+            </svg>
           </span>
           <span class="set-copy">
             <span class="set-count">UFLI Lessons</span>
