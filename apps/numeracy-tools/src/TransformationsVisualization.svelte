@@ -78,10 +78,10 @@
 </main>
 
 <style>
-  .transformations { --a-color: #7050b0; --h-color: #176f91; --k-color: #a05224; --curve-color: #7050b0; display: flex; flex-direction: column; height: calc(100dvh - 4.6rem); min-height: 26rem; padding: 1.1rem clamp(.5rem, 2vw, 1.5rem) .8rem; }
+  .transformations { --a-color: #7050b0; --h-color: #176f91; --k-color: #a05224; --curve-color: #7050b0; display: flex; flex-direction: column; height: calc(100dvh - 3rem - clamp(.4rem, 1.6dvh, .8rem)); min-height: 26rem; padding: 0 clamp(.5rem, 2vw, 1.5rem) .8rem; }
   :global(.dark-mode) .transformations { --a-color: #c8b0ff; --h-color: #7ccbe8; --k-color: #f1b681; --curve-color: #c8b0ff; }
-  .equation-toolbar { display: flex; align-items: center; justify-content: center; gap: .16em; font-size: clamp(1.25rem, 4.3vw, 2.6rem); padding: .3em 0 0; }
-  .equation-toolbar.with-aids { padding-top: .8em; padding-bottom: 1.2em; }
+  .equation-toolbar { display: flex; align-items: center; justify-content: center; gap: .16em; font-size: clamp(1.25rem, 4.3vw, 2.6rem); padding: .65em 0 0; }
+  .equation-toolbar.with-aids { padding-top: .86em; padding-bottom: 1.2em; }
   .math-part { height: 1.52em; flex: none; overflow: visible; }
   .math-part :global([data-mml-node='mo']:is([data-latex='-'], [data-latex='+'])) { fill: var(--sign-color, currentColor); }
   .settings-dialog { width: min(28rem, calc(100vw - 1.5rem)); max-height: calc(100dvh - 2rem); overflow: auto; padding: 1.25rem; border: 1px solid var(--line); border-radius: 18px; background: var(--paper); color: var(--ink); }

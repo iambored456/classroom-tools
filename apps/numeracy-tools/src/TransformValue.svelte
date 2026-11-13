@@ -91,9 +91,9 @@
 
 <style>
   .parameter { position: relative; display: inline-flex; width: 2.6em; flex: none; color: var(--parameter-color); }
-  .parameter-name { position: absolute; top: -.95em; left: 0; right: 0; text-align: center; font-size: .38em; font-weight: 700; }
-  .machine::before { content: ''; position: absolute; inset: -.7em -.1em -1.12em; border: 2px solid currentColor; border-radius: .18em; box-shadow: 0 .07em 0 currentColor; pointer-events: none; background: radial-gradient(circle, currentColor 0 1px, transparent 1.5px) .13em .13em / .12em .12em no-repeat, radial-gradient(circle, currentColor 0 1px, transparent 1.5px) calc(100% - .13em) .13em / .12em .12em no-repeat; }
-  .machine .parameter-name { top: -1.38em; font-size: .48em; line-height: 1; }
+  .parameter-name { position: absolute; bottom: calc(100% + .08em); left: 0; right: 0; text-align: center; font-size: .56em; line-height: 1; font-weight: 700; }
+  .machine::before { content: ''; position: absolute; inset: -.82em -.1em -1.12em; border: 2px solid currentColor; border-radius: .18em; box-shadow: 0 .07em 0 currentColor; pointer-events: none; background: radial-gradient(circle, currentColor 0 1px, transparent 1.5px) .13em .13em / .12em .12em no-repeat, radial-gradient(circle, currentColor 0 1px, transparent 1.5px) calc(100% - .13em) .13em / .12em .12em no-repeat; }
+  .machine .parameter-name { font-size: .64em; }
   .machine button, .machine input { border-radius: .08em; background: var(--soft); }
   .machine-symbol { position: absolute; top: calc(100% + .06em); left: 0; width: 100%; height: 1em; }
   .machine-symbol svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }

@@ -90,7 +90,7 @@
 <svelte:window onhashchange={syncRoute} />
 
 <div class="app" class:landing={!toolOpen} class:dark-mode={darkMode}>
-    <header class="sets-header">
+    <header class="sets-header" class:transformations-header={transformationsOpen}>
       <a class="icon-button" href={toolOpen ? "#" : hubUrl} aria-label={toolOpen ? "Return to Numeracy Tools" : "Return to Classroom Tools"} title={toolOpen ? "Numeracy Tools" : "Classroom Tools"}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 11 8.5-7 8.5 7M6 9.5V20h12V9.5M9.5 20v-6h5v6" /></svg>
       </a>
@@ -161,4 +161,5 @@
 
 <style>
   .header-actions { display: flex; align-items: center; gap: .6rem; }
+  .transformations-header { padding-bottom: 0; }
 </style>
