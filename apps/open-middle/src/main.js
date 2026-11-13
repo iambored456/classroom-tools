@@ -1,3 +1,4 @@
+import '../../../packages/motion-preference/index'
 import './style.css'
 import './targets.css'
 import './sum-square.css'

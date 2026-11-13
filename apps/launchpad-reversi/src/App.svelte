@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { shouldReduceMotion } from '../../../packages/motion-preference/index'
   import { onMount } from 'svelte'
   import { chooseAiMove, type AiDifficulty } from './lib/ai.ts'
   import {
@@ -69,7 +70,6 @@
   let aiRequest = 0
   let aiMoveFlashRequest = 0
   let endgameRequest = 0
-  let prefersReducedMotion = false
 
   const legalMoves = $derived(getLegalMoves(board, currentPlayer))
   const legalMoveSet = $derived(new Set(legalMoves))
@@ -110,7 +110,6 @@
   })
 
   onMount(() => {
-    prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     restorePreferences()
     setPadPressCallback(handleMidiPad)
 
@@ -241,7 +240,7 @@
     cancelAiMoveFlash()
     cancelColourPreview()
 
-    if (prefersReducedMotion) {
+    if (shouldReduceMotion()) {
       onComplete()
       return
     }
@@ -287,7 +286,7 @@
     cancelColourPreview()
     endgamePhase = 'flash-board'
 
-    if (prefersReducedMotion) {
+    if (shouldReduceMotion()) {
       endgamePhase = 'score'
       return
     }

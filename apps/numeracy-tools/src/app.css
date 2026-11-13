@@ -46,4 +46,4 @@ button:focus-visible, a:focus-visible, input:focus-visible, .flashcard:focus-vis
   .set-count, .set-progress, .set-bottom { display: none; }
 }
 
-@media (prefers-reduced-motion: reduce) { .set-card { transition: none; } }
+:where(html[data-reduced-motion="true"]) .set-card { transition: none; }

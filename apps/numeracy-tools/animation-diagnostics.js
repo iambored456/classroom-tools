@@ -326,6 +326,7 @@
     }
   }, true);
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  listen(window, 'classroom-tools:motion-change', change => event('site-motion-preference', change.detail));
   listen(motion, 'change', () => event('reduced-motion', motion.matches));
   for (const type of ['longtask', 'layout-shift']) {
     if (typeof PerformanceObserver === 'undefined' || !PerformanceObserver.supportedEntryTypes?.includes(type)) continue;
@@ -344,6 +345,9 @@
     userAgent: navigator.userAgent, platform: navigator.platform, language: navigator.language,
     hardwareConcurrency: navigator.hardwareConcurrency, deviceMemory: navigator.deviceMemory,
     viewport: viewport(), visibility: document.visibilityState, reducedMotion: motion.matches,
+    siteMotionPreference: document.documentElement.dataset.motionPreference || 'system',
+    effectiveReducedMotion: document.documentElement.dataset.reducedMotion === undefined
+      ? motion.matches : document.documentElement.dataset.reducedMotion === 'true',
     forcedColors: matchMedia('(forced-colors: active)').matches,
     colorScheme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
     support: {

@@ -580,6 +580,4 @@ a:focus-visible {
   .confirm-dialog > div { grid-template-columns: 1fr; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
-}
+:where(html[data-reduced-motion="true"]), :where(html[data-reduced-motion="true"]) *, :where(html[data-reduced-motion="true"]) *::before, :where(html[data-reduced-motion="true"]) *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }

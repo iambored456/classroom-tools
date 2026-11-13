@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { watchMotionPreference } from '../../../packages/motion-preference/index'
   import { onMount } from 'svelte'
   import MathSvg from './MathSvg.svelte'
   import { buildLesson, defaultSystem, presets, systemPreview, validateSystem, lessonExpressions } from './math/system.js'
@@ -99,10 +100,10 @@
   }
 
   onMount(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const updateMotion = () => { reducedMotion = media.matches; if (reducedMotion) playing = false }
-    updateMotion()
-    media.addEventListener('change', updateMotion)
+    const stopWatchingMotion = watchMotionPreference(state => {
+      reducedMotion = state.reducedMotion
+      if (reducedMotion) playing = false
+    })
     let frame: number
     let previous = 0
     function tick(now: number) {
@@ -115,7 +116,7 @@
       frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
-    return () => { cancelAnimationFrame(frame); media.removeEventListener('change', updateMotion) }
+    return () => { cancelAnimationFrame(frame); stopWatchingMotion() }
   })
 </script>
 

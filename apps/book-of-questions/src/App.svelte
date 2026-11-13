@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { shouldReduceMotion } from '../../../packages/motion-preference/index'
   import { onMount, tick } from 'svelte'
   import QuestionLibrary from './QuestionLibrary.svelte'
   import SessionEditor from './SessionEditor.svelte'
@@ -348,7 +349,7 @@
   }
 
   const prefersReducedMotion = () =>
-    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    typeof window !== 'undefined' && shouldReduceMotion()
 
   const waitForAnimations = async (animations: Animation[]) => {
     await Promise.all(

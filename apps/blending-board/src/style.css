@@ -85,4 +85,4 @@ dialog h2 { margin: 0; font-size: 18px; }
   #history-list { display: flex; gap: 20px; }
   .word-stage { height: 180px; }
 }
-@media (prefers-reduced-motion: reduce) { #sidebar { transition: none; } }
+:where(html[data-reduced-motion="true"]) #sidebar { transition: none; }

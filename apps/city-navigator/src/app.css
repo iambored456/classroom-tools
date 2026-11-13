@@ -241,6 +241,4 @@ h1, h2, h3, button strong { font-family: 'Atkinson Hyperlegible Next', Arial, sa
   .builder-topbar { flex-wrap: wrap; }.builder-title-field { width: calc(100% - 4rem); min-width: 0; margin-left: 0; order: 4; }.builder-layout { grid-template-columns: 1fr; }.tool-rail { grid-template-columns: repeat(5, 1fr); overflow-x: auto; }.tool-rail button { min-width: 3.7rem; min-height: 3.6rem; }.inspector-panel { grid-column: 1; grid-template-columns: 1fr; }.builder-canvas-panel { min-height: 58vw; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-}
+:where(html[data-reduced-motion="true"]), :where(html[data-reduced-motion="true"]) *, :where(html[data-reduced-motion="true"]) *::before, :where(html[data-reduced-motion="true"]) *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

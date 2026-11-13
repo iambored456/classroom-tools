@@ -1,3 +1,4 @@
+import { shouldReduceMotion } from '../../../packages/motion-preference/index';
 /** js/waterBars.js */
 import { State } from './state.ts';
 import { createFallbackFillLayout } from './fillLayout.ts';
@@ -27,9 +28,7 @@ function easeOutCubic(value) {
 }
 
 function prefersReducedMotion() {
-    return typeof window !== 'undefined'
-        && typeof window.matchMedia === 'function'
-        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    return shouldReduceMotion();
 }
 
 function hexToRgb(hex, fallback = { r: 74, g: 168, b: 255 }) {

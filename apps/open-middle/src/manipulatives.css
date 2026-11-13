@@ -71,4 +71,4 @@
 .mp-direction{padding:10px 14px;border-radius:8px;background:#eef5f7;font-weight:600;color:#315769}
 .mp-graph-notes .mp-help{text-align:left}
 @media(max-width:720px){.mp-bug-row{gap:9px;flex-wrap:wrap;padding:14px 10px}.mp-row-label{width:100%;text-align:left}.mp-row-total{width:100%}.mp-ladybug{width:95px;height:130px}.mp-spot{width:22px;height:22px}.mp-bug-group{gap:3px}.mp-math-symbol{font-size:1.1rem}.mp-bug-count{font-size:1rem;min-width:18px}.mp-graph-layout{grid-template-columns:minmax(0,440px);gap:6px}.mp-graph-notes{padding:0 18px}.mp-graph-notes .mp-help{text-align:center}.mp-domino-tray{gap:12px;padding:10px 0}.mp-tray-domino{width:105px;height:54px}.mp-workspace{padding-left:8px;padding-right:8px}}
-@media(prefers-reduced-motion:reduce){.mp-workspace *{scroll-behavior:auto!important}}
+:where(html[data-reduced-motion="true"]) .mp-workspace *{scroll-behavior:auto!important}

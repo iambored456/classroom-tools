@@ -209,3 +209,59 @@ body {
     padding: 2.5rem 1.25rem 3rem;
   }
 }
+
+/* The hub preference is resolved before the app mounts. */
+:where(html[data-reduced-motion="true"]) .card {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+:where(html[data-reduced-motion="true"]) .preview img { transition: none; }
+
+.hero .eyebrow { padding-inline-end: 7rem; }
+.hub-settings-button {
+  position: absolute;
+  top: -.75rem;
+  right: 3.25rem;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid #696158;
+  border-radius: 50%;
+  color: #ede7db;
+  background: #211b15;
+  cursor: pointer;
+}
+.hub-settings-button:hover { background: #352a20; }
+.hub-settings-button:focus-visible,
+.hub-settings button:focus-visible,
+.hub-settings input:focus-visible { outline: 3px solid #e0a379; outline-offset: 3px; }
+.hub-settings {
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  padding: 1.5rem;
+  border: 1px solid #696158;
+  border-radius: 20px;
+  background: #19140f;
+  color: #ede7db;
+  color-scheme: dark;
+  font-family: 'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+.hub-settings::backdrop { background: #000a; }
+.settings-heading { display: flex; align-items: center; gap: 1rem; justify-content: space-between; }
+.settings-heading h2 { margin: 0; font-size: 1.35rem; }
+.settings-close { flex: none; width: 2.5rem; height: 2.5rem; border: 1px solid #696158; border-radius: 50%; color: inherit; background: transparent; font-size: 1.5rem; cursor: pointer; }
+.settings-intro, .device-motion, .motion-status { color: #c1b5a5; font-size: .95rem; line-height: 1.5; }
+.hub-settings fieldset { margin: 1.25rem 0 0; padding: 0; border: 0; min-width: 0; }
+.hub-settings legend { margin-bottom: .6rem; font-weight: 700; }
+.motion-option { display: flex; align-items: flex-start; gap: .8rem; padding: .85rem; margin-bottom: .6rem; border: 1px solid #635445; border-radius: 12px; cursor: pointer; }
+.motion-option.selected { border-color: #e0a379; background: #302218; }
+.motion-option input { margin: .25rem 0 0; width: 1.15rem; height: 1.15rem; flex: none; accent-color: #e0a379; }
+.motion-option strong, .motion-option small { display: block; }
+.motion-option small { margin-top: .3rem; color: #c1b5a5; font-size: .875rem; line-height: 1.45; }
+.device-motion { font-size: .85rem; }
+.motion-status { margin-bottom: 0; }
+.settings-error { color: #ffb4a6; }

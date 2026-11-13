@@ -70,7 +70,7 @@
   .nm-label { max-width: 110px; }
   .nm-feedback { font-size: .9rem; margin-top: 22px; }
 }
-@media (prefers-reduced-motion: reduce) { .nm-board { transition: none; } }
+:where(html[data-reduced-motion="true"]) .nm-board { transition: none; }
 .nm-base-ten .nm-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto auto; align-items: start; max-width: 1000px; margin: 20px auto; }
 .nm-amount { display: flex; flex-direction: column; align-items: center; min-width: 0; }
 .nm-amount .blocks { width: 100%; flex-wrap: wrap; margin-top: 16px; }

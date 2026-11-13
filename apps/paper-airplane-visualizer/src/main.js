@@ -1,3 +1,4 @@
+import { shouldReduceMotion, watchMotionPreference } from '../../../packages/motion-preference/index'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { clamp, smooth, WIDTH, HEIGHT } from './model.js'
@@ -63,12 +64,11 @@ document.querySelector('#app').innerHTML = `
 `
 
 const $ = id => document.getElementById(id)
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
 let selected = screenshot ? substeps.length - 1 : 0
 let selectedStep = null, poseStep = null
 let time = screenshot ? design.endTime : 0
 let furthestFold = time
-let playing = !screenshot && !reducedMotion.matches
+let playing = !screenshot && !shouldReduceMotion()
 let direction = 1, hold = 0.6, travel = null, last = performance.now(), dirty = true
 let viewTurn = null
 let renderer, scene, camera, controls, model, meshRecords = [], edgeRecords = []
@@ -100,7 +100,7 @@ function chooseDesign(id) {
   travel = null
   direction = 1
   hold = 0.65
-  playing = !reducedMotion.matches
+  playing = !shouldReduceMotion()
   try { localStorage.setItem('classroom-tools.airplane-design', design.id) } catch {}
   if (renderer) { buildPaper(); resetView() }
   renderSteps()
@@ -199,7 +199,7 @@ function updateStep() {
   document.querySelectorAll('[data-fold]').forEach(button => {
     button.setAttribute('aria-current', !wholeStep && Number(button.dataset.fold) === selected ? 'step' : 'false')
   })
-  document.querySelector(wholeStep ? `[data-step="${selectedStep}"]` : `[data-fold="${selected}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reducedMotion.matches ? 'instant' : 'smooth' })
+  document.querySelector(wholeStep ? `[data-step="${selectedStep}"]` : `[data-fold="${selected}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: shouldReduceMotion() ? 'instant' : 'smooth' })
   dirty = true
 }
 
@@ -508,8 +508,8 @@ document.addEventListener('fullscreenchange', () => {
   $('fullscreen').setAttribute('aria-label', document.fullscreenElement ? 'Exit full screen' : 'Full screen')
   $('fullscreen').title = document.fullscreenElement ? 'Exit full screen' : 'Full screen'
 })
-reducedMotion.addEventListener('change', event => {
-  if (!event.matches) return
+watchMotionPreference(({ reducedMotion }) => {
+  if (!reducedMotion) return
   playing = false
   cancelTravel()
   updatePlayback()

@@ -95,6 +95,4 @@ h1 em { color: transparent; font-style: normal; -webkit-text-stroke: 2px var(--p
   .board-head, .board-foot { font-size: 7px; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .pad.pending, .pad.failed { animation-duration: 1.8s; }
-}
+:where(html[data-reduced-motion="true"]) .pad.pending, :where(html[data-reduced-motion="true"]) .pad.failed { animation-duration: 1.8s; }

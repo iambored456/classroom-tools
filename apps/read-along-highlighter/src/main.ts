@@ -1,3 +1,4 @@
+import { shouldReduceMotion } from '../../../packages/motion-preference/index'
 import './style.css'
 import { ufliTexts } from './ufli-texts'
 import { ufliSupplementalTexts } from './ufli-supplemental-texts'
@@ -560,7 +561,7 @@ function smoothScrollTo(element: HTMLElement, target: () => number, duration: nu
     const maximum = Math.max(0, element.scrollHeight - element.clientHeight)
     return Math.min(maximum, Math.max(0, target))
   }
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (shouldReduceMotion()) {
     const target = destination()
     stopScrollAnimation()
     element.scrollTop = target

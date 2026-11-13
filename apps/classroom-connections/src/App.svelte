@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { shouldReduceMotion } from '../../../packages/motion-preference/index'
   import { onMount, tick } from 'svelte'
   import { flip } from 'svelte/animate'
   import GroupLibrary from './GroupLibrary.svelte'
@@ -94,7 +95,7 @@
   const delay = (duration: number) => new Promise<void>((resolve) => setTimeout(resolve, duration))
 
   const animationDuration = (standard: number, reduced = 80) =>
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches ? reduced : standard
+    shouldReduceMotion() ? reduced : standard
 
   const shuffle = <T,>(items: T[]): T[] => {
     const next = [...items]

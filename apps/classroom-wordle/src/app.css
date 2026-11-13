@@ -853,18 +853,18 @@ button:disabled {
   to { opacity: 1; transform: scale(1.1) rotate(12deg); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .success-fireworks .firework::before,
-  .board-fireworks .firework::before { display: none; }
-  .success-fireworks .firework-spark,
-  .board-fireworks .firework-spark {
+:where(html[data-reduced-motion="true"]) .success-fireworks .firework::before,
+  :where(html[data-reduced-motion="true"]) .board-fireworks .firework::before { display: none; }
+
+:where(html[data-reduced-motion="true"]) .success-fireworks .firework-spark,
+  :where(html[data-reduced-motion="true"]) .board-fireworks .firework-spark {
     animation: none;
     opacity: 0.85;
     transform: translate(calc(var(--spark-x) * var(--burst-size)), calc(var(--spark-y) * var(--burst-size)));
   }
-  .success-fireworks .celebration-star,
-  .board-fireworks .celebration-star { animation: none; }
-}
+
+:where(html[data-reduced-motion="true"]) .success-fireworks .celebration-star,
+  :where(html[data-reduced-motion="true"]) .board-fireworks .celebration-star { animation: none; }
 
 /* Teacher round setup */
 
@@ -1959,13 +1959,12 @@ button:disabled {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+:where(html[data-reduced-motion="true"]),
+  :where(html[data-reduced-motion="true"]) *,
+  :where(html[data-reduced-motion="true"]) *::before,
+  :where(html[data-reduced-motion="true"]) *::after {
     scroll-behavior: auto !important;
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;
     transition-duration: 1ms !important;
   }
-}

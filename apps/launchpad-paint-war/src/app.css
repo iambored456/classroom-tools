@@ -15,4 +15,4 @@ button, select, input, a { font: inherit; } button { color: inherit; } button:fo
 @keyframes urgent { to { opacity:.35; } }
 @media (max-width:820px) { header > span { display:none; } header { grid-template-columns:1fr auto; } .layout { grid-template-columns:1fr; gap:36px; } aside { text-align:center; } .lede,.segmented,.option-block,.score,.start,.warning,.instructions,.device-panel { margin-inline:auto; } .board-card { width:min(100%,620px); margin:auto; } }
 @media (max-width:480px) { .shell { width:calc(100% - 20px); } h1 { font-size:67px; } .launchpad-frame { padding:21px; } .grid { gap:5px; } header a span { display:none; } .board-card { padding:11px; } }
-@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }
+:where(html[data-reduced-motion="true"]),:where(html[data-reduced-motion="true"]) *,:where(html[data-reduced-motion="true"]) *::before,:where(html[data-reduced-motion="true"]) *::after { animation-duration:.01ms!important; transition-duration:.01ms!important; }

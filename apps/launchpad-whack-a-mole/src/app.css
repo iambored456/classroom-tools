@@ -817,13 +817,12 @@ select:disabled {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+:where(html[data-reduced-motion="true"]),
+  :where(html[data-reduced-motion="true"]) *,
+  :where(html[data-reduced-motion="true"]) *::before,
+  :where(html[data-reduced-motion="true"]) *::after {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}

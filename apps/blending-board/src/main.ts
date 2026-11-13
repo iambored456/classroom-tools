@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import '../../../packages/motion-preference/index'
 import './style.css'
 import { qrShare } from '@classroom-tools/qr-share'
 import lessons from './lessons.json'

@@ -105,6 +105,4 @@ h1 em { color: transparent; -webkit-text-stroke: 2px var(--acid); font-style: no
   .board-message { inset: 32%; min-width: 150px; min-height: 110px; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
-}
+:where(html[data-reduced-motion="true"]), :where(html[data-reduced-motion="true"]) *, :where(html[data-reduced-motion="true"]) *::before, :where(html[data-reduced-motion="true"]) *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
