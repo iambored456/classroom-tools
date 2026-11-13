@@ -327,7 +327,7 @@
 <svelte:head><meta name="description" content="Race another player or a computer to cover an 8 by 8 Launchpad with your colour." /></svelte:head>
 
 <main class="shell" style={`--player-one:${playerOneColour};--player-two:${playerTwoColour};--time:${timePercent}%;`}>
-  <header><a href="../" aria-label="Back to Classroom Tools">← <span>Classroom Tools</span></a><span>LAUNCHPAD ARCADE</span><b class:urgent={phase === 'playing' && remainingMs < 10_000}>{timeText}</b></header>
+  <header><a href="../launchpad-games/" aria-label="Back to Launchpad Games">← <span>Launchpad Games</span></a><span>LAUNCHPAD ARCADE</span><b class:urgent={phase === 'playing' && remainingMs < 10_000}>{timeText}</b></header>
   <section class="layout">
     <aside>
       <p class="eyebrow">TWO COLOURS. ONE GRID.</p><h1>PAINT<br /><em>WAR</em></h1>

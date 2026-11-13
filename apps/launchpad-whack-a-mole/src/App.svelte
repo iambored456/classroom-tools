@@ -45,9 +45,9 @@
 
 <main class="game-shell">
   <header class="hero">
-    <a class="home-link" href="../" aria-label="Back to Classroom Tools">
+    <a class="home-link" href="../launchpad-games/" aria-label="Back to Launchpad Games">
       <span aria-hidden="true">←</span>
-      Classroom Tools
+      Launchpad Games
     </a>
     <p class="eyebrow">Classroom arcade</p>
     <div class="title-row">

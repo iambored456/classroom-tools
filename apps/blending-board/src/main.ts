@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import './style.css'
+import { qrShare } from '@classroom-tools/qr-share'
 import lessons from './lessons.json'
 import { allBanks, basicBanks, blend, copyBanks, emptySelection, isBanks, isSelection, labels, parseBank, toggleTile, type Banks, type Selection } from './model'
 
@@ -8,6 +9,7 @@ const sidebar = byId<HTMLElement>('sidebar')
 const toggle = byId<HTMLButtonElement>('sidebar-toggle')
 const highlightToggle = byId<HTMLInputElement>('highlight-segments')
 const word = byId('word')
+qrShare(byId<HTMLButtonElement>('share-blending-board'), { app: 'blending-board', title: 'Blending Board' })
 
 if (import.meta.env.DEV && location.port === '5197') {
   const hubUrl = new URL('/', location.href)

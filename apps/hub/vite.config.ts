@@ -1,4 +1,5 @@
-﻿import { defineConfig } from 'vite'
+﻿import { fileURLToPath } from 'node:url'
+import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 
 const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1]
@@ -9,6 +10,14 @@ const base =
 export default defineConfig({
   base,
   plugins: [svelte()],
+  build: {
+    rollupOptions: {
+      input: {
+        hub: fileURLToPath(new URL('./index.html', import.meta.url)),
+        launchpadGames: fileURLToPath(new URL('./launchpad-games/index.html', import.meta.url)),
+      },
+    },
+  },
   server: {
     port: 5173,
     // The launcher reuses a matching server on this port. Never silently move the hub,

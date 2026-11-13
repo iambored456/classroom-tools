@@ -1,12 +1,7 @@
 import { solutionSize, solutionEqualsX, solutionFirstBaseline } from './math/layout'
 
-export const steps = [
-  { title: 'Pack the expression', short: 'Pack', text: 'Since y = −2x + 7, the whole expression can go inside a chest labelled y.', result: 'The y chest contains (−2x + 7).', duration: 4600 },
-  { title: 'Replace y with its chest', short: 'Replace', text: 'Move the same y chest into 4x + y = 5. Equal quantities can replace one another.', result: '4x + the y chest = 5.', duration: 3200 },
-  { title: 'Unpack the substitution', short: 'Unpack', text: 'Open the chest. Its entire expression replaces y, with brackets keeping it together.', result: '4x + (−2x + 7) = 5.', duration: 4200 },
-  { title: 'Solve the system', short: 'Solve', text: 'Combine like terms, subtract 7 from both sides, and divide both sides by 2. Then substitute x = −1 into the first equation to find y. Each line stays visible.', result: 'x = −1 and y = 9.', duration: 16000 },
-  { title: 'Check both equations', short: 'Check', text: 'The ordered pair (−1, 9) must make both original equations true.', result: '9 = −2(−1) + 7 and 4(−1) + 9 = 5. Both are true.', duration: 2600 },
-] as const
+import { buildLesson, defaultSystem } from './math/system.js'
+export const steps = buildLesson(defaultSystem).steps
 
 export const clamp = (value: number) => Math.max(0, Math.min(1, value))
 export function phase(progress: number, start = 0, end = 1) {
@@ -52,11 +47,11 @@ export function expressionPose(step: number, progress: number) {
 }
 
 // Start with the exact unpacked equation, then make room below it.
-export function solutionPose(progress: number) {
+export function solutionPose(progress: number, size = solutionSize, equalsX = 630) {
   const settle = phase(progress, 0, .14)
-  const finalScale = solutionSize / 54
+  const finalScale = size / 54
   return {
-    x: (solutionEqualsX - 630 * finalScale) * settle,
+    x: (solutionEqualsX - equalsX * finalScale) * settle,
     y: (solutionFirstBaseline - 355 * finalScale) * settle,
     scale: 1 + (finalScale - 1) * settle,
   }
@@ -65,4 +60,19 @@ export function solutionPose(progress: number) {
 export function solutionLineOpacity(progress: number, index: number) {
   const start = .16 + index * .08
   return phase(progress, start, start + .045)
+}
+
+// Reserve only the space currently needed around the replacement variable.
+export function replacementSpacing(step: number, progress: number, variableWidth: number, expressionWidth: number, equalsWidth: number) {
+  const chestSpace = step < 1 ? 0 : step === 1 ? phase(progress, .25, .7) : 1
+  const expressionSpace = step < 2 ? 0 : step === 2 ? phase(progress, .22, .75) : 1
+  const variableHalf = variableWidth / 2
+  const chestHalf = 50
+  const expressionHalf = Math.max(chestHalf, expressionWidth / 2 + 30)
+  const halfWidth = variableHalf + (chestHalf - variableHalf) * chestSpace + (expressionHalf - chestHalf) * expressionSpace
+  const gap = 12 + 8 * chestSpace
+  return {
+    prefixEnd: 420 - halfWidth - gap,
+    equalsX: 420 + halfWidth + gap + equalsWidth / 2,
+  }
 }

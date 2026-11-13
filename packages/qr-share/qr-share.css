@@ -1,0 +1,24 @@
+.tool-qr-button { flex: none; }
+.tool-qr-button > svg { display: block; width: 1.35rem; height: 1.35rem; }
+
+.tool-qr-dialog {
+  box-sizing: border-box;
+  width: min(54rem, calc(100vw - 1.5rem));
+  max-height: calc(100dvh - 1.5rem);
+  overflow: auto;
+  padding: clamp(.9rem, 3dvh, 2rem);
+  border: 1px solid var(--line, #bcc7ce);
+  border-radius: 1rem;
+  color-scheme: inherit;
+  background: Canvas;
+  color: CanvasText;
+  text-align: center;
+}
+.tool-qr-dialog::backdrop { background: #0009; }
+.tool-qr-dialog .tool-qr-heading { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin: 0 0 .5rem; text-align: left; }
+.tool-qr-dialog h2 { margin: 0; font-size: clamp(1rem, 3.5vw, 1.5rem); }
+.tool-qr-dialog .tool-qr-heading button { flex: none; width: 2.75rem; height: 2.75rem; padding: 0; border: 1px solid var(--line, #bcc7ce); border-radius: .5rem; background: transparent; color: inherit; font-size: 1.5rem; cursor: pointer; }
+.tool-qr-dialog p { margin: 0 0 1rem; }
+.tool-qr-code { width: min(100%, 60dvh, 38rem); aspect-ratio: 1; margin: 0 auto 1rem; background: #fff; }
+.tool-qr-code svg { display: block; width: 100%; height: auto; shape-rendering: crispEdges; }
+.tool-qr-dialog .tool-qr-url { color: inherit; overflow-wrap: anywhere; }

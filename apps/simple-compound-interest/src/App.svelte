@@ -7,6 +7,7 @@
 </svelte:head>
 
 <script lang="ts">
+  import { qrShare } from '@classroom-tools/qr-share'
   import { onDestroy, onMount, tick } from 'svelte'
 
   type InterestMode = 'simple' | 'compound'
@@ -538,13 +539,16 @@
 
 <main class="app-shell">
   <header class="topbar">
-    <a class="home-button" href={homeHref} aria-label="Back to app hub" title="Back to app hub">
-      <svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M3.5 10.5L12 3.75l8.5 6.75" />
-        <path d="M6.5 9.75V20.25h11V9.75" />
-        <path d="M10 20.25v-5.5h4v5.5" />
-      </svg>
-    </a>
+    <div class="navigation-actions">
+      <a class="home-button" href={homeHref} aria-label="Back to app hub" title="Back to app hub">
+        <svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3.5 10.5L12 3.75l8.5 6.75" />
+          <path d="M6.5 9.75V20.25h11V9.75" />
+          <path d="M10 20.25v-5.5h4v5.5" />
+        </svg>
+      </a>
+      <button class="home-button" type="button" title="Show QR code" use:qrShare={{ app: 'simple-compound-interest', title: 'Simple & Compound Interest' }}></button>
+    </div>
     <div class="topbar-title">
       <h1>{mode === 'simple' ? 'Simple Interest' : 'Compound Interest'}</h1>
       <div class="legend" aria-label="Chart legend">

@@ -1,0 +1,9 @@
+{
+  "name": "@classroom-tools/qr-share",
+  "private": true,
+  "type": "module",
+  "exports": "./index.ts",
+  "dependencies": {
+    "qrcode-generator": "^2.0.4"
+  }
+}

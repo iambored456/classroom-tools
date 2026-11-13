@@ -7,7 +7,7 @@ import { RegisterHTMLHandler } from '@mathjax/src/js/handlers/html.js'
 import { MathJaxFiraFont } from '@mathjax/mathjax-fira-font/js/svg.js'
 import '@mathjax/src/js/util/asyncLoad/esm.js'
 import '@mathjax/src/js/input/tex/base/BaseConfiguration.js'
-import { fragments, solutionLines } from '../src/math/notation.js'
+import { buildLesson, presets, lessonExpressions } from '../src/math/system.js'
 
 const adaptor = liteAdaptor()
 RegisterHTMLHandler(adaptor)
@@ -15,7 +15,8 @@ const document = mathjax.document('', {
   InputJax: new TeX({ packages: ['base'], formatError(_jax, error) { throw error } }),
   OutputJax: new SVG({ fontData: MathJaxFiraFont, fontCache: 'none' }),
 })
-const expressions = new Set([...Object.values(fragments), ...solutionLines.flatMap(line => [line.left, line.right])])
+const expressions = new Set(presets.flatMap(preset => lessonExpressions(buildLesson(preset.config))))
+for (const tex of ['y =', '(x -', ')^2 +', '(x +', ')^2 -']) expressions.add(tex)
 const assets = {}
 for (const tex of expressions) {
   const result = await document.convertPromise(tex, { display: true, em: 16, ex: 8, containerWidth: 16000 })

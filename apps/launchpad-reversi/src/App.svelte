@@ -425,7 +425,7 @@
   style={`--player-one: ${playerOneColour}; --player-two: ${playerTwoColour};`}
 >
   <header class="topbar">
-    <a href="../" aria-label="Back to Classroom Tools">← <span>Classroom Tools</span></a>
+    <a href="../launchpad-games/" aria-label="Back to Launchpad Games">← <span>Launchpad Games</span></a>
     <div class="brand"><i></i> LAUNCHPAD TABLETOP</div>
     <span class="status"><i class:thinking={aiThinking}></i> {gameOver ? 'GAME OVER' : aiThinking ? 'THINKING' : 'READY'}</span>
   </header>

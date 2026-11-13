@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte'
+  import { qrShare } from '@classroom-tools/qr-share'
   import { cardSets, cardImage, createNonsenseSet, sessionStorageKey, setFromHash } from './sets'
   import type { CardSet, CardSetId } from './sets'
   import { chooseAnotherCard, createSession, nextCard, previousCard, restoreSession } from './deck'
@@ -335,9 +336,12 @@
       <a class="icon-button" href={hubUrl} aria-label="Return to Classroom Tools" title="Classroom Tools">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 11 8.5-7 8.5 7M6 9.5V20h12V9.5M9.5 20v-6h5v6" /></svg>
       </a>
-      <button class="icon-button" onclick={toggleTheme} aria-label={darkMode ? 'Use light mode' : 'Use dark mode'} title={darkMode ? 'Use light mode' : 'Use dark mode'}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" /></svg>
-      </button>
+      <div class="header-actions">
+        <button class="icon-button" type="button" title="Show QR code" use:qrShare={{ app: 'literacy-flashcards', title: 'Literacy Tools' }}></button>
+        <button class="icon-button" onclick={toggleTheme} aria-label={darkMode ? 'Use light mode' : 'Use dark mode'} title={darkMode ? 'Use light mode' : 'Use dark mode'}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" /></svg>
+        </button>
+      </div>
     </header>
     <main class="sets-main">
       <h1>Literacy Tools</h1>
@@ -406,6 +410,7 @@
       <div class="active-set-heading"><h1>{activeSet.name}</h1><span>{session.position}/{cardCount} completed</span></div>
       <div class="header-actions">
         <button class="icon-button" bind:this={helpButton} onclick={showHelp} disabled={busy} aria-label="Help and settings" title="Help and settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4M12 16.5v.1" /></svg></button>
+        <button class="icon-button" type="button" title="Show QR code" use:qrShare={{ app: 'literacy-flashcards', title: activeSet.name, hash: activeSetId }}></button>
         <button class="icon-button fullscreen-button" onclick={toggleFullscreen} aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'} title={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" /></svg></button>
         <button class="icon-button previous-card-button" onclick={goBack} disabled={!busy && session.position === 0} aria-label="Previous card" title={busy || session.position > 0 ? 'Return to the previous card and mark it incomplete.' : 'No completed cards to return to.'}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4m7-7-7 7 7 7" /></svg></button>
       </div>

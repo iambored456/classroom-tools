@@ -1,4 +1,5 @@
 import './styles.css'
+import { qrShare } from '@classroom-tools/qr-share'
 
 import {
   DEFAULT_CONFIG,
@@ -165,6 +166,7 @@ function createShell(root: HTMLElement): void {
             <div class="action-cluster">
               <button id="go-button" class="primary-button" type="button">Go: Fill Brackets</button>
               <button id="reset-button" type="button">Reset</button>
+              <button id="share-tax-brackets" type="button"></button>
               <button id="toolbar-controls-toggle" class="toolbar-controls-toggle" type="button" aria-expanded="true">
                 Bracket Controls
               </button>
@@ -300,6 +302,9 @@ class TaxBracketsMarbleVisualApp {
   constructor(root: HTMLElement) {
     this.root = root
     createShell(root)
+    qrShare(queryRequired<HTMLButtonElement>(root, '#share-tax-brackets'), {
+      app: 'tax-brackets-marble-visual', title: 'Tax Brackets',
+    })
 
     this.elements = {
       toolbarShell: queryRequired(root, '.toolbar-shell'),

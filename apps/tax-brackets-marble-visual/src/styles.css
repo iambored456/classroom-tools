@@ -152,6 +152,15 @@ input {
   flex: 0 0 auto;
 }
 
+#share-tax-brackets {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border-radius: 50%;
+}
+
 .toolbar-controls-toggle::after {
   content: '▴';
   margin-left: 0.55rem;

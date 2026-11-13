@@ -7,6 +7,7 @@
 </svelte:head>
 
 <script lang="ts">
+  import { qrShare } from '@classroom-tools/qr-share'
   import { onDestroy, onMount } from 'svelte'
 
   type Axis = 'x' | 'y'
@@ -493,6 +494,7 @@
         </svg>
       {/if}
     </button>
+    <button class="home-button" type="button" title="Show QR code" use:qrShare={{ app: 'coordinates', title: 'Coordinates' }}></button>
   </header>
 
   <section class="workspace">

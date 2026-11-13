@@ -245,7 +245,7 @@
 
 <main class="app-shell">
   <header class="topbar">
-    <a class="home-link" href="../" aria-label="Back to Classroom Tools">← <span>Classroom Tools</span></a>
+    <a class="home-link" href="../launchpad-games/" aria-label="Back to Launchpad Games">← <span>Launchpad Games</span></a>
     <div class="brand"><span class="brand-mark"></span> LAUNCHPAD ARCADE</div>
     <button class="sound-button" aria-label={soundOn ? 'Mute sound' : 'Turn sound on'} onclick={toggleSound}>{soundOn ? '♪' : '×'}</button>
   </header>

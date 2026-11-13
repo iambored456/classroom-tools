@@ -117,6 +117,12 @@ button:hover {
   align-items: center;
 }
 
+.navigation-actions {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+}
+
 .home-button {
   display: inline-flex;
   align-items: center;

@@ -12,7 +12,7 @@ export type StandaloneApp = {
 export type HubEntry = StandaloneApp
 
 const baseUrl = import.meta.env.BASE_URL
-const withBase = (path: string) => `${baseUrl}${path.replace(/^\/+/, '')}`
+export const withBase = (path: string) => `${baseUrl}${path.replace(/^\/+/, '')}`
 
 export const hubEntries: HubEntry[] = [
   {
@@ -97,6 +97,16 @@ export const hubEntries: HubEntry[] = [
   },
   {
     kind: 'app',
+    id: 'launchpad-games',
+    name: 'Launchpad Games',
+    description: 'Play Whack-a-Mole, Snake, Reversi, Paint War, and Finger Twister.',
+    href: withBase('launchpad-games/'),
+    preview: withBase('images/LaunchpadPaintWar-screenshot.png'),
+    tags: ['Dev. Ed.'],
+    accent: '#ff4f91',
+  },
+  {
+    kind: 'app',
     id: 'read-along-highlighter',
     name: "ReadAlong Highlighter",
     description: "Highlights text as someone reads.",
@@ -124,56 +134,6 @@ export const hubEntries: HubEntry[] = [
     preview: withBase('images/CityRoutes-screenshot.png'),
     tags: ['Dev. Ed.'],
     accent: '#1f6659',
-  },
-  {
-    kind: 'app',
-    id: 'launchpad-whack-a-mole',
-    name: "Launchpad\nWhacke-a-Mole",
-    description: "Hit the single light as fast as possible within the time limit. 1 Player.",
-    href: withBase('launchpad-whack-a-mole/'),
-    preview: withBase('images/LaunchpadWhackaMole-screenshot.png'),
-    tags: ['Dev. Ed.'],
-    accent: '#e07d5a',
-  },
-  {
-    kind: 'app',
-    id: 'launchpad-snake',
-    name: "Launchpad\nSnack",
-    description: "Play the retro arcade game 'Snake' on a Launchpad. 1 Player.",
-    href: withBase('launchpad-snake/'),
-    preview: withBase('images/LaunchpadSnake-screenshot.png'),
-    tags: ['Dev. Ed.'],
-    accent: '#cbf53c',
-  },
-  {
-    kind: 'app',
-    id: 'launchpad-reversi',
-    name: "Launchpad\nReversi",
-    description: "Play the classic game 'Reverse' on a Launchpad. 1-2 Players.",
-    href: withBase('launchpad-reversi/'),
-    preview: withBase('images/LaunchpadReversi-screenshot.png'),
-    tags: ['Dev. Ed.'],
-    accent: '#65f5bd',
-  },
-  {
-    kind: 'app',
-    id: 'launchpad-paint-war',
-    name: "Launchpad\nPaint War",
-    description: "Push pads as fast as possible to control more squares than your opponent. 1-2 Players.",
-    href: withBase('launchpad-paint-war/'),
-    preview: withBase('images/LaunchpadPaintWar-screenshot.png'),
-    tags: ['Dev. Ed.'],
-    accent: '#ff4f91',
-  },
-  {
-    kind: 'app',
-    id: 'launchpad-finger-twister',
-    name: "Launchpad\nFinder Twister",
-    description: "Place a finger on each new colour without lifting any off of the Launchpad. 1-2 Players.",
-    href: withBase('launchpad-finger-twister/'),
-    preview: withBase('images/LaunchpadFingerTwister-screenshot.png'),
-    tags: ['Dev. Ed.'],
-    accent: '#c7ff4f',
   },
   {
     kind: 'app',

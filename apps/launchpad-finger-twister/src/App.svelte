@@ -365,7 +365,7 @@
 <svelte:head><meta name="description" content="A multi-touch holding challenge for one or two players on an 8 by 8 Launchpad." /></svelte:head>
 
 <main class="shell" style={`--player-one:${playerOneColour};--player-two:${playerTwoColour};`}>
-  <header><a href="../" aria-label="Back to Classroom Tools">← <span>Classroom Tools</span></a><span>LAUNCHPAD ARCADE</span><b class:danger={phase === 'lost'}>{phase === 'lost' ? 'RELEASED' : active ? 'HOLD' : 'READY'}</b></header>
+  <header><a href="../launchpad-games/" aria-label="Back to Launchpad Games">← <span>Launchpad Games</span></a><span>LAUNCHPAD ARCADE</span><b class:danger={phase === 'lost'}>{phase === 'lost' ? 'RELEASED' : active ? 'HOLD' : 'READY'}</b></header>
   <section class="layout">
     <aside>
       <p class="eyebrow">DON'T LET GO.</p><h1>FINGER<br /><em>TWISTER</em></h1>
