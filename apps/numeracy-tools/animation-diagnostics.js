@@ -1,10 +1,10 @@
 (() => {
   'use strict';
-  // Paste this entire file into DevTools on the affected Numeracy Tools page.
-  const VERSION = 'numeracy-console-2026-11-13-v1';
+  // Loaded automatically by the app; also works when pasted into DevTools.
+  const VERSION = 'numeracy-console-2026-11-13-v2';
   const LIMIT_MS = 60000;
   const PREFIX = '[Numeracy diagnostics]';
-  if (window.numeracyDiagnostics?.version === VERSION) {
+  if (window.numeracyDiagnostics?.version?.startsWith('numeracy-console-')) {
     window.numeracyDiagnostics.stop();
   } else if (window.numeracyDiagnostics) {
     console.warn(PREFIX, 'An unrelated window.numeracyDiagnostics already exists. Reload before installing.');
@@ -61,12 +61,14 @@
   let slowFrames = 0;
   let sampleTimer;
   let deadline;
+  let lastAutoSnapshot = 0;
+  let lastConsoleSample = 0;
   const cleanup = [];
   function event(type, data) {
     const entry = { ms: round(performance.now() - started), type, data };
     if (report.events.length < 400) report.events.push(entry);
     else report.dropped.events++;
-    if (/error|rejection|violation/.test(type)) console.warn(PREFIX, type, data);
+    if (/error|rejection|violation/.test(type)) console.warn(PREFIX + ' ' + type + ' ' + JSON.stringify(data));
   }
   function listen(target, type, callback, options) {
     target.addEventListener(type, callback, options);
@@ -165,7 +167,7 @@
       samplingCostMs: round(performance.now() - before)
     };
     report.snapshots.push(capture);
-    console.info(PREFIX, 'Snapshot:', note, capture);
+    console.info(PREFIX + ' Snapshot: ' + note + ' at ' + capture.ms + 'ms');
     return capture;
   }
   function viewport() {
@@ -198,6 +200,56 @@
     });
     report.samples.push({ ms: round(before - started), state: safely(state), costMs: round(performance.now() - before) });
     intervals = []; frameCount = 0; maxGap = 0; slowFrames = 0;
+    if (before - started - lastConsoleSample >= 5000) {
+      lastConsoleSample = before - started;
+      console.info(PREFIX + ' SAMPLE ' + JSON.stringify({
+        timing: report.frames[report.frames.length - 1], state: report.samples[report.samples.length - 1].state
+      }));
+    }
+    // Reserve one slot for the final snapshot. Avoid geometry reads every frame.
+    if (before - started - lastAutoSnapshot >= 10000 && report.snapshots.length < 19) {
+      lastAutoSnapshot = before - started;
+      safely(() => snapshot('automatic'));
+    }
+  }
+  function printReport() {
+    // Print actual strings, never expandable objects that paste as Object / {...}.
+    // Keep heavy path markup in the downloadable JSON, out of the console report.
+    const line = (section, value) => console.info(PREFIX + ' ' + section + ' ' + JSON.stringify(value));
+    const batches = (section, values, size = 10) => {
+      for (let i = 0; i < values.length; i += size) line(section + ' ' + (i + 1) + '-' + Math.min(i + size, values.length), values.slice(i, i + size));
+    };
+    console.info(PREFIX + ' BEGIN REPORT ' + VERSION + ' ' + report.startedAt);
+    const { resources: initialResources, ...environment } = report.environment;
+    line('ENVIRONMENT', { page: report.page, initialRoute: report.initialRoute, ...environment });
+    batches('TIMING', report.frames);
+    batches('STATE', report.samples.filter((_, index) => index % 5 === 0 || index === report.samples.length - 1), 5);
+    batches('EVENTS', report.events.map(({ data, ...entry }) => {
+      if (!data || typeof data !== 'object') return { ...entry, data };
+      const { state: ignoredState, ...details } = data;
+      return { ...entry, data: details };
+    }), 20);
+    const styles = node => {
+      if (!node.style) return node;
+      const keys = ['display', 'visibility', 'opacity', 'overflow', 'width', 'height',
+        'min-height', 'max-height', 'transform', 'transform-origin', 'transform-box',
+        'filter', 'clip-path', 'contain', 'zoom', 'fill', 'color'];
+      return { ...node, style: Object.fromEntries(keys.map(key => [key, node.style[key]])) };
+    };
+    for (const capture of report.snapshots) {
+      const { sceneMarkup, definitions, nodes, ancestors, references, ...summary } = capture;
+      line('SNAPSHOT', { ...summary,
+        consoleNodesTruncated: nodes.length > 24,
+        nodes: nodes.slice(0, 24).map(styles),
+        ancestors: ancestors.slice(0, 4).map(styles),
+        referenceIssues: references.filter(reference => reference.matches !== 1)
+      });
+    }
+    line('RESOURCES', { total: report.resourcesAtEnd?.length,
+      failed: Array.isArray(report.resourcesAtEnd)
+        ? report.resourcesAtEnd.filter(resource => resource.responseStatus >= 400) : report.resourcesAtEnd });
+    line('END REPORT', { durationMs: report.durationMs, dropped: report.dropped,
+      note: 'Copy the text from BEGIN REPORT through END REPORT. Full SVG markup remains available with nd.save().' });
   }
   function frame(now) {
     if (!active) return;
@@ -223,7 +275,7 @@
     report.resourcesAtEnd = safely(resources);
     report.endedAt = new Date().toISOString();
     report.durationMs = round(performance.now() - started);
-    console.info(PREFIX, 'Capture stopped. Export with copy(numeracyDiagnostics.text()) or numeracyDiagnostics.download().');
+    safely(printReport);
     return report;
   }
   function download() {
@@ -340,5 +392,5 @@
   frameId = requestAnimationFrame(frame);
   sampleTimer = setInterval(sample, 1000);
   deadline = setTimeout(stop, LIMIT_MS);
-  console.info(PREFIX, 'Recording for 60 seconds. Reproduce the problem, then run numeracyDiagnostics.snapshot("broken here"). Finish with numeracyDiagnostics.stop(); copy(numeracyDiagnostics.text()).');
+  console.info(PREFIX + ' Recording automatically for 60 seconds. Move/play the visualization, then copy the Console text through END REPORT. No commands needed.');
 })();
