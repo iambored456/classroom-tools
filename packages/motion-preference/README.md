@@ -1,7 +1,8 @@
 # Shared animation preference
 
 The Classroom Tools hub settings store `system`, `full`, or `reduced` under
-`classroom-tools.motion-preference`. The default is `system`.
+`classroom-tools.motion-preference`. The default is `full` (Always play animations), including when the device requests reduced motion.
+Saved choices still take precedence.
 
 Import `index.ts` in apps that use motion preferences. Use
 `shouldReduceMotion()` for one-time decisions and `watchMotionPreference()`

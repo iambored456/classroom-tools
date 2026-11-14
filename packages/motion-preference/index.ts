@@ -6,6 +6,7 @@ export interface MotionState {
 }
 
 export const motionStorageKey = 'classroom-tools.motion-preference'
+const defaultPreference: MotionPreference = 'full'
 const changeEvent = 'classroom-tools:motion-change'
 const browser = typeof window === 'undefined' ? undefined : window
 const media = browser?.matchMedia?.('(prefers-reduced-motion: reduce)')
@@ -14,10 +15,10 @@ const listeners = new Set<(state: MotionState) => void>()
 const validPreference = (value: unknown): value is MotionPreference =>
   value === 'system' || value === 'full' || value === 'reduced'
 
-function readStoredPreference(fallback: MotionPreference = 'system'): MotionPreference {
+function readStoredPreference(fallback: MotionPreference = defaultPreference): MotionPreference {
   try {
     const value = browser?.localStorage.getItem(motionStorageKey)
-    return validPreference(value) ? value : 'system'
+    return validPreference(value) ? value : defaultPreference
   } catch {
     return fallback
   }
