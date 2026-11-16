@@ -27,11 +27,17 @@
   const sensitiveTopicCount = (topic: SensitiveTopic) =>
     questions.filter((question) => question.enabled && question.sensitiveTopics.includes(topic)).length
 
+  const countAvailable = (pool: Question[], categoryIds: string[], topics: SensitiveTopic[]) =>
+    pool.filter((question) => questionMatchesSession(question, {
+      categoryIds, includedSensitiveTopics: topics,
+    })).length
+
   const toggleSensitiveTopic = (topic: SensitiveTopic) => {
     includedSensitiveTopics = includedSensitiveTopics.includes(topic)
       ? includedSensitiveTopics.filter((item) => item !== topic)
       : [...includedSensitiveTopics, topic]
     error = ''
+    updateExistingSession()
   }
 
   const toggleCategory = (categoryId: string) => {
@@ -39,6 +45,7 @@
       ? selectedCategoryIds.filter((id) => id !== categoryId)
       : [...selectedCategoryIds, categoryId]
     error = ''
+    updateExistingSession()
   }
 
   const selectAll = () => {
@@ -46,33 +53,43 @@
       .filter((category) => enabledCount(category.id) > 0)
       .map((category) => category.id)
     error = ''
+    updateExistingSession()
+  }
+
+  const clearCategories = () => {
+    selectedCategoryIds = []
+    error = ''
+    updateExistingSession()
   }
 
   const save = () => {
     const trimmedName = name.trim()
     if (!trimmedName) {
       error = 'Give this session a name.'
-      nameInput?.focus()
+      if (!session) nameInput?.focus()
       return
     }
     if (selectedCategoryIds.length === 0 && includedSensitiveTopics.length === 0) {
       error = 'Choose at least one category or sensitive topic.'
       return
     }
-    if (availableQuestionCount === 0) {
+    if (countAvailable(questions, selectedCategoryIds, includedSensitiveTopics) === 0) {
       error = 'Choose a category or sensitive topic with at least one available question.'
       return
     }
+    error = ''
     dispatch('save', { name: trimmedName, categoryIds: selectedCategoryIds, includedSensitiveTopics })
+  }
+
+  function updateExistingSession() {
+    if (session) save()
   }
 
   const handleKeydown = (event: KeyboardEvent) => {
     if (event.key === 'Escape') dispatch('close')
   }
 
-  $: availableQuestionCount = questions.filter((question) => questionMatchesSession(question, {
-    categoryIds: selectedCategoryIds, includedSensitiveTopics,
-  })).length
+  $: availableQuestionCount = countAvailable(questions, selectedCategoryIds, includedSensitiveTopics)
 
   onMount(() => {
     document.body.classList.add('modal-open')
@@ -97,7 +114,10 @@
   <div class="session-editor-content">
     <label class="field-label">
       <span>Session name</span>
-      <input bind:this={nameInput} bind:value={name} maxlength="80" placeholder="e.g. Period 2 check-in" />
+      <input bind:this={nameInput} value={name} maxlength="80" placeholder="e.g. Period 2 check-in" on:input={(event) => {
+        name = event.currentTarget.value
+        updateExistingSession()
+      }} />
     </label>
 
     {#if session}
@@ -111,7 +131,7 @@
       </div>
       <div class="text-actions">
         <button type="button" on:click={selectAll}>Select all</button>
-        <button type="button" on:click={() => (selectedCategoryIds = [])}>Clear</button>
+        <button type="button" on:click={clearCategories}>Clear</button>
       </div>
     </div>
 
@@ -170,9 +190,11 @@
       <span>questions available</span>
       {#if error}<p class="form-error" role="alert">{error}</p>{/if}
     </div>
-    <div class="footer-actions">
-      <button class="dialog-button secondary" type="button" on:click={() => dispatch('close')}>Cancel</button>
-      <button class="dialog-button primary" type="button" on:click={save}>{session ? 'Save Changes' : 'Start Session'}</button>
-    </div>
+    {#if !session}
+      <div class="footer-actions">
+        <button class="dialog-button secondary" type="button" on:click={() => dispatch('close')}>Cancel</button>
+        <button class="dialog-button primary" type="button" on:click={save}>Start Session</button>
+      </div>
+    {/if}
   </footer>
 </div>

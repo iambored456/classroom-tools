@@ -11,6 +11,7 @@
   let settingsDialog: HTMLDialogElement
   let { settingsOpen = $bindable(false) }: { settingsOpen?: boolean } = $props()
   let applying = $state(false)
+  let updateVersion = 0
   let settingsError = $state('')
   const fragments = $derived(lesson.fragments)
   const steps = $derived(lesson.steps)
@@ -27,8 +28,10 @@
 
   export function openSettings() {
     playing = false
-    draft = { ...lesson.config }
-    settingsError = ''
+    if (!applying) {
+      draft = { ...lesson.config }
+      settingsError = ''
+    }
     settingsOpen = true
     settingsDialog.showModal()
   }
@@ -37,23 +40,27 @@
     settingsDialog.close()
   }
 
-  async function applySettings(event: SubmitEvent) {
-    event.preventDefault()
-    settingsError = validateSystem(draft)
-    if (settingsError) return
+  async function updateEquations(config: typeof draft) {
+    const update = ++updateVersion
+    draft = { ...config }
+    settingsError = validateSystem(config)
+    if (settingsError || JSON.stringify(config) === JSON.stringify(lesson.config)) {
+      applying = false
+      return
+    }
     applying = true
     try {
-      const next = buildLesson(draft)
+      const next = buildLesson(config)
       await prepareMath(lessonExpressions(next))
+      if (update !== updateVersion) return
       // Render the entire new lesson before swapping any visible state.
       layoutSolution(next.solutionLines)
       lesson = next
       reset()
-      closeSettings()
     } catch {
-      settingsError = 'The equations could not be prepared. Please try again.'
+      if (update === updateVersion) settingsError = 'The equations could not be prepared. Please try again.'
     } finally {
-      applying = false
+      if (update === updateVersion) applying = false
     }
   }
 
@@ -123,21 +130,21 @@
 <svelte:window onkeydown={keyboard} />
 
 <main class="substitution" aria-label="Substitution Visualization">
-  <dialog class="settings-dialog" bind:this={settingsDialog} aria-labelledby="settings-title" onclose={() => { settingsOpen = false }} oncancel={(event) => { if (applying) event.preventDefault() }}>
-    <form onsubmit={applySettings}>
-      <div class="settings-heading"><h2 id="settings-title">Equation settings</h2><button type="button" class="close-settings" onclick={closeSettings} disabled={applying} aria-label="Close settings">×</button></div>
-      <fieldset disabled={applying} class="preset-fieldset">
+  <dialog class="settings-dialog" bind:this={settingsDialog} aria-labelledby="settings-title" onclose={() => { settingsOpen = false }}>
+    <form onsubmit={(event) => event.preventDefault()} oninput={() => updateEquations(draft)}>
+      <div class="settings-heading"><h2 id="settings-title">Equation settings</h2><button type="button" class="close-settings" onclick={closeSettings} aria-label="Close settings">×</button></div>
+      <fieldset class="preset-fieldset">
         <legend>Try an example</legend>
         <div class="preset-list">
           {#each presets as preset}
-            <button type="button" class="preset" aria-pressed={JSON.stringify(draft) === JSON.stringify(preset.config)} onclick={() => { draft = { ...preset.config }; settingsError = '' }}>
+            <button type="button" class="preset" aria-pressed={JSON.stringify(draft) === JSON.stringify(preset.config)} onclick={() => updateEquations(preset.config)}>
               <strong>{preset.name}</strong>
               {#each systemPreview(preset.config) as equation}<span>{equation}</span>{/each}
             </button>
           {/each}
         </div>
       </fieldset>
-      <fieldset disabled={applying} class="custom-equations">
+      <fieldset class="custom-equations">
         <legend>Change the values</legend>
         <label class="variable-choice">Isolated variable <select bind:value={draft.variable}><option value="y">y</option><option value="x">x</option></select></label>
         <p class="field-label">First equation</p>
@@ -158,7 +165,7 @@
         <p class="settings-hint">Whole numbers from −20 to 20. Negative values are welcome.</p>
       </fieldset>
       {#if settingsError}<p class="settings-error" role="alert">{settingsError}</p>{/if}
-      <div class="settings-actions"><button type="button" onclick={closeSettings} disabled={applying}>Cancel</button><button type="submit" class="apply-settings" disabled={applying}>{applying ? 'Preparing…' : 'Apply equations'}</button></div>
+      {#if applying}<p class="settings-hint" role="status">Preparing the equations…</p>{/if}
     </form>
   </dialog>
 
@@ -287,8 +294,6 @@
   .equation-fields input { width: 100%; min-width: 0; padding: .5rem .3rem; border: 1px solid var(--line); border-radius: 7px; background: var(--canvas); color: var(--ink); cursor: text; }
   .settings-hint { margin: .8rem 0 0; color: var(--muted); font-size: .75rem; }
   .settings-error { color: var(--ink); border-left: 3px solid var(--accent); padding-left: .7rem; }
-  .settings-actions { display: flex; justify-content: flex-end; gap: .6rem; }
-  .apply-settings { background: var(--tint); border-color: var(--accent); color: var(--accent); font-weight: 700; }
   .stage { border: 1px solid var(--line); border-radius: 20px; background: var(--paper); overflow: hidden; }
   .scene { display: block; width: 100%; max-height: 62dvh; min-height: 245px; }
   .equation { font-size: 54px; font-weight: 700; fill: var(--ink); }

@@ -6,7 +6,6 @@
   const operators: Operator[] = ['+', '-', '*', '/']
   const labels: Record<Mark, string> = { correct: 'correct position', present: 'different position', absent: 'no remaining match' }
   let settings: Settings = { ...defaults, operators: [...defaults.operators] }
-  let pending: Settings = { ...settings, operators: [...settings.operators] }
   let game: Game = newGame(settings)
   let dailyGames: Record<string, Game> = {}
   let results: Record<string, number> = {}
@@ -77,10 +76,16 @@
     const fresh = newGame(settings)
     game = dailyGames[fresh.id] ?? fresh
   }
-  function start() {
+  function loadPuzzle() {
     if (settings.daily) loadDaily()
     else game = newGame(settings)
-    message = ''; shareText = ''; modal = null; save()
+    message = ''
+    shareText = ''
+  }
+  function start() {
+    loadPuzzle()
+    modal = null
+    save()
   }
   function requestNew() {
     if (game.guesses.length || game.draft) { modal = 'new'; return }
@@ -118,23 +123,25 @@
     }
   }
   function openSettings() {
-    pending = { ...settings, operators: [...settings.operators] }; custom = ''; customError = ''; modal = 'settings'
+    custom = ''; customError = ''; modal = 'settings'
   }
   function toggleOperator(op: Operator) {
-    pending = { ...pending, operators: pending.operators.includes(op) ? pending.operators.filter(value => value !== op) : [...pending.operators, op] }
+    const selected = settings.operators.includes(op)
+    if (selected && settings.operators.length === 1) return
+    setSettings({ operators: selected ? settings.operators.filter(value => value !== op) : [...settings.operators, op] })
   }
-  function applySettings() {
-    if (!pending.operators.length) { customError = 'Choose at least one arithmetic operator.'; return }
-    const changed = pending.length !== settings.length || pending.daily !== settings.daily || [...pending.operators].sort().join('') !== [...settings.operators].sort().join('')
-    settings = { ...pending, operators: [...pending.operators] }
-    if (changed) start()
-    else { modal = null; save() }
+  function setSettings(changes: Partial<Settings>) {
+    const next = { ...settings, ...changes }
+    const changesPuzzle = next.length !== settings.length || next.daily !== settings.daily || next.operators !== settings.operators
+    settings = next
+    if (changesPuzzle) loadPuzzle()
+    save()
   }
   function customGame() {
     const answer = normalize(custom)
     customError = validate(answer) ?? ''
     if (customError) return
-    settings = { ...pending, length: answer.length, daily: false, operators: pending.operators.length ? [...pending.operators] : [...defaults.operators] }
+    settings = { ...settings, length: answer.length, daily: false }
     game = { answer, guesses: [], draft: '', id: `custom:${Date.now()}:${Math.random()}`, day: localDay(), custom: true }
     custom = ''; message = ''; shareText = ''; modal = null; save()
   }
@@ -216,15 +223,14 @@
       <button class="primary full" onclick={() => modal = null}>Let’s play</button>
     {:else if modal === 'settings'}
       <label class="field-label" for="length">Equation length <span>Includes digits, operators, and =</span></label>
-      <select id="length" bind:value={pending.length}>{#each [5,6,7,8,9,10,11,12] as length}<option value={length}>{length} symbols</option>{/each}</select>
-      <fieldset><legend>Operators in the hidden equation</legend><div class="operator-options">{#each operators as op}<button aria-pressed={pending.operators.includes(op)} onclick={() => toggleOperator(op)}>{display(op)}</button>{/each}</div><p class="muted">Guesses may use any operator.</p></fieldset>
-      <label class="toggle"><span><strong>Hard mode</strong><small>Keep correct positions and reuse revealed symbols.</small></span><input type="checkbox" bind:checked={pending.hard} /></label>
-      <label class="toggle"><span><strong>Daily mode</strong><small>One puzzle per day for each length and operator selection.</small></span><input type="checkbox" bind:checked={pending.daily} /></label>
-      <label class="toggle"><span><strong>Dark mode</strong></span><input type="checkbox" bind:checked={pending.dark} /></label>
-      <label class="toggle"><span><strong>High contrast</strong><small>Blue/orange clues with shape markers on tiles.</small></span><input type="checkbox" bind:checked={pending.contrast} /></label>
-      <label class="toggle"><span><strong>Swap Enter and Backspace</strong></span><input type="checkbox" bind:checked={pending.swap} /></label>
+      <select id="length" value={settings.length} onchange={(event) => setSettings({ length: Number(event.currentTarget.value) })}>{#each [5,6,7,8,9,10,11,12] as length}<option value={length}>{length} symbols</option>{/each}</select>
+      <fieldset><legend>Operators in the hidden equation</legend><div class="operator-options">{#each operators as op}<button aria-pressed={settings.operators.includes(op)} disabled={settings.operators.length === 1 && settings.operators.includes(op)} onclick={() => toggleOperator(op)}>{display(op)}</button>{/each}</div><p class="muted">Keep at least one operator selected. Guesses may use any operator.</p></fieldset>
+      <label class="toggle"><span><strong>Hard mode</strong><small>Keep correct positions and reuse revealed symbols.</small></span><input type="checkbox" checked={settings.hard} onchange={(event) => setSettings({ hard: event.currentTarget.checked })} /></label>
+      <label class="toggle"><span><strong>Daily mode</strong><small>One puzzle per day for each length and operator selection.</small></span><input type="checkbox" checked={settings.daily} onchange={(event) => setSettings({ daily: event.currentTarget.checked })} /></label>
+      <label class="toggle"><span><strong>Dark mode</strong></span><input type="checkbox" checked={settings.dark} onchange={(event) => setSettings({ dark: event.currentTarget.checked })} /></label>
+      <label class="toggle"><span><strong>High contrast</strong><small>Blue/orange clues with shape markers on tiles.</small></span><input type="checkbox" checked={settings.contrast} onchange={(event) => setSettings({ contrast: event.currentTarget.checked })} /></label>
+      <label class="toggle"><span><strong>Swap Enter and Backspace</strong></span><input type="checkbox" checked={settings.swap} onchange={(event) => setSettings({ swap: event.currentTarget.checked })} /></label>
       <p class="muted">Changing length, operators, or daily mode starts or resumes the matching puzzle. Appearance changes keep your progress.</p>
-      <button class="primary full" onclick={applySettings}>Apply settings</button>
       <details><summary>Set a classroom equation</summary><p>Enter a valid 5–12 symbol equation, then start the puzzle before showing the board to students.</p><label class="field-label" for="custom">Hidden equation</label><input id="custom" type="password" bind:value={custom} autocomplete="off" placeholder="e.g. 12+10=22" /><button class="full" onclick={customGame}>Start classroom puzzle</button></details>
       {#if customError}<p role="alert" class="error">{customError}</p>{/if}
     {:else if modal === 'stats'}

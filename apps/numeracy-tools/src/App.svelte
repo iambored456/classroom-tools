@@ -3,18 +3,32 @@
   import { qrShare } from '@classroom-tools/qr-share'
   import TransformationsVisualization from './TransformationsVisualization.svelte'
   import SubstitutionVisualization from './SubstitutionVisualization.svelte'
+  import ZerosCannonball from './ZerosCannonball.svelte'
+  import { defaultExample, factorQuadratic } from './zeros-cannonball'
 
+  const diagnosticRoute = 'cycle-4-diagnostic'
+  const diagnosticTitle = 'Cycle 4 Math Diagnostic'
   let substitutionOpen = $state(window.location.hash === '#substitution-visualization')
   let transformationsOpen = $state(window.location.hash === '#transformations-visualization')
-  const toolOpen = $derived(substitutionOpen || transformationsOpen)
+  let zerosOpen = $state(window.location.hash === '#zeros-cannonball')
+  let diagnosticOpen = $state(window.location.hash === `#${diagnosticRoute}`)
+  let diagnosticComponent: Promise<typeof import('./diagnostic/Diagnostic.svelte')> | undefined = $state()
+  const toolOpen = $derived(substitutionOpen || transformationsOpen || zerosOpen || diagnosticOpen)
+  const toolTitle = $derived(transformationsOpen ? 'Transformations Visualization' : substitutionOpen ? 'Substitution Visualization' : zerosOpen ? 'Zeros Cannonball' : diagnosticOpen ? diagnosticTitle : '')
   let settingsOpen = $state(false)
   let substitution: { openSettings: () => void } | undefined = $state()
   let transformations: { openSettings: () => void } | undefined = $state()
+  let zeros: { openSettings: () => void } | undefined = $state()
+  let zerosLesson = $state(factorQuadratic(defaultExample))
   function syncRoute() {
     settingsOpen = false
     transformationsOpen = window.location.hash === '#transformations-visualization'
     substitutionOpen = window.location.hash === '#substitution-visualization'
-    document.title = transformationsOpen ? 'Transformations Visualization · Numeracy Tools' : substitutionOpen ? 'Substitution Visualization · Numeracy Tools' : 'Numeracy Tools'
+    zerosOpen = window.location.hash === '#zeros-cannonball'
+    if (!zerosOpen) zerosLesson = factorQuadratic(defaultExample)
+    diagnosticOpen = window.location.hash === `#${diagnosticRoute}`
+    if (diagnosticOpen) diagnosticComponent ??= import('./diagnostic/Diagnostic.svelte')
+    document.title = toolTitle ? `${toolTitle} · Numeracy Tools` : 'Numeracy Tools'
   }
 
   const themeKey = 'numeracy-tools.dark-mode'
@@ -25,6 +39,8 @@
   const tools = [
     { id: 'transformations-visualization', name: 'Transformations Visualization', topic: 'Functions', description: 'Move, stretch, and reflect a parabola by changing its equation.', image: '', color: '#dceaf1' },
     { id: 'substitution-visualization', name: 'Substitution Visualization', topic: 'Algebra', description: 'Unpack substitution, one animated step at a time.', image: '', color: '#e5dcf2' },
+    { id: 'zeros-cannonball', name: 'Zeros Cannonball', topic: 'Quadratics', description: 'Factor, find the zeros, and fire a cannonball along a parabola.', image: '', color: '#f0e3cb' },
+    { id: diagnosticRoute, name: diagnosticTitle, topic: 'Grade 10 Academic Mathematics', description: 'Check factoring skills and build your next-practice checklist.', image: '', color: '#d5eadc' },
     { id: 'coordinates', name: 'Coordinates', topic: 'Coordinate geometry', description: 'Read and plot ordered pairs on a coordinate plane.', image: 'Coordinates-screenshot.png', color: '#d7ebf0' },
     { id: 'simple-compound-interest', name: 'Simple & Compound Interest', topic: 'Financial literacy', description: 'Compare how savings grow with simple and compound interest.', image: 'SimpleCompoundInterest-screenshot.png', color: '#f0e1d1' },
     { id: 'tax-brackets-marble-visual', name: 'Tax Brackets', topic: 'Financial literacy', description: 'Explore deductions, tax brackets, and take-home pay.', image: 'TaxBracketsMarbleVisual-screenshot.png', color: '#d6e9e2' },
@@ -90,20 +106,25 @@
 <svelte:window onhashchange={syncRoute} />
 
 <div class="app" class:landing={!toolOpen} class:dark-mode={darkMode}>
-    <header class="sets-header" class:transformations-header={transformationsOpen}>
+    <header class="sets-header" class:transformations-header={transformationsOpen} class:zeros-header={zerosOpen}>
       <a class="icon-button" href={toolOpen ? "#" : hubUrl} aria-label={toolOpen ? "Return to Numeracy Tools" : "Return to Classroom Tools"} title={toolOpen ? "Numeracy Tools" : "Classroom Tools"}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 11 8.5-7 8.5 7M6 9.5V20h12V9.5M9.5 20v-6h5v6" /></svg>
       </a>
+      {#if zerosOpen}
+        <button class="equation-button" onclick={() => zeros?.openSettings()} aria-label="Change equation" aria-haspopup="dialog" aria-expanded={settingsOpen}>
+          y = {zerosLesson.standard}<span aria-hidden="true">✎</span>
+        </button>
+      {/if}
       <div class="header-actions">
-      {#if toolOpen}
-        <button class="icon-button" onclick={() => (transformationsOpen ? transformations : substitution)?.openSettings()} aria-label={transformationsOpen ? 'Transformation settings' : 'Equation settings'} aria-haspopup="dialog" aria-expanded={settingsOpen} title="Settings">
+      {#if transformationsOpen || substitutionOpen || zerosOpen}
+        <button class="icon-button" onclick={() => (transformationsOpen ? transformations : zerosOpen ? zeros : substitution)?.openSettings()} aria-label={transformationsOpen ? 'Transformation settings' : 'Equation settings'} aria-haspopup="dialog" aria-expanded={settingsOpen} title="Settings">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 3-.7 2.4-2 .9-2.3-.6-2 3.5 1.6 1.8v2l-1.6 1.8 2 3.5 2.3-.6 2 .9.7 2.4h5l.7-2.4 2-.9 2.3.6 2-3.5-1.6-1.8v-2l1.6-1.8-2-3.5-2.3.6-2-.9-.7-2.4Z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       {/if}
       <button class="icon-button" type="button" title="Show QR code" use:qrShare={{
         app: 'numeracy-tools',
-        title: transformationsOpen ? 'Transformations Visualization' : substitutionOpen ? 'Substitution Visualization' : 'Numeracy Tools',
-        hash: transformationsOpen ? 'transformations-visualization' : substitutionOpen ? 'substitution-visualization' : '',
+        title: toolTitle || 'Numeracy Tools',
+        hash: transformationsOpen ? 'transformations-visualization' : substitutionOpen ? 'substitution-visualization' : zerosOpen ? 'zeros-cannonball' : diagnosticOpen ? diagnosticRoute : '',
       }}></button>
       <button class="icon-button" onclick={toggleTheme} aria-label={darkMode ? 'Use light mode' : 'Use dark mode'} title={darkMode ? 'Use light mode' : 'Use dark mode'}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" /></svg>
@@ -114,12 +135,24 @@
     <TransformationsVisualization bind:this={transformations} bind:settingsOpen />
   {:else if substitutionOpen}
     <SubstitutionVisualization bind:this={substitution} bind:settingsOpen />
+  {:else if zerosOpen}
+    <ZerosCannonball bind:this={zeros} bind:settingsOpen bind:lesson={zerosLesson} />
+  {:else if diagnosticOpen}
+    {#if diagnosticComponent}
+      {#await diagnosticComponent}
+        <p class="diagnostic-loading" role="status">Loading the diagnostic…</p>
+      {:then { default: Diagnostic }}
+        <Diagnostic />
+      {:catch}
+        <p class="diagnostic-loading" role="alert">The diagnostic could not load. Refresh the page to try again.</p>
+      {/await}
+    {/if}
   {:else}
   <main class="sets-main">
     <h1>Numeracy Tools</h1>
     <div class="set-grid" use:fitCards>
       {#each tools as tool (tool.id)}
-        <a class="set-card" href={['substitution-visualization', 'transformations-visualization'].includes(tool.id) ? `#${tool.id}` : `${hubUrl}${tool.id}/`} aria-label={`Open ${tool.name}`}>
+        <a class="set-card" href={tool.image ? `${hubUrl}${tool.id}/` : `#${tool.id}`} aria-label={`Open ${tool.name}`}>
           <span class="set-preview" style={`--preview-background: ${tool.color}`}>
             {#if tool.id === 'transformations-visualization'}
               <svg class="card-art" viewBox="0 0 600 400" aria-hidden="true">
@@ -143,6 +176,25 @@
                 <text x="310" y="255" text-anchor="middle" font-size="30" font-weight="700" fill="#553219">y</text>
                 <text x="300" y="350" text-anchor="middle" font-size="23" fill="#766889">Same value. A different form.</text>
               </svg>
+            {:else if tool.id === 'zeros-cannonball'}
+              <svg class="card-art" viewBox="0 0 600 400" aria-hidden="true">
+                <rect width="600" height="400" fill="#fffaf0" />
+                <path d="M45 290H555M260 55V340" stroke="#bdb3a0" stroke-width="2" />
+                <path d="M130 290Q300-100 470 290" fill="none" stroke="#7050b0" stroke-width="6" />
+                <g transform="translate(130 290) rotate(-48)"><rect x="-85" y="-20" width="85" height="40" rx="12" fill="#586579" stroke="#273346" stroke-width="4" /><rect x="-14" y="-24" width="15" height="48" rx="4" fill="#8998ab" /></g>
+                <circle cx="95" cy="305" r="24" fill="#e4b57b" stroke="#754929" stroke-width="6" />
+                <circle cx="95" cy="305" r="7" fill="#754929" />
+                <circle cx="345" cy="109" r="13" fill="#273346" />
+                <circle cx="470" cy="290" r="8" fill="#7050b0" />
+                <text x="130" y="360" text-anchor="middle" font-size="28" fill="#7050b0">(−2, 0)</text>
+                <text x="470" y="360" text-anchor="middle" font-size="28" fill="#7050b0">(4, 0)</text>
+                <text x="300" y="45" text-anchor="middle" font-size="29" fill="#7050b0">y = −(x + 2)(x − 4)</text>
+              </svg>
+            {:else if tool.id === diagnosticRoute}
+              <div class="text-preview diagnostic-preview" aria-hidden="true">
+                <span>x² − 5x + 6 = 0</span>
+                <span>(x − 2)(x − 3) = 0</span>
+              </div>
             {:else}
             <img src={`${hubUrl}images/${tool.image}`} alt="" width="1200" height="800" />
             {/if}
@@ -161,5 +213,31 @@
 
 <style>
   .header-actions { display: flex; align-items: center; gap: .6rem; }
+  .zeros-header { display: grid; grid-template-columns: minmax(10.2rem, 1fr) minmax(0, 44rem) minmax(10.2rem, 1fr); align-items: center; column-gap: 1rem; }
+  .zeros-header > a { justify-self: start; }
+  .zeros-header .header-actions { justify-self: end; }
+  .equation-button {
+    display: flex; align-items: center; justify-self: center; gap: 1rem;
+    max-width: 100%; padding: .6rem .8rem; border: 1px solid var(--line); border-radius: 10px;
+    background: var(--paper); color: var(--ink); font-size: clamp(.85rem, 2vw, 1.15rem); text-align: center;
+  }
+  .equation-button:hover { background: var(--soft); }
+  .equation-button span { color: #7050b0; }
+  .dark-mode .equation-button span { color: #c8b0ff; }
+  @media (max-width: 42rem) {
+    .zeros-header { grid-template-columns: 1fr auto; row-gap: .75rem; }
+    .equation-button { grid-column: 1 / -1; grid-row: 2; }
+  }
   .transformations-header { padding-bottom: 0; }
+  .diagnostic-loading { margin: 1.5rem auto; width: min(90%, 68rem); }
+  .diagnostic-preview {
+    align-content: center;
+    gap: .48em;
+    color: #225b50;
+    background: #f6fbf5;
+    box-shadow: 5px 8px 0 #a5c7b3, 9px 15px 24px #352b1c24;
+    font-size: clamp(.9rem, min(10cqw, 16cqh), 2.35rem);
+    font-weight: 700;
+  }
+  .diagnostic-preview span + span { padding-top: .35em; border-top: 1px solid #a5c7b3; }
 </style>

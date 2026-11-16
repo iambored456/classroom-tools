@@ -281,7 +281,7 @@ try {
   await page.getByRole('button', { name: 'Edit name & categories' }).click()
   const editDialog = page.getByRole('dialog', { name: 'Edit this session' })
   await editDialog.getByLabel('Session name').fill('Period 3')
-  await editDialog.getByRole('button', { name: 'Save Changes' }).click()
+  await editDialog.getByRole('button', { name: 'Close session editor' }).click()
   await page.getByText('Period 3', { exact: true }).waitFor()
 
   await page.getByRole('button', { name: /Question Library/ }).click()

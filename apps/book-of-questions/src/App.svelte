@@ -313,8 +313,6 @@
         updatedAt: now,
       }
       replaceSession(updatedSession)
-      sessionEditorOpen = false
-      editingSessionId = null
       if (activeSessionId === updatedSession.id && !currentStillIncluded && sessionQuestions(updatedSession).some((question) => !updatedSession.askedQuestionIds.includes(question.id))) {
         drawQuestion(updatedSession)
       }
