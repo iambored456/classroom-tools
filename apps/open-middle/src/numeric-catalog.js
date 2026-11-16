@@ -5,6 +5,12 @@ export const slot = i => ({type:'slots', indices:[i]})
 export const number = (i, count=2) => ({type:'slots',indices:Array.from({length:count},(_,j)=>i+j)})
 export const fraction = (top,bottom) => ({type:'fraction',top,bottom})
 const s=slot, n=number, f=fraction
+const decimalAdditionRows = (sumWholePlaces = 1) => {
+ const decimal = (start, wholePlaces = 1) => ({
+  type:'group', parts:[n(start,wholePlaces),'.',s(start+wholePlaces)]
+ })
+ return [[decimal(0),'+',decimal(2),'=',decimal(4,sumWholePlaces)]]
+}
 const output={type:'output'}
 const make=(id,title,slotCount,rows,extra={})=>({id,title,slotCount,rows,layout:'digit-task',category:'Number',digits,unique:true,instruction:'Use each digit at most once. Fill every space to make a true statement.',...extra})
 export const numericQuestions = [
@@ -43,8 +49,11 @@ export const numericQuestions = [
  make(117,'Create A Pattern',8,[[n(0),',',n(2),',',n(4),',',n(6),', …']],{category:'Patterns',instruction:'Use digits 0 to 9 at most once in four two-digit numbers. Make a pattern that increases or decreases by the same amount each time.',rule:'constant-pattern',leading:[0,2,4,6],sourceUrl:'https://www.openmiddle.com/create-a-pattern/'}),
  make(118,'Decimals on a Number Line',10,[[{type:'label',text:'Left tick'},{type:'group',parts:[s(0),'.',n(1,3)]}],[{type:'label',text:'Middle tick'},{type:'group',parts:['10.',n(4)]}],[{type:'label',text:'Right tick'},{type:'group',parts:[n(6),'.',n(8)]}]],{category:'Decimals',instruction:'Use digits 0 to 9 once each in the ten spaces to make the numbers increase from left to right on the number line. The printed 10 stays fixed and does not use bank digits.',rule:'decimal-line',leading:[6],visual:'decimal-line',sourceUrl:'https://www.openmiddle.com/decimals-on-a-number-line/'}),
  make(119,'Decomposing Tenths and Hundredths',5,[[f(s(0),'10'),'+',f(s(1),'10'),'+',f(s(2),'10'),'+',f(n(3),'100'),'=',{type:'group',parts:['1',f('1','10')]}]],{category:'Decimals',rule:'decompose-decimal'}),
+ make(178,'Decimal Addition 2',6,decimalAdditionRows(),{digits:digits.slice(1),category:'Decimals',instruction:'Use digits 1 to 9 at most once across both addends and the sum. Fill all six spaces to make the equation true.',rule:'decimal-addition',sourceUrl:'https://www.openmiddle.com/decimal-addition-2/'}),
+ make(179,'Decimal Addition 3',6,decimalAdditionRows(),{digits:digits.slice(1),category:'Decimals',instruction:'Use digits 1 to 9 at most once across both addends and the sum. Fill all six spaces to make a true equation with the greatest possible sum.',rule:'greatest-decimal-sum',sourceUrl:'https://www.openmiddle.com/decimal-addition-3/'}),
  make(180,'Decimal Product Close to 50',4,[[{type:'group',parts:[s(0),'.',s(1)]},'×',{type:'group',parts:[s(2),'.',s(3)]},'=',output]],{digits:digits.slice(1),category:'Decimals',instruction:'Use each digit at most once. Make a product as close to 50 as possible.',rule:'product-50'}),
  make(219,'Order of Operations',4,[[s(0),'+','(',s(1),'−',s(2),')','×',s(3),'=',output]],{category:'Operations',instruction:'Use each digit at most once. Create a value {mode}.',modes:[['20','greater than 20'],['40','greater than 40'],['60','greater than 60']],rule:'order-operations'}),
+ make(246,'Decimal Addition',7,decimalAdditionRows(2),{category:'Decimals',instruction:'Use digits 0 to 9 at most once across both addends and the sum. Fill all seven spaces to make the equation true. If the sum is less than 10, put 0 in its tens place.',rule:'decimal-addition',sourceUrl:'https://www.openmiddle.com/decimal-addition/'}),
  make(278,'Percent of a Quantity',6,[[f(n(0),n(2)),'=',{type:'group',parts:[n(4),'%']}]],{category:'Percent',rule:'percent-fraction',leading:[0,2,4]}),
  make(279,'Scaling a Number by a Percent',6,[[{type:'group',parts:[n(0),'%']},'of',n(2),'=',n(4)]],{unique:false,category:'Percent',instruction:'Make a true sentence with three two-digit numbers. Use the movable digits {mode}.',modes:[['free','with repetition allowed'],['unique','at most once each']],rule:'percent-of',leading:[0,2,4]}),
  make(353,'Probability with Bags of Marbles',5,[[{type:'label',text:'Bag A'},s(0),'red +',s(1),'blue'],[{type:'label',text:'Bag B'},s(2),'red +',n(3),'green']],{digits:digits.slice(1),category:'Probability',instruction:'Use digits 1 to 9 without repeating. Make the probability of drawing a red marble equal in both bags. The number of green marbles must have two digits.',rule:'marbles',visual:'marbles'}),
@@ -114,6 +123,16 @@ export function evaluateNumeric(q,a,mode=q.modes?.[0][0]) {
  case 'ordered-sum':{const v=[a[0]*10,a[1]*10+num(2),num(4),75];return check(v.every((x,i)=>!i||v[i-1]<x),`${v.map(x=>fmt(x/100)).join(' < ')} ${v.every((x,i)=>!i||v[i-1]<x)?'is true.':'is not yet true.'}`)}
  case 'fraction-decimal':if(!a[1])return result('invalid','A denominator cannot be zero.');return check(a[0]*10===a[1]*(a[2]*10+a[3]),`${a[0]}/${a[1]} = ${fmt(a[0]/a[1])}; your decimal is ${a[2]}.${a[3]}.`)
  case 'decompose-decimal':return target((10*(a[0]+a[1]+a[2])+num(3))/100,1.1,'Sum')
+ case 'decimal-addition':
+ case 'greatest-decimal-sum': {
+  const sum = num(0) + num(2)
+  const entered = num(4, q.slotCount - 4)
+  if (sum !== entered) return check(false, 'Check that the two addends equal the sum you entered.')
+  if (q.rule === 'decimal-addition') return check(true, 'Your equation is true.')
+  return check(sum === 98, sum === 98
+   ? 'You found the greatest possible sum.'
+   : 'Your equation is true. Can you make a greater sum?')
+ }
  case 'product-50':{const p=(a[0]*10+a[1])*(a[2]*10+a[3]),d=Math.abs(p-5000);return result(d===2?'success':'progress',`Product: ${fmt(p/100)}. Distance from 50: ${fmt(d/100)}.${d===2?' Closest possible!':''}`,fmt(p/100))}
  case 'order-operations':{const v=a[0]+(a[1]-a[2])*a[3];return result(v>Number(mode)?'success':'progress',`Value: ${v}; ${v>Number(mode)?'greater':'not greater'} than ${mode}. Parentheses, multiplication, then addition.`,String(v))}
  case 'percent-fraction':if(!num(2))return result('invalid','The denominator cannot be zero.');return check(num(0)*100===num(2)*num(4),`${num(0)}/${num(2)} = ${fmt(num(0)/num(2)*100)}%. Your percent is ${num(4)}%.`)

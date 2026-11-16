@@ -1,6 +1,6 @@
 # Open Middle questions
 
-57 activities are available, including #59 Fractions on a Number Line and #109 Comparing Fractions from Open Middle. The September 2026 worksheet collection originally supplied 37 activities from 38 files; the ladybug and cutouts-board activities are currently hidden. The two #180 files have identical content and share one activity. Source coverage and mathematical corrections are documented in [SOURCE-MAP.md](SOURCE-MAP.md).
+60 activities are available, including #59 Fractions on a Number Line and #109 Comparing Fractions from Open Middle. The September 2026 worksheet collection originally supplied 37 activities from 38 files; the ladybug and cutouts-board activities are currently hidden. The two #180 files have identical content and share one activity. Source coverage and mathematical corrections are documented in [SOURCE-MAP.md](SOURCE-MAP.md).
 
 **Additional number tasks:** #29 Order Numbers, #51 Adding 3-Digit Numbers, #73 Multiplication, #81–82 Rounding, and #86 Subtraction with Zeros join the existing subtraction activities. Their source prompts, mathematical goals, and input controls are documented below and in SOURCE-MAP.md.
 
@@ -44,7 +44,7 @@ Local verification passed on October 25, 2026: 35 focused controller/model tests
 
 - `src/questions/index.js` registers and sorts the entire library. Numeric and string IDs are supported, with stable `#<id>` links and a landing page listing all activities in one left-aligned column.
 - `src/questions/34.js`, `38.js`, and `40.js` retain the existing sum square and two-digit equation experiences, including base-ten blocks and side totals. Their digit handling comes from `@classroom-tools/open-middle-core`.
-- `src/numeric-catalog.js` defines 41 number, fraction, decimal, percent, geometry, and probability tasks. Diagrams use structured slot/group/fraction tokens; each rule has its own evaluator. Cross-products and integer hundredths avoid floating-point equality errors.
+- `src/numeric-catalog.js` defines 44 number, fraction, decimal, percent, geometry, and probability tasks. Diagrams use structured slot/group/fraction tokens; each rule has its own evaluator. Cross-products and integer hundredths avoid floating-point equality errors.
 - `src/numeric-view.js` implements digit dragging, select-and-place, keyboard entry, reset, challenge modes, automatic feedback, and up to 20 saved arrangements per question. Digit activities use circular spaces and live green/red highlighting when complete; instructions are in Help and saved arrangements are in the Settings section of Help. Unique-digit tasks swap placed digits; repeatable tasks retain the bank.
 - `src/manipulatives.js` supplies ladybug spots, domino arrangement/flipping, shared boards, fraction number-line placement, and coordinate plots with three possible pairings. `src/fraction-line-model.js` checks unique numerator digits and number-line spacing and handles pointer/keyboard position conversion. Domino corner cells contribute to both adjacent side totals. Line comparisons use integer cross and dot products, including vertical, coincident, and degenerate lines.
 - `src/explorations.js` provides apple stories, editable dice outcome tables, the corner-rope model, rounded backpay, and grid/staggered coin arrangements, with checkable responses and written reasoning.

@@ -44,8 +44,11 @@ const examples = [
   [117, [1,9,2,8,3,7,4,6], [1,9,2,8,4,6,3,7]],
   [118, [7,3,4,6,8,9,1,2,5,0], [7,3,4,6,8,9,1,0,5,2]],
   [119, [1,2,3,5,0], [1,2,6,3,0]],
+  [178, [1,2,3,5,4,7], [1,2,3,5,4,8]],
+  [179, [5,2,4,6,9,8], [1,2,3,5,4,7]],
   [180, [6,1,8,2], [6,1,2,8]],
   [219, [1,9,0,8], [1,0,9,8], '60'],
+  [246, [2,3,8,4,1,0,7], [2,3,8,4,1,0,6]],
   [278, [1,7,2,5,6,8], [1,7,2,5,8,6]],
   [279, [2,0,6,5,1,3], [2,0,6,5,3,1], 'unique'],
   [353, [1,3,8,2,4], [1,3,8,4,2]],
@@ -84,6 +87,10 @@ test('all diagram spaces appear exactly once and match their declared digit coun
   for (const q of numericQuestions) {
     assert.deepEqual(collect(q.rows).sort((a,b) => a-b), Array.from({length:q.slotCount}, (_,i) => i), `Question ${q.id}`)
   }
+})
+
+test('Decimal Addition accepts a zero in the tens place of the sum', () => {
+  assert.equal(evaluate(246, [1,2,3,5,0,4,7]).state, 'success')
 })
 
 test('digits swap in unique tasks and may repeat in the source tasks that permit them', () => {

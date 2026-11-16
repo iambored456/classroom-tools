@@ -11,8 +11,6 @@
   let animation = $state<AnimationMode>('rollercoaster')
   const isOsprey = $derived(animation === 'osprey')
   const isCoaster = $derived(animation === 'rollercoaster')
-  const startLabel = $derived(isOsprey ? 'Start dive' : isCoaster ? 'Play' : 'Fire cannon')
-  const replayLabel = $derived(isOsprey ? '↺ Dive again' : isCoaster ? '↺ Ride again' : '↺ Fire again')
   let dialog: HTMLDialogElement
   let error = $state('')
   let step = $state(0)
@@ -20,8 +18,10 @@
   let playing = $state(false)
   let flight = $state(0)
   let firing = $state(false)
+  const isAnimating = $derived(step === 3 ? firing : playing)
+  const playbackComplete = $derived((step === 3 ? flight : progress) === 1)
+  const playbackLabel = $derived(isAnimating ? 'Pause' : playbackComplete ? 'Replay' : 'Play')
   let hasFired = $state(false)
-  let speed = $state(1)
   let reducedMotion = $state(false)
   let graphWidth = $state(960)
   let stage = $state<HTMLElement>()
@@ -48,7 +48,7 @@
   const lessonHeadings = [
     'Step 1: Set y = 0',
     'Step 2: Factor the trinomial.',
-    'Step 3: i) Separate each factor, ii) set each factor equal to zero, iii) solve both for x.',
+    'Step 3: i) Separate each factor and set them equal to zero, ii) solve both for x.',
     'Visualization',
   ]
   const graph = $derived(graphGeometry(lesson, graphWidth))
@@ -59,7 +59,7 @@
   const flipped = $derived(lesson.a > 0)
   const labelOffset = $derived(flipped ? -90 : 90)
   const reveal = (index: number, count: number, time = progress) => reducedMotion && step !== 0 ? 1 : Math.max(0, Math.min(1, time * (count + .5) - index))
-  const ospreyStatus = $derived(!hasFired ? 'Ready. Click the osprey or press Start dive.' : flight === 1 ? 'The osprey caught the fish, surfaced at the right zero, and flew away.'
+  const ospreyStatus = $derived(!hasFired ? 'Ready. Click the osprey or press Play.' : flight === 1 ? 'The osprey caught the fish, surfaced at the right zero, and flew away.'
     : `${firing ? '' : 'Paused. '}${osprey.phase === 'approach' ? 'Approaching the water.' : osprey.phase === 'dive' ? 'Diving below the water surface.' : osprey.phase === 'catch' ? 'Catching the fish at the vertex.' : osprey.phase === 'swim' ? 'Swimming back up with the fish.' : 'Flying away with the fish.'}`)
   const coasterStatus = $derived(!hasFired ? '' : flight === 1
     ? `Ride complete at (${lesson.factors[1].rootLabel}, 0). Both stations have y = 0.`
@@ -218,11 +218,11 @@
       previous = now
       if (playing) {
         const duration = step === 3 ? graphMoves.length ? 1000 : 700 : step === 1 ? 5500 : 3500
-        progress = Math.min(1, progress + elapsed * speed / duration)
+        progress = Math.min(1, progress + elapsed / duration)
         if (progress === 1) playing = false
       }
       if (firing) {
-        flight = Math.min(1, flight + elapsed * speed / (isOsprey ? 8500 : isCoaster ? 1500 : 3200))
+        flight = Math.min(1, flight + elapsed / (isOsprey ? 8500 : isCoaster ? 1500 : 3200))
         if (flight === 1) firing = false
       }
       frame = requestAnimationFrame(tick)
@@ -414,17 +414,16 @@
   <div class="transport">
     <button onclick={() => selectStep(step - 1)} disabled={step === 0}>← Previous</button>
     <label class="scrubber"><span class="sr-only">{step === 3 ? isCoaster ? 'Ride progress' : 'Flight progress' : 'Step progress'}</span><input type="range" min="0" max="1000" step="1" value={Math.round((step === 3 ? flight : progress) * 1000)} oninput={scrub} /><output aria-live="off">{Math.round((step === 3 ? flight : progress) * 100)}%</output></label>
-    <select aria-label="Animation speed" bind:value={speed}><option value={0.5}>0.5×</option><option value={1}>1×</option><option value={2}>2×</option></select>
-    <button class="primary" onclick={togglePlay}>{step === 3 ? firing ? 'Ⅱ Pause' : hasFired && flight > 0 && flight < 1 ? '▶ Resume' : hasFired ? replayLabel : startLabel : playing ? 'Ⅱ Pause' : progress === 1 ? '↺ Replay step' : step === 0 ? '▶ Play' : '▶ Play step'}</button>
+    <button class="primary" onclick={togglePlay}>{playbackLabel}</button>
     <button onclick={() => selectStep(step === 3 ? 0 : step + 1)}>{step === 3 ? 'Start again ↺' : step === 2 ? 'Show the graph →' : 'Next step →'}</button>
   </div>
-  <p class="status" role="status" aria-live="polite">{status || (playing ? 'Watch the steps unfold, or use the slider to explore.' : '')}</p>
+  <p class="status" role="status" aria-live="polite">{status}</p>
 </main>
 
 <style>
   .zeros-cannonball { --accent: #7050b0; --tint: #f0eaf9; --gold: #bd7320; width: min(100%, 1200px); margin: auto; padding: 0 clamp(.75rem, 3vw, 2rem) 1rem; }
   :global(.dark-mode) .zeros-cannonball { --accent: #c8b0ff; --tint: #2c243d; --gold: #ffd184; }
-  button, select { border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); padding: .6rem .8rem; font: inherit; }
+  button { border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); padding: .6rem .8rem; font: inherit; }
   button:hover { background: var(--soft); }
   button:disabled { opacity: .4; }
   .primary, .chosen { color: var(--accent); border-color: var(--accent); background: var(--tint); font-weight: 700; }
@@ -522,8 +521,7 @@
     .steps { gap: .25rem; }
     .steps button { flex-direction: column; padding: .4rem .15rem; font-size: .68rem; gap: .3rem; }
     .transport { flex-wrap: wrap; gap: .4rem; }
-    .scrubber { order: -1; flex-basis: calc(100% - 5rem); }
-    .transport select { order: -1; }
+    .scrubber { order: -1; flex-basis: 100%; }
     .transport button { flex: 1; padding: .6rem .35rem; font-size: .75rem; }
   }
 </style>

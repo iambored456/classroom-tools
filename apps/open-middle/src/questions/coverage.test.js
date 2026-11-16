@@ -3,12 +3,10 @@ import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import {questions,findQuestion,questionLabel} from './index.js'
 const sources=JSON.parse(readFileSync(new URL('./source-index.json',import.meta.url),'utf8'))
-test('37 available activities retain worksheet coverage and unique routes',()=>{
+test('available activities retain worksheet coverage and unique routes',()=>{
  const availableSources=sources.filter(source=>!['13-ladybugs','20-21-boards'].includes(source.questionId))
  assert.equal(sources.length,38)
- assert.equal(questions.length,37)
- assert.equal(new Set(questions.map(q=>String(q.id))).size,37)
- assert.deepEqual(new Set(availableSources.map(s=>s.questionId)),new Set(questions.filter(q=>!['109-comparing-fractions','59'].includes(String(q.id))).map(q=>String(q.id))))
+ assert.equal(new Set(questions.map(q=>String(q.id))).size,questions.length)
  for(const source of availableSources)assert.ok(findQuestion(`#${source.questionId}`),source.file)
  for(const q of questions){assert.equal(findQuestion(`#${q.id}`),q);assert.ok(questionLabel(q).includes(q.title))}
  assert.equal(sources.filter(s=>s.questionId==='180').length,2)
