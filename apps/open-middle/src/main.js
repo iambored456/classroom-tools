@@ -98,10 +98,10 @@ const gradeBoundaries = [13, 37, 50, 88, 156, 241, 326, 396]
 const questionOrder = question => Number.parseInt(question.displayId ?? question.id, 10)
 const questionNumber = question => `<span class="question-number">${escapeHtml(questionLabel(question).split(' - ')[0])}</span>`
 const homeControls = question => `<nav class="home-controls" aria-label="Question navigation">${icon('home','Home')}${questionNumber(question)}</nav>`
-const classroomToolsUrl = location.pathname.includes('/open-middle/')
-  ? new URL('../', location.href).href
-  : 'https://iambored456.github.io/classroom-tools/'
-const landingHome = `<a class="icon landing-home" href="${classroomToolsUrl}" aria-label="Classroom Tools home" title="Classroom Tools home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${icons.home}</svg></a>`
+const numeracyToolsUrl = location.pathname.includes('/open-middle/')
+  ? new URL('../numeracy-tools/', location.href).href
+  : 'https://iambored456.github.io/classroom-tools/numeracy-tools/'
+const landingHome = `<a class="icon landing-home" href="${numeracyToolsUrl}" aria-label="Return to Numeracy Tools" title="Return to Numeracy Tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${icons.home}</svg></a>`
 const instructions = question => `<p class="instructions">${question.instruction}</p>`
 const bank = problem => `<div class="bank" data-layout="${problem.layout}" aria-label="Available digits; drop here to return a digit">${problem.digits.map(d=>`<button class="digit ${slots.includes(d)?'used':''} ${selected===d?'selected':''}" data-digit="${d}" aria-label="Digit ${d}${slots.includes(d)?', already placed':''}" ${slots.includes(d)?'disabled':''}>${d}</button>`).join('')}</div>`
 function twoDigitEquation(problem) {

@@ -2,15 +2,17 @@
   import { onMount } from 'svelte'
   import { withBase } from './lib/apps'
 
-  const games = [
-    { id: 'whack-a-mole', name: 'Whack-a-Mole', preview: 'WhackaMole', color: '#f1cbbd', players: '1 player', description: 'Hit each lit pad as fast as you can before time runs out.' },
-    { id: 'snake', name: 'Snake', preview: 'Snake', color: '#e3efb9', players: '1 player', description: 'Collect food without hitting the walls or your own tail.' },
-    { id: 'reversi', name: 'Reversi', preview: 'Reversi', color: '#c2e8d8', players: '1–2 players', description: 'Trap and flip your opponent’s pieces to control the board.' },
-    { id: 'paint-war', name: 'Paint War', preview: 'PaintWar', color: '#f3c5d9', players: '1–2 players', description: 'Tap pads to claim more squares than your opponent.' },
-    { id: 'finger-twister', name: 'Finger Twister', preview: 'FingerTwister', color: '#e5e8b8', players: '1–2 players', description: 'Hold each new lit pad without letting go of the others.' },
-  ]
+  type Game = {
+    id: string
+    name: string
+    href: string
+    preview: string
+    color: string
+    players?: string
+    description: string
+  }
 
-  const themeKey = 'launchpad-games.dark-mode'
+  let { title, themeKey, games }: { title: string; themeKey: string; games: Game[] } = $props()
   let darkMode = $state(true)
 
   onMount(() => {
@@ -34,15 +36,15 @@
   </header>
 
   <main>
-    <h1>Launchpad Games</h1>
+    <h1>{title}</h1>
     <div class="games">
       {#each games as game (game.id)}
-        <a class="game" href={withBase(`launchpad-${game.id}/`)} aria-label={`Open ${game.name}`}>
+        <a class="game" href={withBase(game.href)} aria-label={`Open ${game.name}`}>
           <span class="preview" style:background={game.color}>
-            <img src={withBase(`images/Launchpad${game.preview}-screenshot.png`)} alt="" />
+            <img src={withBase(game.preview)} alt="" />
           </span>
           <span class="copy">
-            <span class="players">{game.players}</span>
+            {#if game.players}<span class="players">{game.players}</span>{/if}
             <span class="name">{game.name} <span aria-hidden="true">↗</span></span>
             <span class="description">{game.description}</span>
           </span>

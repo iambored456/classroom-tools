@@ -6,6 +6,12 @@
   import ZerosCannonball from './ZerosCannonball.svelte'
   import { defaultExample, factorQuadratic } from './zeros-cannonball'
 
+  import Studio, { studioModes } from './fraction-studio/Studio.svelte'
+  import StudioIcon from './fraction-studio/Icon.svelte'
+  let studioMode = $state(0)
+
+  const studioRoute = 'fraction-studio'
+  let studioOpen = $state(window.location.hash === '#' + studioRoute)
   const diagnosticRoute = 'cycle-4-diagnostic'
   const diagnosticTitle = 'Cycle 4 Math Diagnostic'
   let substitutionOpen = $state(window.location.hash === '#substitution-visualization')
@@ -13,8 +19,8 @@
   let zerosOpen = $state(window.location.hash === '#zeros-cannonball')
   let diagnosticOpen = $state(window.location.hash === `#${diagnosticRoute}`)
   let diagnosticComponent: Promise<typeof import('./diagnostic/Diagnostic.svelte')> | undefined = $state()
-  const toolOpen = $derived(substitutionOpen || transformationsOpen || zerosOpen || diagnosticOpen)
-  const toolTitle = $derived(transformationsOpen ? 'Transformations Visualization' : substitutionOpen ? 'Substitution Visualization' : zerosOpen ? 'Zeros Cannonball' : diagnosticOpen ? diagnosticTitle : '')
+  const toolOpen = $derived(studioOpen || substitutionOpen || transformationsOpen || zerosOpen || diagnosticOpen)
+  const toolTitle = $derived(studioOpen ? 'Fraction Studio' : transformationsOpen ? 'Transformations Visualization' : substitutionOpen ? 'Substitution Visualization' : zerosOpen ? 'Zeros Cannonball' : diagnosticOpen ? diagnosticTitle : '')
   let settingsOpen = $state(false)
   let substitution: { openSettings: () => void } | undefined = $state()
   let transformations: { openSettings: () => void } | undefined = $state()
@@ -22,6 +28,8 @@
   let zerosLesson = $state(factorQuadratic(defaultExample))
   function syncRoute() {
     settingsOpen = false
+    studioOpen = window.location.hash === '#' + studioRoute
+    if (!studioOpen) studioMode = 0
     transformationsOpen = window.location.hash === '#transformations-visualization'
     substitutionOpen = window.location.hash === '#substitution-visualization'
     zerosOpen = window.location.hash === '#zeros-cannonball'
@@ -36,7 +44,12 @@
   const hubUrl = import.meta.env.DEV
     ? `${window.location.protocol}//${window.location.hostname}:5173/`
     : new URL('../', new URL(import.meta.env.BASE_URL, window.location.origin)).pathname
+  const featuredTools = [
+    { id: 'numberle', name: 'Numberle', topic: 'Math', description: 'Guess the hidden equation in six tries. Daily, unlimited, and teacher-set math puzzles.', image: 'Numberle-preview.svg', color: '#d5eadc' },
+    { id: 'open-middle', name: 'Open Middle Math', topic: 'Math', description: 'Solve interactive, open-ended math problems.', image: 'OpenMiddle-preview.svg', color: '#e5dcf2' },
+  ]
   const tools = [
+    { id: studioRoute, name: 'Fraction Studio', topic: 'Workplace numeracy', description: 'Paint tiles and practise fractions, decimals, percents, and money.', image: '', color: '#d8e9d9' },
     { id: 'transformations-visualization', name: 'Transformations Visualization', topic: 'Functions', description: 'Move, stretch, and reflect a parabola by changing its equation.', image: '', color: '#dceaf1' },
     { id: 'substitution-visualization', name: 'Substitution Visualization', topic: 'Algebra', description: 'Unpack substitution, one animated step at a time.', image: '', color: '#e5dcf2' },
     { id: 'zeros-cannonball', name: 'Zeros Cannonball', topic: 'Quadratics', description: 'Factor, find the zeros, and fire a cannonball along a parabola.', image: '', color: '#f0e3cb' },
@@ -58,23 +71,21 @@
 
   function fitCards(grid: HTMLElement) {
     function update() {
-      const count = grid.childElementCount
-      if (!count) return
-
       const style = getComputedStyle(grid)
       const bounds = grid.getBoundingClientRect()
       const width = bounds.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
       const height = bounds.height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)
       const gap = parseFloat(style.columnGap)
       const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
-      const maxColumns = Math.min(count, Math.max(1, Math.floor((width + gap) / (8.5 * rem + gap))))
+      const maxColumns = Math.min(tools.length, Math.max(1, Math.floor((width + gap) / (8.5 * rem + gap))))
       let columns = maxColumns
       let bestSize = 0
 
       for (let candidate = 1; candidate <= maxColumns; candidate++) {
-        const rows = Math.ceil(count / candidate)
+        const rows = Math.ceil(featuredTools.length / candidate) + Math.ceil(tools.length / candidate)
         const cardWidth = (width - (candidate - 1) * gap) / candidate
-        const cardHeight = (height - (rows - 1) * gap) / rows
+        // The divider adds a 1px track and one extra gap.
+        const cardHeight = (height - 1 - rows * gap) / rows
         if (cardHeight < 8 * rem) continue
 
         // Prefer the layout with the most room for previews and labels.
@@ -86,17 +97,15 @@
       }
 
       grid.style.setProperty('--columns', String(columns))
+      grid.style.setProperty('--featured-rows', String(Math.ceil(featuredTools.length / columns)))
     }
 
     update()
     const resize = new ResizeObserver(update)
     resize.observe(grid)
-    const cards = new MutationObserver(update)
-    cards.observe(grid, { childList: true })
     return {
       destroy() {
         resize.disconnect()
-        cards.disconnect()
       },
     }
   }
@@ -106,10 +115,17 @@
 <svelte:window onhashchange={syncRoute} />
 
 <div class="app" class:landing={!toolOpen} class:dark-mode={darkMode}>
-    <header class="sets-header" class:transformations-header={transformationsOpen} class:zeros-header={zerosOpen}>
+    <header class="sets-header" class:studio-header={studioOpen} class:transformations-header={transformationsOpen} class:zeros-header={zerosOpen}>
       <a class="icon-button" href={toolOpen ? "#" : hubUrl} aria-label={toolOpen ? "Return to Numeracy Tools" : "Return to Classroom Tools"} title={toolOpen ? "Numeracy Tools" : "Classroom Tools"}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 11 8.5-7 8.5 7M6 9.5V20h12V9.5M9.5 20v-6h5v6" /></svg>
       </a>
+      {#if studioOpen}
+        <nav class="studio-tabs" aria-label="Studio mode">
+          {#each studioModes as item, i}
+            <button aria-pressed={studioMode === i} onclick={() => studioMode = i}><StudioIcon name={item.icon}/>{item.name}</button>
+          {/each}
+        </nav>
+      {/if}
       {#if zerosOpen}
         <button class="equation-button" onclick={() => zeros?.openSettings()} aria-label="Change equation" aria-haspopup="dialog" aria-expanded={settingsOpen}>
           y = {zerosLesson.standard}<span aria-hidden="true">✎</span>
@@ -124,14 +140,16 @@
       <button class="icon-button" type="button" title="Show QR code" use:qrShare={{
         app: 'numeracy-tools',
         title: toolTitle || 'Numeracy Tools',
-        hash: transformationsOpen ? 'transformations-visualization' : substitutionOpen ? 'substitution-visualization' : zerosOpen ? 'zeros-cannonball' : diagnosticOpen ? diagnosticRoute : '',
+        hash: studioOpen ? studioRoute : transformationsOpen ? 'transformations-visualization' : substitutionOpen ? 'substitution-visualization' : zerosOpen ? 'zeros-cannonball' : diagnosticOpen ? diagnosticRoute : '',
       }}></button>
       <button class="icon-button" onclick={toggleTheme} aria-label={darkMode ? 'Use light mode' : 'Use dark mode'} title={darkMode ? 'Use light mode' : 'Use dark mode'}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" /></svg>
       </button>
       </div>
     </header>
-  {#if transformationsOpen}
+  {#if studioOpen}
+    <Studio mode={studioMode} />
+  {:else if transformationsOpen}
     <TransformationsVisualization bind:this={transformations} bind:settingsOpen />
   {:else if substitutionOpen}
     <SubstitutionVisualization bind:this={substitution} bind:settingsOpen />
@@ -151,10 +169,17 @@
   <main class="sets-main">
     <h1>Numeracy Tools</h1>
     <div class="set-grid" use:fitCards>
-      {#each tools as tool (tool.id)}
+      {#each [...featuredTools, ...tools] as tool, index (tool.id)}
+        {#if index === featuredTools.length}
+          <hr class="set-divider" />
+        {/if}
         <a class="set-card" href={tool.image ? `${hubUrl}${tool.id}/` : `#${tool.id}`} aria-label={`Open ${tool.name}`}>
           <span class="set-preview" style={`--preview-background: ${tool.color}`}>
-            {#if tool.id === 'transformations-visualization'}
+            {#if tool.id === studioRoute}
+              <div class="text-preview studio-preview" aria-hidden="true">
+                <i></i><span>¾ = 75%</span>
+              </div>
+            {:else if tool.id === 'transformations-visualization'}
               <svg class="card-art" viewBox="0 0 600 400" aria-hidden="true">
                 <rect width="600" height="400" fill="#faf7ff" />
                 <path d="M60 290H550M260 55V360" stroke="#afa6bd" stroke-width="2" />
@@ -212,6 +237,22 @@
 </div>
 
 <style>
+  .studio-preview { display: flex; align-items: center; justify-content: center; gap: .45em; background: #f9faf0; color: #153f31; font-size: clamp(1rem, min(13cqw, 21cqh), 3rem); }
+  .studio-preview i { width: 1.75em; height: 1.75em; border-radius: 50%; background: conic-gradient(#39a58b 75%, #e3dcc7 0); }
+  .studio-header { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:.5rem; }
+  .studio-header > a { justify-self:start; }
+  .studio-header .header-actions { justify-self:end; }
+  .studio-tabs { display:flex; align-items:center; padding:.2rem; border:1px solid var(--line); border-radius:.95rem; background:var(--paper); gap:.15rem; }
+  .studio-tabs button { display:flex; align-items:center; justify-content:center; gap:.4rem; min-height:2.4rem; padding:.35rem .75rem; border:0; border-radius:.65rem; font-size:.9rem; font-weight:700; color:var(--muted); background:transparent; }
+  .studio-tabs button[aria-pressed=true] { background:#086449; color:white; }
+  .dark-mode .studio-tabs button[aria-pressed=true] { background:#a5e2ba; color:#142b21; }
+  .app:fullscreen { overflow:auto; }
+  @media (max-width:40rem) {
+    .studio-header { grid-template-columns:1fr auto; }
+    .studio-header .header-actions { grid-column:2; grid-row:1; }
+    .studio-tabs { grid-row:2; grid-column:1/-1; justify-self:center; max-width:100%; }
+    .studio-tabs button { padding-inline:clamp(.3rem,2vw,.75rem); }
+  }
   .header-actions { display: flex; align-items: center; gap: .6rem; }
   .zeros-header { display: grid; grid-template-columns: minmax(10.2rem, 1fr) minmax(0, 44rem) minmax(10.2rem, 1fr); align-items: center; column-gap: 1rem; }
   .zeros-header > a { justify-self: start; }

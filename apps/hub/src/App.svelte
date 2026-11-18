@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { hubEntries } from './lib/apps'
+  import { hubEntries, secondaryHubEntries } from './lib/apps'
 
   import { onMount } from 'svelte'
   import { getMotionState, setMotionPreference, watchMotionPreference, type MotionPreference } from '../../../packages/motion-preference/index'
@@ -86,7 +86,10 @@
   </header>
 
   <section class="cards" aria-label="Apps">
-    {#each hubEntries as entry, index (entry.id)}
+    {#each [...hubEntries, ...secondaryHubEntries] as entry, index (entry.id)}
+      {#if index === hubEntries.length}
+        <hr class="card-divider" />
+      {/if}
       <article class="card" style={`--card-accent: ${entry.accent}; --card-delay: ${index * 90}ms;`}>
         <div class="card-header">
           <h2><a class="tool-text-link" href={entry.href} on:pointerenter={() => prefetchApp(entry.href)} on:focus={() => prefetchApp(entry.href)} on:pointerdown={() => prefetchApp(entry.href)}>{entry.name}</a></h2>

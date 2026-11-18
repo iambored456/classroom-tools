@@ -18,7 +18,7 @@
   let shareText = ''
   let input: HTMLInputElement
   const base = import.meta.env.BASE_URL
-  const hubHref = base.endsWith('/numberle/') ? base.slice(0, -'numberle/'.length) : '/'
+  const rootBase = base.endsWith('/numberle/') ? base.slice(0, -'numberle/'.length) : '/'
   $: status = outcome(game)
   $: marks = game.guesses.map(guess => score(guess, game.answer))
   $: keyMarks = keyboardMarks(game)
@@ -156,7 +156,7 @@
 
 <div class:dark={settings.dark} class:contrast={settings.contrast} class="app-shell">
   <header>
-    <a class="hub-link" href={hubHref}>← Classroom Tools</a>
+    <a class="hub-link" href={`${rootBase}numeracy-tools/`}>← Numeracy Tools</a>
     <div class="toolbar">
       <h1><span class="logo" aria-hidden="true">=</span>Numberle</h1>
       <nav aria-label="Game controls">

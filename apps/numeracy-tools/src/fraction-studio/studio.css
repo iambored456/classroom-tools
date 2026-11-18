@@ -1,0 +1,100 @@
+/* Fraction Studio uses the Numeracy Tools typeface and the shared light/dark switch. */
+.studio {
+  --sheet: #fbfaf5; --surface: #fffefa; --ground: #f3f2e9; --border: #d4d8cc; --text: #182d27;
+  --sub: #53685e; --brand: #086449; --brand-text: white; --touch: #e4eee3; --empty: #dde2d8;
+  background: var(--sheet); color: var(--text); min-height: calc(100dvh - 4.6rem); font-variant-numeric: tabular-nums;
+}
+.dark-mode .studio {
+  --sheet: #162622; --surface: #1c302a; --ground: #253b34; --border: #3b5349; --text: #f0f4e9;
+  --sub: #bdd1c5; --brand: #a5e2ba; --brand-text: #142b21; --touch: #334f43; --empty: #41554d;
+}
+.app:has(.studio) { background: var(--studio-shell,#fbfaf5); }
+.app.dark-mode:has(.studio) { --studio-shell:#162622; }
+.studio-inner { max-width: 69rem; margin: 0 auto; padding: .85rem clamp(.8rem,3vw,2.4rem) 2rem; }
+.studio h2,.studio p { margin: 0; }
+.studio h2 { font-weight: 700; letter-spacing: -.045em; line-height: 1.12; font-size: clamp(1.4rem,2.25vw,1.8rem); }
+.studio button,.studio select,.studio input { font: inherit; color: inherit; }
+.studio button,.studio select { cursor:pointer; }
+.studio button:disabled { cursor:default; opacity:.48; }
+.studio :is(button,input,select):focus-visible { outline:3px solid #ca8123; outline-offset:3px; }
+.studio button { border: 1px solid transparent; }
+.panel-head,.mode-lead,.class-prompt,.board-tools,.actions,.palette { display:flex; align-items:center; }
+.panel-head,.class-prompt,.mode-lead { justify-content:space-between; gap:.7rem; }
+.studio .quiet,.studio .primary,.studio .text-btn,.board-tools button,.palette button,.options button {
+  display:inline-flex; align-items:center; justify-content:center; gap:.4rem; min-height:2.4rem; padding:.43rem .75rem; font-weight:700; border-radius:.65rem; background:transparent;
+}
+.studio .primary { background:var(--brand); color:var(--brand-text); }
+.studio .primary,.studio .quiet { min-height:2.6rem; }
+.studio .quiet,.options button { border-color:var(--border); background:var(--surface); }
+.studio button:not(:disabled):hover { filter:brightness(.96); }
+.studio .mode-lead { color:var(--sub); margin:.7rem 0 1.25rem; line-height:1.4; }
+.workspace { display:grid; grid-template-columns:minmax(0,min(41%, max(16rem,calc(100svh - 13rem)))) minmax(0,1fr); gap:1rem; align-items:start; }
+.studio .panel { min-width:0; border:1px solid var(--border); border-radius:1.25rem; background:var(--surface); padding:clamp(.95rem,2vw,1.45rem); }
+.mode-icon { display:inline-flex; align-items:center; gap:.4rem; font-weight:700; }
+.swatch { display:inline-block; border-radius:50%; width:.75rem; height:.75rem; border:1px solid #0002; flex-shrink:0; }
+.studio-inner:has(> div:not([hidden]) .workspace) { max-width:none; margin:0; padding:0; }
+.studio .board-panel.panel { padding:0; border:0; background:transparent; }
+.tile-board { margin:0; padding:0; width:100%; aspect-ratio:1; display:grid; grid-template-columns:repeat(10,1fr); grid-template-rows:repeat(10,1fr); gap:2px; background:var(--surface); user-select:none; }
+.tile-board.editable { touch-action:none; }
+.studio .tile { min-width:0; min-height:0; padding:0; margin:0; border:0; border-radius:15%; background:var(--empty); touch-action:none; }
+.studio .tile:focus-visible { z-index:1; outline-offset:0; }
+.studio .t1 { background:#39a58b; }
+.studio .t2 { background:#f1a664; }
+.studio .t3 { background:#a194d6; }
+.palette,.board-tools { flex-wrap:wrap; gap:.25rem; }
+.palette { justify-content:center; gap:.45rem; }
+.palette .paint-swatch { width:3.1rem; min-height:2.4rem; color:#142b21; font-size:1.2rem; }
+.palette .paint-swatch[aria-pressed=true] { box-shadow:inset 0 0 0 2px #142b21; }
+.palette button { font-size:.84rem; padding:.35rem .48rem; color:var(--sub); min-height:2.25rem; }
+.palette .chosen,.options .chosen { color:var(--text); background:var(--touch); border-color:var(--brand); }
+.board-tools { margin-top:.85rem; border-top:1px solid var(--border); padding-top:.5rem; justify-content:space-between; }
+.board-tools button,.studio .text-btn { color:var(--sub); font-size:.82rem; padding:.35rem; }
+.studio .panel-note,.studio small,.studio .setup-intro p { color:var(--sub); }
+.studio .panel-note { font-size:.94rem; margin:.4rem 0 .85rem; }
+.studio .connections.panel { container: value-panel / inline-size; padding:.2rem; }
+.value-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.28fr); padding:0; border-radius:.7rem; background:var(--row-paint); }
+.value-row + .value-row { margin-top:.2rem; }
+.studio .value-card { min-width:0; container-type:inline-size; padding:.15rem .12rem; border:0; border-radius:.45rem; background:transparent; color:#11281f; display:grid; grid-template-rows:auto 1fr auto; grid-template-columns:minmax(0,1fr); justify-items:center; align-items:center; gap:.08rem; text-align:center; }
+.studio .value-card + .value-card { border-left:1px solid #10281f2b; }
+.studio .value-card:hover { background:#ffffff25; }
+.card-label { font-size:clamp(.82rem,15cqi,1.6rem); line-height:1.05; font-weight:700; }
+.fraction-disc { display:block; width:.72em; aspect-ratio:1; border-radius:50%; background:conic-gradient(#193c32 var(--angle),#fff9 0); }
+.reading,.covered { display:flex; gap:.09em; align-items:center; justify-content:center; font-size:min(47cqi,calc(180cqi / var(--characters,1)),6rem); letter-spacing:-.045em; line-height:1; white-space:nowrap; }
+@container value-panel (max-width:33rem) { .fraction-disc { display:none; } }
+.stack-frac { display:inline-flex; flex-direction:column; align-items:stretch; text-align:center; line-height:.9; font-size:.72em; }
+.stack-frac span:first-child { border-bottom:2px solid; padding-bottom:.035em; margin-bottom:.035em; }
+.studio .value-card small { color:#19382e; font-size:clamp(.72rem,11cqi,1.15rem); line-height:1.08; }
+.studio select,.studio input:not([type=range]) { color:var(--text); background:var(--surface); border:1px solid var(--border); padding:.5rem .6rem; border-radius:.55rem; max-width:100%; }
+.reveal-all { margin-block-start:.6rem; }
+.class-prompt { border-left:.3rem solid var(--brand); padding:.7rem 1rem; margin-bottom:1rem; background:var(--touch); border-radius:0 .8rem .8rem 0; }
+.class-prompt h2 { font-size:clamp(1.35rem,2.4vw,2rem); margin-top:.25rem; }
+.class-prompt button { flex:none; }
+.kicker { color:var(--sub); font-size:.8rem; font-weight:700; }
+.value-dialog { background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:1rem; padding:1.4rem; width:min(94%,24rem); }
+.value-dialog::backdrop { background:#081b16aa; }
+.value-dialog label,.setup-fields label,.challenge label { display:grid; gap:.4rem; font-weight:700; }
+.value-dialog form,.challenge form { display:grid; gap:.9rem; }
+.practice-setup { width:min(100%,44rem); margin:auto; }
+.mode-icon { float:right; background:var(--touch); border-radius:.8rem; padding:.7rem; color:var(--brand); }
+.studio .setup-intro p,.practice-setup>p { margin:.5rem 0; }
+.setup-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; margin:1.3rem 0; }
+.setup-fields label,.challenge label { font-size:.9rem; }
+.challenge progress { width:100%; height:.45rem; accent-color:var(--brand); margin:.65rem 0 1.3rem; }
+.studio .question { font-size:clamp(1.25rem,2.6vw,1.75rem); line-height:1.23; margin:.65rem 0 1.2rem; }
+.options { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
+.actions { flex-wrap:wrap; gap:.65rem; }
+.studio .feedback,.studio .hint { background:var(--ground); border-left:3px solid #d39147; padding:.75rem; border-radius:.25rem; }
+.studio .success { border-color:#39a58b; }
+.studio .hint { border-color:#a194d6; }
+@media (min-width:55rem) and (max-height:820px) {
+  .studio-inner { padding-top:.25rem; }
+}
+@media(max-width:48rem) {
+  .workspace { grid-template-columns:minmax(0,1fr); }
+  .studio-inner { max-width:38rem; }.class-prompt { flex-wrap:wrap; }
+}
+@media(max-width:28rem) {
+  .studio-inner { padding-inline:.65rem; }
+  .studio .panel { padding:.8rem; }.setup-fields { grid-template-columns:1fr; }.palette button { font-size:.78rem; }
+}
+

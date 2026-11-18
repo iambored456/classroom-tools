@@ -15,6 +15,8 @@ export default defineConfig({
       input: {
         hub: fileURLToPath(new URL('./index.html', import.meta.url)),
         launchpadGames: fileURLToPath(new URL('./launchpad-games/index.html', import.meta.url)),
+        wordGames: fileURLToPath(new URL('./word-games/index.html', import.meta.url)),
+        deTools: fileURLToPath(new URL('./de-tools/index.html', import.meta.url)),
       },
     },
   },
