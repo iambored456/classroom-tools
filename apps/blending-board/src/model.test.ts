@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import lessons from './lessons.json'
-import { basicBanks, blend, emptySelection, isBanks, isSelection, parseBank, toggleTile } from './model'
+import { basicBanks, blend, emptySelection, isBanks, isSelection, parseBank, sortTiles, toggleTile } from './model'
 
 test('tiles replace another selection in the same bank and toggle off on a second click', () => {
   let selection = toggleTile(emptySelection(), 0, 'str')
@@ -20,6 +20,11 @@ test('custom banks preserve graphemes and safely validate restored state', () =>
   assert.equal(isBanks([['a']]), false)
   assert.equal(isSelection(['b','a','t',''], basicBanks), true)
   assert.equal(isSelection(['str','a','t',''], basicBanks), false)
+})
+test('tiles sort by length, then alphabetically, without changing the source bank', () => {
+  const tiles = ['tch', 'sh', 'z', 'ch', 'a', 'dge', 'igh', 'eigh', 'b']
+  assert.deepEqual(sortTiles(tiles), ['a', 'b', 'z', 'ch', 'sh', 'dge', 'igh', 'tch', 'eigh'])
+  assert.equal(tiles[0], 'tch')
 })
 test('all lessons and variants exist, with only missing drills unavailable', () => {
   assert.equal(lessons.length, 138)

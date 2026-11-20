@@ -1,3 +1,4 @@
+import { exitDoorPath } from '../../../packages/navigation-icons/index'
 import '../../../packages/motion-preference/index'
 import './style.css'
 import './targets.css'
@@ -52,7 +53,7 @@ const customQuestion = problem => problem && (problem.layout === 'digit-task' ||
 const escapeHtml = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
 let doubleSpace = false
 try { doubleSpace = localStorage.getItem('open-middle-double-space') === 'true' } catch {}
-const icons = {fullscreen:'<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>',exitFullscreen:'<path d="M3 8h5V3m8 0v5h5M8 21v-5H3m13 5v-5h5"/>',help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .7-1.5 1-1.5 3"/><path d="M12 17h.01"/>',home:'<path d="m3 11 9-8 9 8v10h-6v-7H9v7H3z"/>',refresh:'<path d="M20 7v5h-5M20 12a8 8 0 1 0-2 6"/>'}
+const icons = {fullscreen:'<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>',exitFullscreen:'<path d="M3 8h5V3m8 0v5h5M8 21v-5H3m13 5v-5h5"/>',help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .7-1.5 1-1.5 3"/><path d="M12 17h.01"/>',exit:`<path d="${exitDoorPath}"/>`,refresh:'<path d="M20 7v5h-5M20 12a8 8 0 1 0-2 6"/>'}
 const icon = (name,label) => `<button class="icon" id="${name}" aria-label="${label}" title="${label}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${icons[name]}</svg></button>`
 const fullscreenControl = () => icon(document.fullscreenElement ? 'exitFullscreen' : 'fullscreen', document.fullscreenElement ? 'Exit fullscreen' : 'Enter fullscreen').replace(/id="[^"]+"/, 'id="fullscreen"')
 function bindFullscreen() {
@@ -81,7 +82,7 @@ function helpDialog(copy, numeric = false) {
 }
 function bindQuestionControls(problem) {
  bindFullscreen()
- document.querySelector('#home').onclick = () => {location.hash=''}
+ document.querySelector('#exit').onclick = () => {location.hash=''}
  const help = document.querySelector('#help')
  help.setAttribute('aria-haspopup', 'dialog')
  help.setAttribute('aria-controls', 'help-dialog')
@@ -97,11 +98,11 @@ function bindQuestionControls(problem) {
 const gradeBoundaries = [13, 37, 50, 88, 156, 241, 326, 396]
 const questionOrder = question => Number.parseInt(question.displayId ?? question.id, 10)
 const questionNumber = question => `<span class="question-number">${escapeHtml(questionLabel(question).split(' - ')[0])}</span>`
-const homeControls = question => `<nav class="home-controls" aria-label="Question navigation">${icon('home','Home')}${questionNumber(question)}</nav>`
+const homeControls = question => `<nav class="home-controls" aria-label="Question navigation">${icon('exit','Return to Open Middle activities')}${questionNumber(question)}</nav>`
 const numeracyToolsUrl = location.pathname.includes('/open-middle/')
   ? new URL('../numeracy-tools/', location.href).href
   : 'https://iambored456.github.io/classroom-tools/numeracy-tools/'
-const landingHome = `<a class="icon landing-home" href="${numeracyToolsUrl}" aria-label="Return to Numeracy Tools" title="Return to Numeracy Tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${icons.home}</svg></a>`
+const landingHome = `<a class="icon landing-home" href="${numeracyToolsUrl}" aria-label="Return to Numeracy Tools" title="Return to Numeracy Tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${icons.exit}</svg></a>`
 const instructions = question => `<p class="instructions">${question.instruction}</p>`
 const bank = problem => `<div class="bank" data-layout="${problem.layout}" aria-label="Available digits; drop here to return a digit">${problem.digits.map(d=>`<button class="digit ${slots.includes(d)?'used':''} ${selected===d?'selected':''}" data-digit="${d}" aria-label="Digit ${d}${slots.includes(d)?', already placed':''}" ${slots.includes(d)?'disabled':''}>${d}</button>`).join('')}</div>`
 function twoDigitEquation(problem) {

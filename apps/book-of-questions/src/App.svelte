@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { exitDoorPath } from '../../../packages/navigation-icons/index'
   import { shouldReduceMotion } from '../../../packages/motion-preference/index'
   import { onMount, tick } from 'svelte'
   import QuestionLibrary from './QuestionLibrary.svelte'
@@ -53,6 +54,10 @@
   let previousQuestionId: string | null = null
   let sortedSessions: QuestionSession[] = []
   let activeStats = { total: 0, answered: 0, inDeck: 0 }
+  const responseSupportKey = 'book-of-questions:response-support:v1'
+  let fullscreenAvailable = false
+  let fullscreen = false
+  let responseSupport = false
   let wouldYouRatherOrientation: 'horizontal' | 'vertical' = 'horizontal'
   let cardTransition: CardTransition = 'idle'
   let queuedQuestion: Question | null = null
@@ -83,7 +88,7 @@
     ? sessions.find((session) => session.id === editingSessionId) ?? null
     : null
   $: enabledQuestionCount = library.questions.filter((question) => question.enabled).length
-  $: wouldYouRatherOptions = currentQuestion ? getWouldYouRatherOptions(currentQuestion) : null
+  $: wouldYouRatherOptions = currentQuestion ? getWouldYouRatherOptions(currentQuestion, responseSupport) : null
 
   const sessionQuestions = (session: QuestionSession) =>
     library.questions.filter((question) => questionMatchesSession(question, session))
@@ -151,7 +156,11 @@
     if (contentWidth <= 0 || contentHeight <= 0) return
 
     const fit = fitQuestionText({
-      prompt: formatQuestionForDisplay(question.prompt),
+      prompt: formatQuestionForDisplay(
+        wouldYouRatherOptions
+          ? `Would you rather ${wouldYouRatherOptions.first} or ${wouldYouRatherOptions.second}?`
+          : question.prompt,
+      ),
       followUps: splitFollowUpPrompts(question.followUp).map(formatQuestionForDisplay),
       contentWidth,
       contentHeight,
@@ -542,6 +551,33 @@
     saveDarkMode(darkMode)
   }
 
+  const syncFullscreen = () => {
+    fullscreen = Boolean(document.fullscreenElement)
+  }
+
+  const toggleFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen()
+      } else {
+        await document.documentElement.requestFullscreen()
+      }
+    } catch {
+      // A browser can reject fullscreen without changing the current layout.
+      syncFullscreen()
+    }
+  }
+
+  const setResponseSupport = (enabled: boolean) => {
+    responseSupport = enabled
+    try {
+      localStorage.setItem(responseSupportKey, String(enabled))
+    } catch {
+      // Keep the preference for this visit when storage is unavailable.
+    }
+    scheduleQuestionTextFit()
+  }
+
   const toggleWouldYouRatherOrientation = () => {
     wouldYouRatherOrientation = wouldYouRatherOrientation === 'horizontal' ? 'vertical' : 'horizontal'
     try {
@@ -611,6 +647,8 @@
   }
 
   onMount(() => {
+    fullscreenAvailable = document.fullscreenEnabled
+    syncFullscreen()
     library = loadLibrary()
     darkMode = loadDarkMode()
     try {
@@ -619,6 +657,11 @@
         : 'horizontal'
     } catch {
       wouldYouRatherOrientation = 'horizontal'
+    }
+    try {
+      responseSupport = localStorage.getItem(responseSupportKey) === 'true'
+    } catch {
+      responseSupport = false
     }
     const validCategoryIds = new Set(library.categories.map((category) => category.id))
     sessions = loadSessions().map((session) => {
@@ -651,12 +694,13 @@
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
+<svelte:document on:fullscreenchange={syncFullscreen} />
 <svelte:body class:app-dark={darkMode} />
 
 {#if screen === 'home'}
   <main class="landing-screen" class:dark-mode={darkMode}>
     <a class="hub-link" href="../" aria-label="Classroom Tools home">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 11 8.5-7 8.5 7"></path><path d="M6 9.5V20h12V9.5M9.5 20v-6h5v6"></path></svg>
+      <svg viewBox="1.5 1.5 21 21" aria-hidden="true"><path d="m3.5 11 8.5-7 8.5 7"></path><path d="M6 9.5V20h12V9.5M9.5 20v-6h5v6"></path></svg>
     </a>
 
     <section class="landing-card" aria-labelledby="landing-title">
@@ -777,8 +821,8 @@
 {:else if activeSession}
   <div class="question-screen" class:dark-mode={darkMode}>
     <header class="question-header">
-      <button class="header-icon-button" type="button" aria-label="Return to sessions" on:click={returnHome}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 11 8.5-7 8.5 7"></path><path d="M6 9.5V20h12V9.5M9.5 20v-6h5v6"></path></svg>
+      <button class="header-icon-button" type="button" aria-label="Return to sessions" title="Return to sessions" on:click={returnHome}>
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d={exitDoorPath} /></svg>
       </button>
       <div class="active-session-heading">
         <p>{activeSession.name}</p>
@@ -818,6 +862,23 @@
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
         </button>
+        {#if fullscreenAvailable}
+          <button
+            class="header-icon-button"
+            type="button"
+            aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            title={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            on:click={toggleFullscreen}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              {#if fullscreen}
+                <path d="M3 9h6V3m12 6h-6V3M3 15h6v6m12-6h-6v6" />
+              {:else}
+                <path d="M9 3H3v6m12-6h6v6M9 21H3v-6m12 6h6v-6" />
+              {/if}
+            </svg>
+          </button>
+        {/if}
         <button
           class="header-icon-button previous-card-button"
           type="button"
@@ -833,22 +894,15 @@
 
     <main class="question-stage">
       {#if currentQuestion}
-        {@const category = library.categories.find((item) => item.id === currentQuestion.categoryId)}
         <div class="question-card-stack" aria-busy={cardTransition !== 'idle'}>
           {#if queuedQuestion}
-            {@const queuedCategory = library.categories.find((item) => item.id === queuedQuestion?.categoryId)}
-            {@const queuedWouldYouRatherOptions = getWouldYouRatherOptions(queuedQuestion)}
+            {@const queuedWouldYouRatherOptions = getWouldYouRatherOptions(queuedQuestion, responseSupport)}
             <article
               class={`question-card question-card-underlay ${questionSizeClass(queuedQuestion)}`}
               class:would-you-rather-card={Boolean(queuedWouldYouRatherOptions)}
               class:vertical={Boolean(queuedWouldYouRatherOptions) && wouldYouRatherOrientation === 'vertical'}
               aria-hidden="true"
             >
-              {#if queuedCategory}
-                <p class="question-category" style={`--category-colour: ${categoryColour(queuedCategory.id, library.categories)}`}>
-                  <span></span>{queuedCategory.name}
-                </p>
-              {/if}
               {#if queuedWouldYouRatherOptions}
                 <div class="would-you-rather-heading"><h1>Would you rather</h1></div>
                 <div class={`would-you-rather-options ${wouldYouRatherOrientation}`}>
@@ -868,11 +922,6 @@
             class:vertical={Boolean(wouldYouRatherOptions) && wouldYouRatherOrientation === 'vertical'}
             use:observeQuestionCard
           >
-          {#if category}
-            <p class="question-category" style={`--category-colour: ${categoryColour(category.id, library.categories)}`}>
-              <span></span>{category.name}
-            </p>
-          {/if}
           {#if wouldYouRatherOptions}
             <div class="would-you-rather-heading">
               <h1>Would you rather</h1>
@@ -950,7 +999,7 @@
           <h1>Every card is in the Answered deck.</h1>
           <p>Choose more categories or restart this session to begin the rotation again.</p>
           <div>
-            <button class="dialog-button secondary" type="button" on:click={returnHome}>Return Home</button>
+            <button class="dialog-button secondary" type="button" on:click={returnHome}>Return to sessions</button>
             <button class="dialog-button secondary" type="button" on:click={() => openExistingSessionEditor(activeSession.id)}>Change Categories</button>
             <button class="dialog-button primary" type="button" on:click={() => (pendingAction = { kind: 'restart', sessionId: activeSession.id })}>Restart Session</button>
           </div>
@@ -966,6 +1015,8 @@
     categories={library.categories}
     questions={library.questions}
     session={editingSession}
+    {responseSupport}
+    on:responseSupportChange={(event) => setResponseSupport(event.detail)}
     suggestedName={`Session ${sessions.length + 1}`}
     on:close={() => { sessionEditorOpen = false; editingSessionId = null }}
     on:save={(event) => saveSessionEditor(event.detail)}

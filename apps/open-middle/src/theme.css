@@ -67,12 +67,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .collection-count, .nm-feedback, .nm-shapes figcaption, .ex-note, .ex-save-note,
 .mp-help, .mp-row-label, .mp-row-total, .mp-tile-caption { color: var(--muted-ink); }
 
-.corner-tools, .custom-question .corner-tools, #home, .custom-question #home, .landing-home {
+.corner-tools, .custom-question .corner-tools, #exit, .custom-question #exit, .landing-home {
   background: #fff7e9e8;
   border-radius: 26px;
 }
 .icon { background: transparent; color: var(--ink); }
-#home, .landing-home { background: #fff7e9e8; }
+#exit, .landing-home { background: #fff7e9e8; }
 .icon:hover { background: #e6d3b9; }
 .question-number { color: var(--muted-ink); }
 

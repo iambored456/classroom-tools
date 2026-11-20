@@ -120,9 +120,8 @@ try {
       width: icon.getBoundingClientRect().width,
       height: icon.getBoundingClientRect().height,
     })),
-    homeIcon: await page.locator('[aria-label="Home"] .home-tool-icon').evaluate((icon) => ({
-      source: icon.getAttribute('data-icon-source'),
-      file: new URL(icon.getAttribute('src'), document.baseURI).pathname,
+    exitIcon: await page.locator('[aria-label="Return to levels"] .exit-tool-icon').evaluate((icon) => ({
+      path: icon.querySelector('path').getAttribute('d'),
       width: icon.getBoundingClientRect().width,
       height: icon.getBoundingClientRect().height,
     })),
@@ -182,7 +181,7 @@ try {
     return Boolean(intersectionBox && starBox.width < intersectionBox.width && starBox.height < intersectionBox.height)
   })
   const mapNodeCount = await page.locator('.intersection-surface').count()
-  if (gameplayLayout.topbarCount || gameplayLayout.removedDockHeadings || gameplayLayout.dockPosition !== 'fixed' || gameplayLayout.dockPadding.some((value) => value !== '0px') || gameplayLayout.settingsIcon.source !== 'music-learning-tools/packages/diatonic-compass-ui/public/assets/Settings_optimized.svg' || !gameplayLayout.settingsIcon.file.endsWith('/assets/Settings_optimized.svg') || gameplayLayout.settingsIcon.width !== 48 || gameplayLayout.settingsIcon.height !== 48 || gameplayLayout.homeIcon.source !== 'music-learning-tools/packages/diatonic-compass-ui/public/assets/home-icon.svg' || !gameplayLayout.homeIcon.file.endsWith('/assets/home-icon.svg') || gameplayLayout.homeIcon.width < 24 || gameplayLayout.homeIcon.height < 24 || gameplayLayout.goButtonSize.width < 84 || gameplayLayout.goButtonSize.height < 84 || gameplayLayout.goButtonSize.fontSize < 24 || !gameplayLayout.objectiveOverlay || gameplayLayout.objectiveProgressLines !== 0 || /stops? reached/i.test(gameplayLayout.objectiveText) || gameplayLayout.mapStageSpacing.padding.some((value) => value !== '0px') || gameplayLayout.mapStageSpacing.margin.some((value) => value !== '0px') || gameplayLayout.mapStageSpacing.dockGap > 1 || gameplayLayout.dockControlFontSizes.some((size) => size < 16) || !gameplayLayout.sideViewTrees || !gameplayLayout.sideViewHouses || !gameplayLayout.residentialTrees || gameplayLayout.houseDefinitions !== 3 || gameplayLayout.treeDefinitions !== 4 || gameplayLayout.houseVariantsUsed !== 3 || gameplayLayout.treeVariantsUsed !== 4 || gameplayLayout.houseAnatomy < 5 || gameplayLayout.genericBuildingRoofs !== 0 || gameplayLayout.emptyRecipeText || gameplayLayout.recipeScrollbar !== 'none' || !gameplayLayout.streetLabelBackgrounds || !gameplayLayout.paddedVerticalStreetLabels || gameplayLayout.intersectionMarkings !== mapNodeCount - 1 || !gameplayLayout.squircleIntersections || !gameplayLayout.fullSizeIntersectionMarkings || gameplayLayout.initialCarCount !== 0 || gameplayLayout.combinedPaletteSymbols !== 4 || gameplayLayout.combinedPaletteLetters.join('|') !== 'N|E|S|W' || !gameplayLayout.startLabelInsideIntersection || emptyRecipeWidth < 1200 || !starFitsIntersection) {
+  if (gameplayLayout.topbarCount || gameplayLayout.removedDockHeadings || gameplayLayout.dockPosition !== 'fixed' || gameplayLayout.dockPadding.some((value) => value !== '0px') || gameplayLayout.settingsIcon.source !== 'music-learning-tools/packages/diatonic-compass-ui/public/assets/Settings_optimized.svg' || !gameplayLayout.settingsIcon.file.endsWith('/assets/Settings_optimized.svg') || gameplayLayout.settingsIcon.width !== 48 || gameplayLayout.settingsIcon.height !== 48 || gameplayLayout.exitIcon.path !== 'M2.5 20.5H6.5M4.5 20.5V3.5H6M8 2.2L18 3.6V20L8 22V2.2ZM10 11V13M18 20.5H20.5' || gameplayLayout.exitIcon.width < 24 || gameplayLayout.exitIcon.height < 24 || gameplayLayout.goButtonSize.width < 84 || gameplayLayout.goButtonSize.height < 84 || gameplayLayout.goButtonSize.fontSize < 24 || !gameplayLayout.objectiveOverlay || gameplayLayout.objectiveProgressLines !== 0 || /stops? reached/i.test(gameplayLayout.objectiveText) || gameplayLayout.mapStageSpacing.padding.some((value) => value !== '0px') || gameplayLayout.mapStageSpacing.margin.some((value) => value !== '0px') || gameplayLayout.mapStageSpacing.dockGap > 1 || gameplayLayout.dockControlFontSizes.some((size) => size < 16) || !gameplayLayout.sideViewTrees || !gameplayLayout.sideViewHouses || !gameplayLayout.residentialTrees || gameplayLayout.houseDefinitions !== 3 || gameplayLayout.treeDefinitions !== 4 || gameplayLayout.houseVariantsUsed !== 3 || gameplayLayout.treeVariantsUsed !== 4 || gameplayLayout.houseAnatomy < 5 || gameplayLayout.genericBuildingRoofs !== 0 || gameplayLayout.emptyRecipeText || gameplayLayout.recipeScrollbar !== 'none' || !gameplayLayout.streetLabelBackgrounds || !gameplayLayout.paddedVerticalStreetLabels || gameplayLayout.intersectionMarkings !== mapNodeCount - 1 || !gameplayLayout.squircleIntersections || !gameplayLayout.fullSizeIntersectionMarkings || gameplayLayout.initialCarCount !== 0 || gameplayLayout.combinedPaletteSymbols !== 4 || gameplayLayout.combinedPaletteLetters.join('|') !== 'N|E|S|W' || !gameplayLayout.startLabelInsideIntersection || emptyRecipeWidth < 1200 || !starFitsIntersection) {
     throw new Error(`Gameplay layout did not match the bottom-dock design: ${JSON.stringify(gameplayLayout)}`)
   }
   if (captureScreenshots) await page.screenshot({ path: '.tmp-city-grid.png', fullPage: true })
@@ -203,7 +202,7 @@ try {
     throw new Error(`The mobile route controls were not stacked vertically: ${JSON.stringify(mobileRouteControls)}`)
   }
   await page.setViewportSize({ width: 1440, height: 1000 })
-  await page.getByRole('button', { name: 'Home' }).click()
+  await page.getByRole('button', { name: 'Return to levels' }).click()
 
   await page.getByRole('button', { name: 'Play Across the Grid' }).click()
   await page.getByRole('button', { name: 'North', exact: true }).click()
@@ -340,7 +339,7 @@ try {
     throw new Error(`Clear did not restore a blank route at the starting intersection: ${JSON.stringify(clearedRouteState)}`)
   }
 
-  await page.getByRole('button', { name: 'Home' }).click()
+  await page.getByRole('button', { name: 'Return to levels' }).click()
   if (await page.getByRole('button', { name: 'Play Cedar Corner' }).count()) {
     throw new Error('Cedar Corner still appeared in the level library.')
   }
@@ -374,7 +373,7 @@ try {
   await page.getByRole('button', { name: /Pause/i }).click()
   await page.waitForTimeout(700)
   const tracesAfterLatePause = await page.locator('.route-trace').count()
-  await page.getByRole('button', { name: 'Home' }).click()
+  await page.getByRole('button', { name: 'Return to levels' }).click()
 
   await page.getByRole('button', { name: 'Play Where Will It End?' }).click()
   await page.getByRole('button', { name: 'Level settings' }).click()
@@ -395,8 +394,8 @@ try {
   if (!goDisabledDuringReplayRewind || replayRewindMs > 900 || replayResult !== predictionResult || predictionTracesAfterReplay !== predictionTracesBeforeReplay) {
     throw new Error(`GO did not rapidly rewind and replay the completed route: ${JSON.stringify({ goDisabledDuringReplayRewind, replayRewindMs, predictionResult, replayResult, predictionTracesBeforeReplay, predictionTracesAfterReplay })}`)
   }
-  await page.getByRole('button', { name: 'Home' }).click()
-  await page.getByRole('button', { name: /Back to home/i }).click()
+  await page.getByRole('button', { name: 'Return to levels' }).click()
+  await page.getByRole('button', { name: 'Return to City Routes setup' }).click()
   await page.getByRole('button', { name: /Level Builder/i }).click()
   await page.waitForSelector('.builder-screen')
   const builderMap = page.locator('.builder-canvas-panel .city-map')
@@ -454,7 +453,7 @@ try {
   await page.getByRole('button', { name: 'Save level' }).click()
   await page.waitForSelector('.library-screen')
   const savedGeneratedLevel = await page.getByText('Preview Keeps My Work', { exact: true }).count()
-  await page.getByRole('button', { name: /Back to home/i }).click()
+  await page.getByRole('button', { name: 'Return to City Routes setup' }).click()
   await page.locator('.direction-choices button').filter({ hasText: 'Relative' }).click()
   await page.getByRole('button', { name: /Choose a level/i }).click()
   await page.getByRole('button', { name: 'Play Across the Grid' }).click()

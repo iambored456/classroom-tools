@@ -15,17 +15,26 @@ type SeedData = {
 
 const originalSeedData = rawQuestionBank as SeedData
 const kidsQuestions = rawKidsQuestions as SeedQuestion[]
-const wouldYouRatherQuestions = rawWouldYouRatherQuestions as SeedQuestion[]
+export const WOULD_YOU_RATHER_CATEGORY_ID = 'would-you-rather-family-friendly'
+
+const wouldYouRatherQuestions = rawWouldYouRatherQuestions as (SeedQuestion & {
+  responseSupport?: Partial<WouldYouRatherOptions>
+})[]
+const supportedQuestionsById = new Map(
+  wouldYouRatherQuestions
+    .filter((question) => question.responseSupport)
+    .map((question) => [question.id, question]),
+)
 const seedData: SeedData = {
   categories: [
     ...originalSeedData.categories,
     { id: 'kids-book-of-questions', name: "Kids' Book of Questions" },
     {
-      id: 'would-you-rather-family-friendly',
+      id: WOULD_YOU_RATHER_CATEGORY_ID,
       name: 'Would You Rather: Family-Friendly Challenges',
     },
   ],
-  questions: [...originalSeedData.questions, ...kidsQuestions, ...wouldYouRatherQuestions],
+  questions: [...originalSeedData.questions, ...kidsQuestions, ...wouldYouRatherQuestions.map(({ responseSupport, ...question }) => question)],
 }
 
 const INTIMACY_QUESTION_IDS = new Set([
@@ -230,11 +239,23 @@ export const parseWouldYouRather = (value: string): WouldYouRatherOptions | null
 }
 
 export const getWouldYouRatherOptions = (
-  question: Pick<Question, 'prompt' | 'optionA' | 'optionB'>,
+  question: Pick<Question, 'id' | 'prompt' | 'optionA' | 'optionB'>,
+  responseSupport = false,
 ): WouldYouRatherOptions | null => {
   const first = question.optionA?.trim()
   const second = question.optionB?.trim()
-  return first && second ? { first, second } : parseWouldYouRather(question.prompt)
+  const options = first && second ? { first, second } : parseWouldYouRather(question.prompt)
+  if (!responseSupport || !options) return options
+
+  const original = supportedQuestionsById.get(question.id)
+  if (
+    original?.prompt === question.prompt &&
+    original.optionA === options.first &&
+    original.optionB === options.second
+  ) {
+    return { ...options, ...original.responseSupport }
+  }
+  return options
 }
 
 export type QuestionSizeClass = '' | 'long' | 'extra-long' | 'very-long'

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { exitDoorPath } from '../../../packages/navigation-icons/index'
   import { onMount } from 'svelte'
   import {
     connect,
@@ -245,7 +246,7 @@
 
 <main class="app-shell">
   <header class="topbar">
-    <a class="home-link" href="../launchpad-games/" aria-label="Back to Launchpad Games">← <span>Launchpad Games</span></a>
+    <a class="home-link" href="../launchpad-games/" aria-label="Return to Launchpad Games" title="Return to Launchpad Games"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d={exitDoorPath} /></svg> <span>Launchpad Games</span></a>
     <div class="brand"><span class="brand-mark"></span> LAUNCHPAD ARCADE</div>
     <button class="sound-button" aria-label={soundOn ? 'Mute sound' : 'Turn sound on'} onclick={toggleSound}>{soundOn ? '♪' : '×'}</button>
   </header>

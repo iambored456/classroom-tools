@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { exitDoorPath } from '../../../../packages/navigation-icons/index'
   import { createEventDispatcher, onDestroy } from 'svelte'
   import DirectionSymbol from './DirectionSymbol.svelte'
   import MapView from './MapView.svelte'
@@ -693,15 +694,8 @@
             data-icon-source="music-learning-tools/packages/diatonic-compass-ui/public/assets/Settings_optimized.svg"
           />
         </button>
-        <button class="dock-home-button" type="button" aria-label={preview ? 'Return to builder' : 'Home'} title={preview ? 'Return to builder' : 'Home'} on:click={() => dispatch('exit')}>
-          <img
-            class="home-tool-icon"
-            src="assets/home-icon.svg"
-            alt=""
-            width="48"
-            height="48"
-            data-icon-source="music-learning-tools/packages/diatonic-compass-ui/public/assets/home-icon.svg"
-          />
+        <button class="dock-exit-button" type="button" aria-label={preview ? 'Return to builder' : 'Return to levels'} title={preview ? 'Return to builder' : 'Return to levels'} on:click={() => dispatch('exit')}>
+          <svg class="exit-tool-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d={exitDoorPath} /></svg>
         </button>
       </div>
     </div>

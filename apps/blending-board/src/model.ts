@@ -16,6 +16,8 @@ export const allBanks: Banks = [
 export const emptySelection = (): Selection => ['', '', '', '']
 export const copyBanks = (banks: Banks): Banks => banks.map(bank => [...bank]) as Banks
 export const parseBank = (value: string): string[] => [...new Set(value.split(/[,\n]/).map(tile => tile.trim()).filter(Boolean))]
+export const sortTiles = (tiles: readonly string[]): string[] =>
+  [...tiles].sort((first, second) => first.length - second.length || first.localeCompare(second, 'en'))
 export const blend = (selection: Selection) => selection.join('')
 export function toggleTile(selection: Selection, bank: number, tile: string): Selection {
   const nextTile = selection[bank] === tile ? '' : tile

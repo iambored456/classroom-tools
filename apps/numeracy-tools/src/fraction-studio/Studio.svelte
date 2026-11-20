@@ -11,7 +11,7 @@
   import Practice from './Practice.svelte'
   import Icon from './Icon.svelte'
   import './studio.css'
-  let { mode }: { mode: number } = $props()
+  let { mode, simplifyFractions }: { mode: number; simplifyFractions: boolean } = $props()
   let studio: HTMLElement
   let full = $state(false), screenMessage = $state('')
   onDestroy(() => {
@@ -33,9 +33,9 @@
     </div>
     {/if}
     {#if screenMessage && mode === 2}<p role="status">{screenMessage}</p>{/if}
-    <div hidden={mode !== 0}><Workspace /></div>
-    <div hidden={mode !== 1}><Practice /></div>
-    <div hidden={mode !== 2}><Workspace classroom /></div>
+    <div hidden={mode !== 0}><Workspace {simplifyFractions} /></div>
+    <div hidden={mode !== 1}><Practice {simplifyFractions} /></div>
+    <div hidden={mode !== 2}><Workspace classroom {simplifyFractions} /></div>
   </div>
 </main>
 

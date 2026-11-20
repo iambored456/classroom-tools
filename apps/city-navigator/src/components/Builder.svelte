@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { exitDoorPath } from '../../../../packages/navigation-icons/index'
   import { createEventDispatcher } from 'svelte'
   import DirectionSymbol from './DirectionSymbol.svelte'
   import { addOrthogonalRoad, cycleCrossing, generateLevel } from '../lib/maps'
@@ -313,7 +314,7 @@
 
 <main class="builder-screen">
   <header class="builder-topbar">
-    <button class="round-button" type="button" aria-label="Leave builder" on:click={() => dispatch('cancel')}>←</button>
+    <button class="round-button" type="button" aria-label="Return to levels" title="Return to levels" on:click={() => dispatch('cancel')}><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d={exitDoorPath} /></svg></button>
     <div><p class="eyebrow">Teacher workspace</p><h1>Level Builder</h1></div>
     <label class="builder-title-field"><span>Level name</span><input value={draft.name} on:input={(event) => { draft.name = event.currentTarget.value; draft = clone(draft) }} /></label>
     <button type="button" disabled={errors.length > 0} on:click={() => dispatch('preview', clone(draft))}>▶ Preview</button>

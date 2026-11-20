@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { exitDoorPath } from '../../../../packages/navigation-icons/index'
   import { createEventDispatcher } from 'svelte'
   import { clone, nodeById, uid } from '../lib/domain'
   import MapView from './MapView.svelte'
@@ -125,7 +126,7 @@
 
 <main class="library-screen">
   <header class="page-header">
-    <button class="round-button" type="button" aria-label="Back to home" on:click={() => dispatch('home')}>←</button>
+    <button class="round-button" type="button" aria-label="Return to City Routes setup" title="Return to City Routes setup" on:click={() => dispatch('home')}><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d={exitDoorPath} /></svg></button>
     <div><h1>Choose a level</h1></div>
     <div class="header-actions">
       <button class:active={manage} type="button" on:click={() => manage = !manage}>{manage ? 'Done' : 'Organize'}</button>

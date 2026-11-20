@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { exitDoorPath } from '../../../packages/navigation-icons/index'
   import { onMount } from 'svelte'
   import { hexToLaunchpadRgb } from '@classroom-tools/launchpad-midi'
   import {
@@ -327,7 +328,7 @@
 <svelte:head><meta name="description" content="Race another player or a computer to cover an 8 by 8 Launchpad with your colour." /></svelte:head>
 
 <main class="shell" style={`--player-one:${playerOneColour};--player-two:${playerTwoColour};--time:${timePercent}%;`}>
-  <header><a href="../launchpad-games/" aria-label="Back to Launchpad Games">← <span>Launchpad Games</span></a><span>LAUNCHPAD ARCADE</span><b class:urgent={phase === 'playing' && remainingMs < 10_000}>{timeText}</b></header>
+  <header><a href="../launchpad-games/" aria-label="Return to Launchpad Games" title="Return to Launchpad Games"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d={exitDoorPath} /></svg> <span>Launchpad Games</span></a><span>LAUNCHPAD ARCADE</span><b class:urgent={phase === 'playing' && remainingMs < 10_000}>{timeText}</b></header>
   <section class="layout">
     <aside>
       <p class="eyebrow">TWO COLOURS. ONE GRID.</p><h1>PAINT<br /><em>WAR</em></h1>

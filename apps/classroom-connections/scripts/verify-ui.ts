@@ -215,7 +215,7 @@ try {
   assert.equal(await page.locator('.mistake-dots > span').count(), 4)
   assert.equal(await page.getByRole('button', { name: 'Library' }).count(), 0)
   assert.equal(await page.locator('.game-header, .game-instruction').count(), 0)
-  assert.ok((await page.getByRole('button', { name: 'Return to home', exact: true }).locator('svg').evaluate((icon) => icon.getBoundingClientRect().width)) >= 25)
+  assert.ok((await page.getByRole('button', { name: 'Return to Connections setup', exact: true }).locator('svg').evaluate((icon) => icon.getBoundingClientRect().width)) >= 25)
   assert.ok(
     Number.parseFloat(await page.locator('.word-tile').first().evaluate((tile) => getComputedStyle(tile).fontSize)) >= 20,
   )
@@ -283,7 +283,7 @@ try {
   )
   await hoveredTile.click()
   await page.waitForFunction(() => !document.querySelector('.word-tile.selected'))
-  await page.getByRole('button', { name: 'Return to home' }).click()
+  await page.getByRole('button', { name: 'Return to Connections setup' }).click()
   await page.getByRole('dialog', { name: 'Are you sure you want to exit the game?' }).waitFor()
   await page.getByRole('button', { name: 'Stay' }).click()
   await page.locator('.tile-grid').waitFor()
@@ -558,7 +558,7 @@ try {
   })
   assert.equal(playedAfterCycle.length, 0)
 
-  await page.getByRole('button', { name: 'Return to home' }).click()
+  await page.getByRole('button', { name: 'Return to Connections setup' }).click()
   await page.getByRole('button', { name: 'Exit game' }).click()
   await page.getByRole('heading', { name: 'Classroom Connections' }).waitFor()
   assert.match(await page.getByRole('button', { name: /Question Library/ }).innerText(), /Easy/)
@@ -578,7 +578,7 @@ try {
     2,
   )
   assert.equal(await page.locator('.mistake-dots > span').count(), 3)
-  await page.getByRole('button', { name: 'Return to home' }).click()
+  await page.getByRole('button', { name: 'Return to Connections setup' }).click()
   await page.getByRole('button', { name: 'Exit game' }).click()
 
   for (let increase = 0; increase < 4; increase += 1) {

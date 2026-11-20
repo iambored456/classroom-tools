@@ -1,15 +1,17 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte'
-  import { categoryColour, questionMatchesSession, SENSITIVE_TOPIC_LABELS } from './data'
+  import { categoryColour, questionMatchesSession, SENSITIVE_TOPIC_LABELS, WOULD_YOU_RATHER_CATEGORY_ID } from './data'
   import type { Category, Question, QuestionSession, SensitiveTopic } from './types'
 
   export let categories: Category[]
   export let questions: Question[]
   export let session: QuestionSession | null = null
+  export let responseSupport = false
   export let suggestedName = 'Session 1'
 
   const dispatch = createEventDispatcher<{
     close: void
+    responseSupportChange: boolean
     save: { name: string; categoryIds: string[]; includedSensitiveTopics: SensitiveTopic[] }
   }>()
 
@@ -152,6 +154,22 @@
       {/each}
     </div>
 
+    {#if selectedCategoryIds.includes(WOULD_YOU_RATHER_CATEGORY_ID)}
+      <label class="response-support-setting">
+        <input
+          type="checkbox"
+          role="switch"
+          checked={responseSupport}
+          aria-describedby="response-support-description"
+          on:change={(event) => dispatch('responseSupportChange', event.currentTarget.checked)}
+        />
+        <span>
+          <strong>Response support</strong>
+          <small id="response-support-description">Expand Would You Rather choices so either one can follow “I would rather…”</small>
+        </span>
+      </label>
+    {/if}
+
     <section class="sensitive-topic-section" aria-labelledby="sensitive-topic-heading">
       <div class="sensitive-topic-heading">
         <div>
@@ -198,3 +216,21 @@
     {/if}
   </footer>
 </div>
+
+<style>
+  .response-support-setting {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    cursor: pointer;
+  }
+
+  .response-support-setting span {
+    display: grid;
+    gap: .15rem;
+  }
+
+  .response-support-setting small {
+    color: var(--muted);
+  }
+</style>

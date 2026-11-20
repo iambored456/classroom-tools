@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { exitDoorPath } from '../../../packages/navigation-icons/index'
   import { shouldReduceMotion } from '../../../packages/motion-preference/index'
   import { onMount, tick } from 'svelte'
   import { flip } from 'svelte/animate'
@@ -679,7 +680,7 @@
 {#if screen === 'home'}
   <main class="landing-screen" class:dark-mode={darkMode}>
     <a class="hub-link" href="../" aria-label="Classroom Tools home">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
+      <svg viewBox="1.5 1.5 21 21" aria-hidden="true">
         <path d="m3.5 11 8.5-7 8.5 7"></path>
         <path d="M6 9.5V20h12V9.5M9.5 20v-6h5v6"></path>
       </svg>
@@ -842,14 +843,11 @@
           <button
             type="button"
             class="header-action home-action"
-            aria-label="Return to home"
+            aria-label="Return to Connections setup" title="Return to Connections setup"
             disabled={isSubmitting}
             on:click={requestExit}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m3.5 11 8.5-7 8.5 7"></path>
-              <path d="M6 9.5V20h12V9.5M9.5 20v-6h5v6"></path>
-            </svg>
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d={exitDoorPath} /></svg>
           </button>
           {#if gameEnded}
             <button type="button" class="control-button primary-control" on:click={startGame}>New Game</button>

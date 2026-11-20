@@ -7,14 +7,15 @@ export const colours = [
 ] as const
 export const money = (amount: number) => '$' + amount.toFixed(2)
 export const boardOf = (count: number) => Array.from({ length: 100 }, (_, i) => Number(i < count))
-export function fraction(n: number) {
+export function fraction(n: number, simplify = false) {
+  if (!simplify) return n + '/100'
   let a = n, b = 100
   while (b) [a, b] = [b, a % b]
   return (n / a) + '/' + (100 / a)
 }
-export function format(n: number, form: Form, whole = 1) {
+export function format(n: number, form: Form, whole = 1, simplify = false) {
   switch (form) {
-    case 'fraction': return fraction(n)
+    case 'fraction': return fraction(n, simplify)
     case 'decimal': return String(n / 100)
     case 'percent': return n + '%'
     case 'money': return money(n * whole / 100)

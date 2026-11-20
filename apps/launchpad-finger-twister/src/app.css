@@ -12,7 +12,7 @@ button { cursor: pointer; }
 button:disabled { cursor: default; }
 .shell { width: min(1210px, calc(100% - 36px)); margin: auto; padding: 22px 0 38px; }
 header { display: flex; justify-content: space-between; padding-bottom: 18px; border-bottom: 1px solid #28483f; color: #829f96; font: 700 11px "Courier New", monospace; letter-spacing: .13em; }
-header a { color: inherit; text-decoration: none; }
+header a { display: inline-flex; align-items: center; gap: .5rem; color: inherit; text-decoration: none; }
 header a:hover { color: #effff8; }
 header b { color: var(--player-one); }
 header b.danger { color: #ff5b55; }

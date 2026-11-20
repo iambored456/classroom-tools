@@ -147,7 +147,7 @@ try {
   )
   assert.ok((await page.locator('.game-home-action svg').evaluate((icon) => icon.getBoundingClientRect().width)) >= 25)
 
-  await page.getByRole('button', { name: 'Return to home' }).click()
+  await page.getByRole('button', { name: 'Return to Wordle setup' }).click()
   await page.getByRole('dialog', { name: 'Are you sure you want to exit the game?' }).waitFor()
   await page.getByRole('button', { name: 'Stay' }).click()
   await page.locator('.word-grid').waitFor()
@@ -289,7 +289,7 @@ try {
   const newGameBox = await page.getByRole('button', { name: 'New Game', exact: true }).boundingBox()
   const scoreboardBox = await page.getByRole('button', { name: 'View Scoreboard', exact: true }).boundingBox()
   assert.ok(completedGridBox && newGameBox && scoreboardBox)
-  const homeBox = await page.getByRole('button', { name: 'Return to home' }).boundingBox()
+  const homeBox = await page.getByRole('button', { name: 'Return to Wordle setup' }).boundingBox()
   assert.ok(homeBox)
   assert.ok(newGameBox.x + newGameBox.width < completedGridBox.x)
   assert.ok(newGameBox.y >= homeBox.y + homeBox.height)
@@ -298,7 +298,7 @@ try {
   await page.getByRole('button', { name: 'New Game', exact: true }).press('Enter')
   await page.getByRole('dialog', { name: /Choose this round/ }).waitFor()
   await page.getByRole('button', { name: 'Close word chooser' }).click()
-  await page.getByRole('button', { name: 'Return to home' }).click()
+  await page.getByRole('button', { name: 'Return to Wordle setup' }).click()
   await page.getByRole('dialog', { name: 'Are you sure you want to exit the game?' }).waitFor()
   await page.getByRole('button', { name: 'Exit game' }).click()
   await page.reload({ waitUntil: 'networkidle' })
@@ -380,7 +380,7 @@ try {
   assert.equal(await page.locator('.keyboard').count(), 1)
   assert.equal(await page.locator('.letter-tile.evaluated').count(), 0)
 
-  await page.getByRole('button', { name: 'Return to home' }).click()
+  await page.getByRole('button', { name: 'Return to Wordle setup' }).click()
   await page.getByRole('button', { name: 'Exit game' }).click()
   for (let increase = 0; increase < 7; increase += 1) {
     await page.getByRole('button', { name: 'More guesses' }).click()

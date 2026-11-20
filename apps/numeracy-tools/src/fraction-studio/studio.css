@@ -43,6 +43,8 @@
 .studio .t3 { background:#a194d6; }
 .palette,.board-tools { flex-wrap:wrap; gap:.25rem; }
 .palette { justify-content:center; gap:.45rem; }
+.palette-tools { display:flex; gap:inherit; }
+.broom-icon { display:block; width:1.4rem; height:1.4rem; }
 .palette .paint-swatch { width:3.1rem; min-height:2.4rem; color:#142b21; font-size:1.2rem; }
 .palette .paint-swatch[aria-pressed=true] { box-shadow:inset 0 0 0 2px #142b21; }
 .palette button { font-size:.84rem; padding:.35rem .48rem; color:var(--sub); min-height:2.25rem; }

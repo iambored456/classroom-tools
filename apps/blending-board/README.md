@@ -2,7 +2,7 @@
 
 Local Classroom Tools app at `/blending-board/`. Run `pnpm dev:blending-board` from the monorepo root (port 5197), or open it from Literacy Tools in the Classroom Tools hub.
 
-The board has four colour-coded segment banks with tiles that toggle on and off, a blended word display, recallable word history, a tile picker, editable banks, fullscreen, and local browser persistence. The right sidebar and UFLI lesson dialog follow ReadAlong Highlighter's visual pattern. Choosing a lesson clears the current word/history and loads its banks.
+The board has four colour-coded segment banks with tiles that toggle on and off, a blended word display, a tile picker, editable banks, fullscreen, and local browser persistence. The right sidebar and UFLI lesson dialog follow ReadAlong Highlighter's visual pattern. Choosing a lesson clears the current word and loads its banks.
 
 ## Lesson data
 

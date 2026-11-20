@@ -374,26 +374,24 @@ a:focus-visible {
 .active-session-heading p { max-width: 100%; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: clamp(1.15rem, 2.3vw, 1.65rem); font-weight: 850; }
 .active-session-heading span { color: var(--muted); font-size: .86rem; font-weight: 700; }
 .header-icon-button:hover:not(:disabled) { background: var(--paper-muted); }
-.question-stage { min-height: 0; display: grid; grid-template-rows: minmax(min(66vh, 42rem), 1fr) auto; align-content: stretch; justify-items: center; gap: clamp(1rem, 2.8vh, 1.7rem); padding: clamp(.7rem, 1.6vw, 1.3rem) clamp(1rem, 3vw, 2.4rem) clamp(1rem, 2.5vw, 2rem); }
+.question-stage { min-height: 0; display: grid; grid-template-rows: minmax(min(66vh, 42rem), 1fr) auto; align-content: stretch; justify-items: center; gap: clamp(.55rem, 1.5vh, 1rem); padding: clamp(.35rem, .8vw, .65rem) clamp(.5rem, 1.4vw, 1.25rem) clamp(.5rem, 1.2vw, 1rem); }
 .question-card-stack { position: relative; width: min(100%, 84rem); height: 100%; min-height: min(66vh, 42rem); display: grid; perspective: 1500px; isolation: isolate; }
 .question-card { position: relative; width: 100%; height: 100%; min-height: min(66vh, 42rem); display: grid; align-content: center; gap: clamp(1.2rem, 3vh, 2rem); padding: clamp(1.5rem, 5vw, 5rem); border: 1px solid var(--line); border-radius: 24px 24px 24px 7px; background: var(--paper); box-shadow: 0 18px 52px rgba(0,0,0,.11); overflow: hidden; backface-visibility: hidden; transform-style: preserve-3d; }
 .question-card-stack > .question-card:not(.question-card-underlay) { z-index: 1; }
 .question-card-underlay { position: absolute; z-index: 0; inset: 0; pointer-events: none; transform: scale(.965); animation: card-underlay-ready .52s cubic-bezier(.2, .72, .2, 1) forwards; }
 .question-card::after { content: ''; position: absolute; right: -1px; bottom: -1px; width: 3.5rem; height: 3.5rem; border: solid var(--line); border-width: 1px 0 0 1px; border-radius: 2.8rem 0 0 0; opacity: .55; }
-.question-category { position: absolute; top: 1rem; left: 1rem; display: inline-flex; align-items: center; gap: .45rem; margin: 0; padding: .4rem .7rem; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: .86rem; font-weight: 800; }
-.question-category span { width: .7rem; height: .7rem; border-radius: 3px; background: currentColor; }
 .question-card h1 { margin: 0; overflow-wrap: anywhere; font-size: clamp(3.75rem, 8vw, 8rem); font-weight: 400; line-height: 1.02; letter-spacing: -.035em; text-wrap: balance; white-space: pre-line; }
 .question-card.long h1 { font-size: clamp(3.3rem, 7vw, 7rem); }
 .question-card.extra-long h1 { font-size: clamp(2.5rem, 4.5vw, 4.5rem); }
 .question-card.very-long h1 { font-size: clamp(2rem, 3vw, 3.25rem); }
 .question-card.text-fitted:not(.would-you-rather-card) h1 { font-size: var(--question-fitted-font-size); }
 .question-card.text-fitted .follow-up-sequence li { font-size: var(--follow-up-fitted-font-size); }
-.would-you-rather-card { align-content: stretch; grid-template-rows: auto minmax(0, 1fr); gap: clamp(.8rem, 2vh, 1.35rem); padding: clamp(3.8rem, 5vw, 4.8rem) clamp(1.2rem, 4vw, 3.5rem) clamp(1.25rem, 3vw, 2.4rem); }
+.would-you-rather-card { align-content: stretch; grid-template-rows: auto minmax(0, 1fr); gap: clamp(.45rem, 1.25vh, .9rem); padding: clamp(.65rem, 1.45vw, 1.25rem); }
 .would-you-rather-heading { display: grid; place-items: center; }
-.would-you-rather-heading h1 { font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 800; letter-spacing: -.04em; text-align: center; }
-.would-you-rather-options { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: clamp(.7rem, 2vw, 1.35rem); perspective: 1200px; }
+.question-card .would-you-rather-heading h1 { font-size: clamp(2.35rem, 5.8vw, 5rem); font-weight: 800; letter-spacing: -.04em; text-align: center; }
+.would-you-rather-options { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: clamp(.45rem, 1.1vw, .8rem); perspective: 1200px; }
 .would-you-rather-options.vertical { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr); }
-.would-you-rather-option { min-width: 0; min-height: 0; display: grid; place-items: center; padding: clamp(1rem, 3vw, 2.5rem); border: 1px solid color-mix(in srgb, var(--line) 82%, transparent); border-radius: 22px; background: #e7edff; color: inherit; box-shadow: 0 12px 30px rgba(0,0,0,.075); text-align: center; transition: transform .18s ease, box-shadow .18s ease, filter .18s ease; }
+.would-you-rather-option { min-width: 0; min-height: 0; display: grid; place-items: center; padding: clamp(.4rem, 1vw, .85rem); border: 1px solid color-mix(in srgb, var(--line) 82%, transparent); border-radius: 22px; background: #e7edff; color: inherit; box-shadow: 0 12px 30px rgba(0,0,0,.075); text-align: center; transition: transform .18s ease, box-shadow .18s ease, filter .18s ease; }
 .would-you-rather-option:last-child { background: #fff0d7; }
 .would-you-rather-option:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(0,0,0,.12); filter: saturate(1.06); }
 .would-you-rather-option:active { transform: translateY(0); }
@@ -546,7 +544,7 @@ a:focus-visible {
   .question-list-heading { align-items: center; }
   .bulk-actions { justify-content: flex-end; }
   .question-header { grid-template-columns: auto minmax(0, 1fr) auto; }
-  .question-stage { grid-template-rows: minmax(clamp(24rem, 58dvh, 34rem), 1fr) auto; padding: .55rem .7rem max(.9rem, env(safe-area-inset-bottom)); align-content: stretch; }
+  .question-stage { grid-template-rows: minmax(clamp(24rem, 58dvh, 34rem), 1fr) auto; padding: .3rem .4rem max(.5rem, env(safe-area-inset-bottom)); align-content: stretch; }
   .question-header { padding-top: max(.8rem, env(safe-area-inset-top)); }
   .question-card-stack, .question-card { min-height: clamp(24rem, 58dvh, 34rem); }
   .question-card { padding: 4rem 1.1rem 1.5rem; border-radius: 16px 16px 16px 5px; }
@@ -563,10 +561,10 @@ a:focus-visible {
   .question-card.very-long .follow-up-sequence li { font-size: clamp(.75rem, 3vw, 1rem); }
   .question-controls { grid-template-columns: 1fr; }
   .sensitive-topic-grid { grid-template-columns: 1fr; }
-  .would-you-rather-card { padding: 3.6rem .8rem 1rem; }
-  .would-you-rather-heading h1 { font-size: clamp(1.65rem, 8vw, 2.4rem); }
-  .would-you-rather-options { gap: .55rem; }
-  .would-you-rather-option { padding: .8rem; border-radius: 14px; }
+  .would-you-rather-card { padding: .6rem .45rem; }
+  .question-card .would-you-rather-heading h1 { font-size: clamp(2rem, 9vw, 3.25rem); }
+  .would-you-rather-options { gap: .4rem; }
+  .would-you-rather-option { padding: .4rem; border-radius: 14px; }
   .would-you-rather-option p { font-size: clamp(1.2rem, 5.2vw, 2rem); }
   .would-you-rather-or { width: 2.5rem; height: 2.5rem; font-size: .85rem; }
   .session-complete-card > div { display: grid; width: 100%; }

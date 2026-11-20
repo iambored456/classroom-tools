@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { exitDoorPath } from '../../../packages/navigation-icons/index'
   import { onMount } from 'svelte'
   import GameControls from './components/GameControls.svelte'
   import MidiPanel from './components/MidiPanel.svelte'
@@ -45,8 +46,8 @@
 
 <main class="game-shell">
   <header class="hero">
-    <a class="home-link" href="../launchpad-games/" aria-label="Back to Launchpad Games">
-      <span aria-hidden="true">←</span>
+    <a class="home-link" href="../launchpad-games/" aria-label="Return to Launchpad Games" title="Return to Launchpad Games">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d={exitDoorPath} /></svg>
       Launchpad Games
     </a>
     <p class="eyebrow">Classroom arcade</p>

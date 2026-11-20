@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { exitDoorPath } from '../../../packages/navigation-icons/index'
   import { onMount } from 'svelte'
   import { qrShare } from '@classroom-tools/qr-share'
   import TransformationsVisualization from './TransformationsVisualization.svelte'
@@ -8,8 +9,16 @@
 
   import Studio, { studioModes } from './fraction-studio/Studio.svelte'
   import StudioIcon from './fraction-studio/Icon.svelte'
+  import ExploreNumberLine from './number-line/ExploreNumberLine.svelte'
   let studioMode = $state(0)
+  let studioMenuOpen = $state(false)
+  let studioMenuTrigger = $state<HTMLElement>()
+  let studioSettings = $state<HTMLDialogElement>()
+  let simplifyFractions = $state(false)
+  const simplifyFractionsKey = 'numeracy-tools.fraction-studio.simplify-fractions'
 
+  const numberLineRoute = 'number-line'
+  let numberLineOpen = $state(window.location.hash === '#' + numberLineRoute)
   const studioRoute = 'fraction-studio'
   let studioOpen = $state(window.location.hash === '#' + studioRoute)
   const diagnosticRoute = 'cycle-4-diagnostic'
@@ -19,8 +28,8 @@
   let zerosOpen = $state(window.location.hash === '#zeros-cannonball')
   let diagnosticOpen = $state(window.location.hash === `#${diagnosticRoute}`)
   let diagnosticComponent: Promise<typeof import('./diagnostic/Diagnostic.svelte')> | undefined = $state()
-  const toolOpen = $derived(studioOpen || substitutionOpen || transformationsOpen || zerosOpen || diagnosticOpen)
-  const toolTitle = $derived(studioOpen ? 'Fraction Studio' : transformationsOpen ? 'Transformations Visualization' : substitutionOpen ? 'Substitution Visualization' : zerosOpen ? 'Zeros Cannonball' : diagnosticOpen ? diagnosticTitle : '')
+  const toolOpen = $derived(numberLineOpen || studioOpen || substitutionOpen || transformationsOpen || zerosOpen || diagnosticOpen)
+  const toolTitle = $derived(numberLineOpen ? 'Number Line' : studioOpen ? 'Fraction Studio' : transformationsOpen ? 'Transformations Visualization' : substitutionOpen ? 'Substitution Visualization' : zerosOpen ? 'Zeros Cannonball' : diagnosticOpen ? diagnosticTitle : '')
   let settingsOpen = $state(false)
   let substitution: { openSettings: () => void } | undefined = $state()
   let transformations: { openSettings: () => void } | undefined = $state()
@@ -28,7 +37,9 @@
   let zerosLesson = $state(factorQuadratic(defaultExample))
   function syncRoute() {
     settingsOpen = false
+    numberLineOpen = window.location.hash === '#' + numberLineRoute
     studioOpen = window.location.hash === '#' + studioRoute
+    studioMenuOpen = false
     if (!studioOpen) studioMode = 0
     transformationsOpen = window.location.hash === '#transformations-visualization'
     substitutionOpen = window.location.hash === '#substitution-visualization'
@@ -49,6 +60,7 @@
     { id: 'open-middle', name: 'Open Middle Math', topic: 'Math', description: 'Solve interactive, open-ended math problems.', image: 'OpenMiddle-preview.svg', color: '#e5dcf2' },
   ]
   const tools = [
+    { id: numberLineRoute, name: 'Number Line', topic: 'Math', description: 'Pan and zoom to explore negative numbers, decimals, and place value.', image: '', color: '#dcf0e6' },
     { id: studioRoute, name: 'Fraction Studio', topic: 'Workplace numeracy', description: 'Paint tiles and practise fractions, decimals, percents, and money.', image: '', color: '#d8e9d9' },
     { id: 'transformations-visualization', name: 'Transformations Visualization', topic: 'Functions', description: 'Move, stretch, and reflect a parabola by changing its equation.', image: '', color: '#dceaf1' },
     { id: 'substitution-visualization', name: 'Substitution Visualization', topic: 'Algebra', description: 'Unpack substitution, one animated step at a time.', image: '', color: '#e5dcf2' },
@@ -61,8 +73,14 @@
 
   onMount(() => {
     syncRoute()
+    try { simplifyFractions = localStorage.getItem(simplifyFractionsKey) === 'true' } catch { /* Use the default. */ }
     try { darkMode = localStorage.getItem(themeKey) !== 'false' } catch { /* Use the default theme. */ }
   })
+
+  function setSimplifyFractions(enabled: boolean) {
+    simplifyFractions = enabled
+    try { localStorage.setItem(simplifyFractionsKey, String(enabled)) } catch { /* The setting still works for this visit. */ }
+  }
 
   function toggleTheme() {
     darkMode = !darkMode
@@ -112,19 +130,44 @@
 
 </script>
 
-<svelte:window onhashchange={syncRoute} />
+<svelte:window onhashchange={syncRoute}
+  onpointerdown={event => {
+    if (studioMenuOpen && event.target instanceof Element && !event.target.closest('.studio-mode')) studioMenuOpen = false
+  }}
+  onkeydown={event => {
+    if (event.key !== 'Escape' || !studioMenuOpen) return
+    event.preventDefault()
+    studioMenuOpen = false
+    studioMenuTrigger?.focus()
+  }} />
 
 <div class="app" class:landing={!toolOpen} class:dark-mode={darkMode}>
     <header class="sets-header" class:studio-header={studioOpen} class:transformations-header={transformationsOpen} class:zeros-header={zerosOpen}>
-      <a class="icon-button" href={toolOpen ? "#" : hubUrl} aria-label={toolOpen ? "Return to Numeracy Tools" : "Return to Classroom Tools"} title={toolOpen ? "Numeracy Tools" : "Classroom Tools"}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 11 8.5-7 8.5 7M6 9.5V20h12V9.5M9.5 20v-6h5v6" /></svg>
+      <a class="icon-button" href={toolOpen ? "#" : hubUrl} aria-label={toolOpen ? "Return to Numeracy Tools" : "Return to Classroom Tools"} title={toolOpen ? "Return to Numeracy Tools" : "Classroom Tools home"}>
+        <svg viewBox={toolOpen ? "0 0 24 24" : "1.5 1.5 21 21"} aria-hidden="true"><path d={toolOpen ? exitDoorPath : "m3.5 11 8.5-7 8.5 7M6 9.5V20h12V9.5M9.5 20v-6h5v6"} /></svg>
       </a>
       {#if studioOpen}
-        <nav class="studio-tabs" aria-label="Studio mode">
-          {#each studioModes as item, i}
-            <button aria-pressed={studioMode === i} onclick={() => studioMode = i}><StudioIcon name={item.icon}/>{item.name}</button>
-          {/each}
-        </nav>
+        <details class="studio-mode" bind:open={studioMenuOpen}
+          onfocusout={event => {
+            if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget)) studioMenuOpen = false
+          }}>
+          <summary bind:this={studioMenuTrigger} aria-label={'Fraction Studio mode: ' + studioModes[studioMode].name}>
+            <StudioIcon name={studioModes[studioMode].icon} />
+            {studioModes[studioMode].name}
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="m2 4 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+          </summary>
+          <div class="studio-mode-options">
+            {#each studioModes as item, i}
+              <button type="button" aria-pressed={studioMode === i} onclick={() => {
+                studioMode = i
+                studioMenuOpen = false
+                studioMenuTrigger?.focus()
+              }}>
+                <StudioIcon name={item.icon} />{item.name}
+              </button>
+            {/each}
+          </div>
+        </details>
       {/if}
       {#if zerosOpen}
         <button class="equation-button" onclick={() => zeros?.openSettings()} aria-label="Change equation" aria-haspopup="dialog" aria-expanded={settingsOpen}>
@@ -132,23 +175,35 @@
         </button>
       {/if}
       <div class="header-actions">
-      {#if transformationsOpen || substitutionOpen || zerosOpen}
-        <button class="icon-button" onclick={() => (transformationsOpen ? transformations : zerosOpen ? zeros : substitution)?.openSettings()} aria-label={transformationsOpen ? 'Transformation settings' : 'Equation settings'} aria-haspopup="dialog" aria-expanded={settingsOpen} title="Settings">
+      {#if studioOpen || transformationsOpen || substitutionOpen || zerosOpen}
+        <button class="icon-button" onclick={() => studioOpen ? studioSettings?.showModal() : (transformationsOpen ? transformations : zerosOpen ? zeros : substitution)?.openSettings()} aria-label={studioOpen ? 'Fraction Studio settings' : transformationsOpen ? 'Transformation settings' : 'Equation settings'} aria-haspopup="dialog" aria-expanded={studioOpen ? undefined : settingsOpen} title="Settings">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 3-.7 2.4-2 .9-2.3-.6-2 3.5 1.6 1.8v2l-1.6 1.8 2 3.5 2.3-.6 2 .9.7 2.4h5l.7-2.4 2-.9 2.3.6 2-3.5-1.6-1.8v-2l1.6-1.8-2-3.5-2.3.6-2-.9-.7-2.4Z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       {/if}
       <button class="icon-button" type="button" title="Show QR code" use:qrShare={{
         app: 'numeracy-tools',
         title: toolTitle || 'Numeracy Tools',
-        hash: studioOpen ? studioRoute : transformationsOpen ? 'transformations-visualization' : substitutionOpen ? 'substitution-visualization' : zerosOpen ? 'zeros-cannonball' : diagnosticOpen ? diagnosticRoute : '',
+        hash: numberLineOpen ? numberLineRoute : studioOpen ? studioRoute : transformationsOpen ? 'transformations-visualization' : substitutionOpen ? 'substitution-visualization' : zerosOpen ? 'zeros-cannonball' : diagnosticOpen ? diagnosticRoute : '',
       }}></button>
+      {#if !studioOpen}
       <button class="icon-button" onclick={toggleTheme} aria-label={darkMode ? 'Use light mode' : 'Use dark mode'} title={darkMode ? 'Use light mode' : 'Use dark mode'}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" /></svg>
       </button>
+      {/if}
       </div>
     </header>
   {#if studioOpen}
-    <Studio mode={studioMode} />
+    <dialog class="studio-settings" bind:this={studioSettings} aria-labelledby="studio-settings-title">
+      <form method="dialog">
+        <h2 id="studio-settings-title">Fraction Studio settings</h2>
+        <label>Dark Mode <input type="checkbox" role="switch" checked={darkMode} onchange={toggleTheme} /></label>
+        <label>Simplify fractions <input type="checkbox" role="switch" checked={simplifyFractions} onchange={event => setSimplifyFractions(event.currentTarget.checked)} /></label>
+        <button>Close</button>
+      </form>
+    </dialog>
+    <Studio mode={studioMode} {simplifyFractions} />
+  {:else if numberLineOpen}
+    <ExploreNumberLine />
   {:else if transformationsOpen}
     <TransformationsVisualization bind:this={transformations} bind:settingsOpen />
   {:else if substitutionOpen}
@@ -175,7 +230,11 @@
         {/if}
         <a class="set-card" href={tool.image ? `${hubUrl}${tool.id}/` : `#${tool.id}`} aria-label={`Open ${tool.name}`}>
           <span class="set-preview" style={`--preview-background: ${tool.color}`}>
-            {#if tool.id === studioRoute}
+            {#if tool.id === numberLineRoute}
+              <div class="text-preview line-preview" aria-hidden="true">
+                <div>{#each ['−5','0','5','10'] as label}<span>{label}</span>{/each}</div>
+              </div>
+            {:else if tool.id === studioRoute}
               <div class="text-preview studio-preview" aria-hidden="true">
                 <i></i><span>¾ = 75%</span>
               </div>
@@ -237,21 +296,56 @@
 </div>
 
 <style>
+  .line-preview { background:#f9faf0; color:#153f31; font-size:clamp(.8rem, min(9cqw, 14cqh), 2.4rem); }
+  .line-preview div { width:86%; display:flex; justify-content:space-between; border-top:2px solid #153f31; }
+  .line-preview span { position:relative; padding-top:.3em; }
+  .line-preview span::before { content:''; width:2px; height:.28em; background:#153f31; position:absolute; left:50%; top:0; }
   .studio-preview { display: flex; align-items: center; justify-content: center; gap: .45em; background: #f9faf0; color: #153f31; font-size: clamp(1rem, min(13cqw, 21cqh), 3rem); }
   .studio-preview i { width: 1.75em; height: 1.75em; border-radius: 50%; background: conic-gradient(#39a58b 75%, #e3dcc7 0); }
   .studio-header { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:.5rem; }
   .studio-header > a { justify-self:start; }
   .studio-header .header-actions { justify-self:end; }
-  .studio-tabs { display:flex; align-items:center; padding:.2rem; border:1px solid var(--line); border-radius:.95rem; background:var(--paper); gap:.15rem; }
-  .studio-tabs button { display:flex; align-items:center; justify-content:center; gap:.4rem; min-height:2.4rem; padding:.35rem .75rem; border:0; border-radius:.65rem; font-size:.9rem; font-weight:700; color:var(--muted); background:transparent; }
-  .studio-tabs button[aria-pressed=true] { background:#086449; color:white; }
-  .dark-mode .studio-tabs button[aria-pressed=true] { background:#a5e2ba; color:#142b21; }
+  .studio-mode { position:relative; justify-self:center; max-width:100%; }
+  .studio-mode summary {
+    display:flex; align-items:center; justify-content:center; gap:.35rem; min-height:3rem; padding:0 .55rem;
+    border:1px solid var(--line); border-radius:.75rem; background:var(--paper);
+    color:var(--ink); font-size:.9rem; font-weight:700; cursor:pointer; list-style:none;
+  }
+  .studio-mode summary::-webkit-details-marker { display:none; }
+  .studio-mode summary:focus-visible { outline:3px solid #a993ec; outline-offset:3px; }
+  .studio-mode-options {
+    position:absolute; z-index:2; top:calc(100% + .3rem); left:50%; transform:translateX(-50%);
+    display:grid; min-width:100%; width:max-content; padding:.25rem;
+    border:1px solid var(--line); border-radius:.75rem; background:var(--paper);
+  }
+  .studio-mode-options button {
+    display:flex; align-items:center; gap:.45rem; min-height:2.5rem; padding:.4rem .6rem;
+    border:0; border-radius:.5rem; color:var(--ink); background:transparent; font-size:.9rem; font-weight:700;
+  }
+  .studio-mode-options button:hover, .studio-mode-options button[aria-pressed=true] { background:var(--soft); }
+  .studio-settings {
+    width:min(24rem, calc(100% - 2rem)); padding:1.25rem;
+    border:1px solid var(--line); border-radius:1rem; background:var(--paper); color:var(--ink);
+  }
+  .studio-settings::backdrop { background:#0008; }
+  .studio-settings form { display:grid; gap:1rem; }
+  .studio-settings h2 { margin:0; font-size:1.25rem; }
+  .studio-settings label { display:flex; align-items:center; justify-content:space-between; gap:1rem; cursor:pointer; }
+  .studio-settings input {
+    appearance:none; flex:none; width:2.5rem; height:1.4rem; margin:0; padding:.15rem;
+    display:flex; align-items:center; border:1px solid var(--muted); border-radius:2rem;
+    background:var(--soft); color:var(--muted); cursor:pointer;
+  }
+  .studio-settings input::before { content:''; width:.95rem; height:.95rem; border-radius:50%; background:currentColor; }
+  .studio-settings input:checked { justify-content:flex-end; background:#086449; color:white; border-color:#086449; }
+  .dark-mode .studio-settings input:checked { background:#a5e2ba; color:#142b21; border-color:#a5e2ba; }
+  .studio-settings button {
+    justify-self:end; padding:.4rem .8rem; border:1px solid var(--line);
+    border-radius:.5rem; background:var(--soft); color:var(--ink);
+  }
   .app:fullscreen { overflow:auto; }
-  @media (max-width:40rem) {
-    .studio-header { grid-template-columns:1fr auto; }
-    .studio-header .header-actions { grid-column:2; grid-row:1; }
-    .studio-tabs { grid-row:2; grid-column:1/-1; justify-self:center; max-width:100%; }
-    .studio-tabs button { padding-inline:clamp(.3rem,2vw,.75rem); }
+  @media (max-width:24rem) {
+    .studio-header { grid-template-columns:auto minmax(0, 1fr) auto; }
   }
   .header-actions { display: flex; align-items: center; gap: .6rem; }
   .zeros-header { display: grid; grid-template-columns: minmax(10.2rem, 1fr) minmax(0, 44rem) minmax(10.2rem, 1fr); align-items: center; column-gap: 1rem; }

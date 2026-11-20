@@ -3,7 +3,7 @@ import '../../../packages/motion-preference/index'
 import './style.css'
 import { qrShare } from '@classroom-tools/qr-share'
 import lessons from './lessons.json'
-import { allBanks, basicBanks, blend, copyBanks, emptySelection, isBanks, isSelection, labels, parseBank, toggleTile, type Banks, type Selection } from './model'
+import { allBanks, basicBanks, blend, copyBanks, emptySelection, isBanks, isSelection, labels, parseBank, sortTiles, toggleTile, type Banks, type Selection } from './model'
 
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
 const sidebar = byId<HTMLElement>('sidebar')
@@ -22,7 +22,6 @@ const tilesDialog = byId<HTMLDialogElement>('tiles-dialog')
 const storageKey = 'blendingBoard:v1'
 let banks = copyBanks(basicBanks)
 let selected = emptySelection()
-let history: Selection[] = []
 let lessonId: string | null = null
 let draft = copyBanks(banks)
 const fields = ['edit-initial', 'edit-middle', 'edit-final', 'edit-ending']
@@ -32,13 +31,12 @@ try {
   if (saved && isBanks(saved.banks)) {
     banks = saved.banks
     if (isSelection(saved.selected, banks)) selected = saved.selected
-    if (Array.isArray(saved.history)) history = saved.history.filter((item: unknown) => isSelection(item, banks)).slice(0, 3)
     if (lessons.some(lesson => lesson.id === saved.lessonId && lesson.banks.some(bank => bank.length))) lessonId = saved.lessonId
   }
 } catch { /* A blocked or outdated browser store should not prevent using the board. */ }
 
 function save() {
-  try { localStorage.setItem(storageKey, JSON.stringify({ banks, selected, history, lessonId, highlightSegments: highlightToggle.checked })) } catch { /* The current board remains usable without persistence. */ }
+  try { localStorage.setItem(storageKey, JSON.stringify({ banks, selected, lessonId, highlightSegments: highlightToggle.checked })) } catch { /* The current board remains usable without persistence. */ }
 }
 function setSidebar(open: boolean) {
   sidebar.classList.toggle('open', open)
@@ -48,7 +46,6 @@ function setSidebar(open: boolean) {
   else toggle.focus()
 }
 function choose(selection: Selection) {
-  if (blend(selected) && blend(selected) !== blend(selection)) history = [selected, ...history.filter(item => blend(item) !== blend(selected))].slice(0, 3)
   selected = selection
   updateWord()
   save()
@@ -68,17 +65,21 @@ function updateWord() {
   document.querySelectorAll<HTMLButtonElement>('#banks button').forEach(button => {
     button.setAttribute('aria-pressed', String(selected[Number(button.dataset.bank)] === button.dataset.tile))
   })
-  const list = byId('history-list')
-  list.replaceChildren()
-  history.forEach(item => {
-    const button = document.createElement('button')
-    button.textContent = blend(item)
-    button.setAttribute('aria-label', `Recall ${blend(item)}`)
-    button.addEventListener('click', () => choose([...item] as Selection))
-    list.append(button)
-  })
-  byId('history').hidden = history.length === 0
 }
+const tileMeasurement = document.createElement('canvas').getContext('2d')
+
+function fitBankTileLabels() {
+  const buttons = document.querySelectorAll<HTMLButtonElement>('#banks .tile')
+  if (!tileMeasurement || !buttons.length) return
+  const style = getComputedStyle(buttons[0])
+  tileMeasurement.font = `${style.fontWeight} 100px ${style.fontFamily}`
+  buttons.forEach(button => {
+    const metrics = tileMeasurement.measureText(button.textContent ?? '')
+    const width = Math.max(metrics.width, metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight)
+    if (width > 0) button.style.setProperty('--tile-label-width', String(width / 100))
+  })
+}
+
 function renderBoard() {
   const container = byId('banks')
   container.replaceChildren()
@@ -90,7 +91,8 @@ function renderBoard() {
     heading.textContent = labels[index]
     const tiles = document.createElement('div')
     tiles.className = 'tiles'
-    bank.forEach(tile => {
+    const orderedTiles = sortTiles(bank)
+    orderedTiles.forEach(tile => {
       const button = document.createElement('button')
       button.className = 'tile'
       button.dataset.bank = String(index)
@@ -102,7 +104,7 @@ function renderBoard() {
     })
     group.append(heading, tiles)
     container.append(group)
-    byId<HTMLTextAreaElement>(fields[index]).value = bank.join(', ')
+    byId<HTMLTextAreaElement>(fields[index]).value = orderedTiles.join(', ')
   })
   const lesson = lessons.find(item => item.id === lessonId)
   byId('lesson-label').textContent = lesson ? `UFLI Lesson ${lesson.id}` : 'Custom board'
@@ -110,12 +112,12 @@ function renderBoard() {
   byId('chain-section').hidden = !lesson
   byId('chain').textContent = lesson?.chain.join(' → ') ?? ''
   document.querySelectorAll<HTMLButtonElement>('#ufli-grid button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.lesson === lessonId)))
+  fitBankTileLabels()
   updateWord()
 }
 function loadBanks(next: Banks, id: string | null = null) {
   banks = copyBanks(next)
   selected = emptySelection()
-  history = []
   lessonId = id
   renderBoard()
   save()
@@ -154,7 +156,7 @@ function openTiles() {
     group.className = `picker-group bank-${index}`
     const heading = document.createElement('h3')
     heading.textContent = labels[index]
-    const options = [...new Set([...catalog, ...banks[index]])]
+    const options = sortTiles([...new Set([...catalog, ...banks[index]])])
     const tiles = document.createElement('div')
     tiles.className = 'picker-tiles'
     const refresh = () => tiles.querySelectorAll<HTMLButtonElement>('button').forEach(button => button.setAttribute('aria-pressed', String(draft[index].includes(button.textContent!))))
@@ -231,3 +233,5 @@ for (const dialog of [lessonDialog, tilesDialog]) dialog.addEventListener('click
 })
 updateHighlight()
 renderBoard()
+
+void document.fonts.ready.then(fitBankTileLabels)

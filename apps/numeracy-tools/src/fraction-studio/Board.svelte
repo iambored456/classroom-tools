@@ -1,8 +1,8 @@
 <script lang="ts">
   import { colours } from './math'
-  let { board, paint = 1, editable = true, onpaint, onstart }: {
+  let { board, paint = 1, editable = true, onpaint }: {
     board: number[]; paint?: number; editable?: boolean
-    onpaint?: (index: number, colour: number) => void; onstart?: () => void
+    onpaint?: (index: number, colour: number) => void
   } = $props()
   let grid: HTMLDivElement
   let activePointer: number | null = null
@@ -33,7 +33,6 @@
     const index = indexAt(e)
     if (index < 0) return
     e.preventDefault()
-    onstart?.()
     activePointer = e.pointerId
     brush = board[index] === paint ? 0 : paint
     last = -1
@@ -53,7 +52,7 @@
   {#each board as tile, i}
     {#if editable}
       <button class={'tile t' + tile} tabindex={focus === i ? 0 : -1} aria-label={'Row ' + (Math.floor(i / 10) + 1) + ', column ' + (i % 10 + 1) + ', ' + colours[tile].name}
-        onfocus={() => focus = i} onkeydown={keyboard} onclick={(e) => { if (e.detail === 0) { onstart?.(); onpaint?.(i, board[i] === paint ? 0 : paint) } }}></button>
+        onfocus={() => focus = i} onkeydown={keyboard} onclick={(e) => { if (e.detail === 0) { onpaint?.(i, board[i] === paint ? 0 : paint) } }}></button>
     {:else}
       <span class={'tile t' + tile}></span>
     {/if}

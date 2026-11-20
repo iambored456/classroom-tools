@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { exitDoorPath } from '../../../packages/navigation-icons/index'
   import { onMount, tick } from 'svelte'
   import WordLibrary from './WordLibrary.svelte'
   import WinCelebration from './WinCelebration.svelte'
@@ -418,7 +419,7 @@
 {#if screen === 'home'}
   <main class="landing-screen" class:colorblind-mode={colorblindMode}>
     <a class="hub-link" href="../" aria-label="Classroom Tools home">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
+      <svg viewBox="1.5 1.5 21 21" aria-hidden="true">
         <path d="m3.5 11 8.5-7 8.5 7"></path>
         <path d="M6 9.5V20h12V9.5M9.5 20v-6h5v6"></path>
       </svg>
@@ -507,11 +508,8 @@
     style={`--word-length: ${selectedLength}; --guess-rows: ${guessLimit};`}
   >
     <nav class="game-controls" aria-label="Game controls">
-      <button type="button" class="game-home-action" aria-label="Return to home" on:click={requestExit}>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="m3.5 11 8.5-7 8.5 7"></path>
-          <path d="M6 9.5V20h12V9.5M9.5 20v-6h5v6"></path>
-        </svg>
+      <button type="button" class="game-home-action" aria-label="Return to Wordle setup" title="Return to Wordle setup" on:click={requestExit}>
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d={exitDoorPath} /></svg>
       </button>
       {#if gameEnded}
         <div class="completion-actions">

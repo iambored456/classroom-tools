@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { exitDoorPath } from '../../../packages/navigation-icons/index'
   import { shouldReduceMotion } from '../../../packages/motion-preference/index'
   import { onMount } from 'svelte'
   import { chooseAiMove, type AiDifficulty } from './lib/ai.ts'
@@ -424,7 +425,7 @@
   style={`--player-one: ${playerOneColour}; --player-two: ${playerTwoColour};`}
 >
   <header class="topbar">
-    <a href="../launchpad-games/" aria-label="Back to Launchpad Games">← <span>Launchpad Games</span></a>
+    <a href="../launchpad-games/" aria-label="Return to Launchpad Games" title="Return to Launchpad Games"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d={exitDoorPath} /></svg> <span>Launchpad Games</span></a>
     <div class="brand"><i></i> LAUNCHPAD TABLETOP</div>
     <span class="status"><i class:thinking={aiThinking}></i> {gameOver ? 'GAME OVER' : aiThinking ? 'THINKING' : 'READY'}</span>
   </header>

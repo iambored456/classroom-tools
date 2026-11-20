@@ -1,10 +1,11 @@
 <script lang="ts">
   import { untrack } from 'svelte'
-  import NumberLine from './NumberLine.svelte'
+  import NumberLine from '../number-line/NumberLine.svelte'
   import Board from './Board.svelte'
   import Icon from './Icon.svelte'
+  import broom from './assets/clear.svg?raw'
   import { boardOf, colours, format, forms, fraction, labels, money, readTiles, resizeColour, shuffle, type Form } from './math'
-  let { classroom = false }: { classroom?: boolean } = $props()
+  let { classroom = false, simplifyFractions }: { classroom?: boolean; simplifyFractions: boolean } = $props()
   const prompts = [
     { count: 90, whole: 1, text: 'What fraction of the grid is jade? How would you write it as a decimal?' },
     { count: 9, whole: 1, text: 'What changed between nine tenths and nine hundredths?' },
@@ -17,7 +18,6 @@
   let selected = $state(1), erase = $state(false), prompt = $state(0)
   const whole = $derived(classroom ? prompts[prompt].whole : 1)
   let revealed = $state<string[]>([])
-  let history = $state<number[][]>([])
   let editing = $state<Form>('decimal'), entry = $state(''), error = $state('')
   let editor: HTMLDialogElement
   const counts = $derived.by(() => {
@@ -31,8 +31,7 @@
   const colour = $derived(colours[selected])
   const visibleKeys = $derived(rows.flatMap(row => forms.map(form => row.id + '-' + form)))
   const allRevealed = $derived(visibleKeys.length > 0 && visibleKeys.every(key => revealed.includes(key)))
-  const examples: Record<Form, string> = { fraction: '3/4', decimal: '0.75', percent: '75%', money: '$0.75' }
-  function remember() { history = [...history.slice(-14), [...board]] }
+  const examples: Record<Form, string> = { fraction: '75/100', decimal: '0.75', percent: '75%', money: '$0.75' }
   function changeCount(n: number) {
     if (n === count) return
     board = resizeColour(board, selected, n)
@@ -40,7 +39,7 @@
   function choose(c: number) { selected = c; erase = false }
   function edit(id: number, form: Form) {
     choose(id)
-    editing = form; entry = format(count, form, whole); error = ''
+    editing = form; entry = format(count, form, whole, simplifyFractions); error = ''
     editor.showModal()
     editor.querySelector('input')?.select()
   }
@@ -48,7 +47,6 @@
     e.preventDefault()
     const n = readTiles(entry, editing, whole)
     if (typeof n === 'string') { error = n; return }
-    if (n !== count) remember()
     changeCount(n)
     editor.close()
   }
@@ -60,7 +58,7 @@
     const next = prompts[prompt]
     selected = 1; erase = false
     board = prompt === 4 ? shuffle(boardOf(next.count)) : boardOf(next.count)
-    revealed = []; history = []
+    revealed = []
   }
 </script>
 
@@ -73,7 +71,7 @@
 
 <div class="workspace" class:projecting={classroom} style={'--paint:' + colour.hex}>
   <section class="board-panel panel">
-    <Board {board} paint={erase ? 0 : selected} onstart={remember} onpaint={(i, c) => board[i] = c} />
+    <Board {board} paint={erase ? 0 : selected} onpaint={(i, c) => board[i] = c} />
     <div class="palette" aria-label="Paint colours">
       {#each colours.slice(1) as c, i}
         <button class="paint-swatch" style:background-color={c.hex} aria-label={c.name} title={c.name}
@@ -81,13 +79,12 @@
           {#if selected === i + 1 && !erase}<span aria-hidden="true">✓</span>{/if}
         </button>
       {/each}
-      <button class:chosen={erase} aria-label="Eraser" title="Eraser" aria-pressed={erase} onclick={() => erase = !erase}><Icon name="erase" /></button>
-    </div>
-    <div class="board-tools">
-      <button onclick={() => { remember(); board = [...board].sort((a,b) => (a || 9) - (b || 9)) }}><Icon name="arrange"/> Arrange</button>
-      <button onclick={() => { remember(); board = shuffle(board) }}><Icon name="shuffle"/> Scatter</button>
-      <button disabled={!history.length} onclick={() => { board = history[history.length - 1]; history = history.slice(0,-1) }}><Icon name="undo"/> Undo</button>
-      <button disabled={board.every(tile => tile === 0)} onclick={() => { remember(); board = boardOf(0) }}>Clear</button>
+      <div class="palette-tools">
+        <button class:chosen={erase} aria-label="Eraser" title="Eraser" aria-pressed={erase} onclick={() => erase = !erase}><Icon name="erase" /></button>
+        <button aria-label="Clear board" title="Clear board" disabled={board.every(tile => tile === 0)} onclick={() => board = boardOf(0)}>
+          <span class="broom-icon">{@html broom}</span>
+        </button>
+      </div>
     </div>
   </section>
 
@@ -97,11 +94,12 @@
       <p class="panel-note">Select a card to reveal or cover its value.</p>
     {/if}
     {#each rows as row (row.id)}
-      {@const parts = fraction(row.count).split('/')}
+      {@const ratio = fraction(row.count, simplifyFractions)}
+      {@const parts = ratio.split('/')}
       <div class="value-row" role="group" aria-label={row.colour.name} style:--row-paint={row.colour.hex}>
         {#each forms as form}
           {@const key = row.id + '-' + form}
-          {@const value = format(row.count, form, whole)}
+          {@const value = format(row.count, form, whole, simplifyFractions)}
           {@const covered = classroom && !revealed.includes(key)}
           <button class="value-card" aria-label={(classroom ? (covered ? 'Reveal ' : 'Hide ') : 'Edit ') + row.colour.name + ' ' + labels[form].toLowerCase()}
             onclick={() => classroom ? toggle(key) : edit(row.id, form)}>
@@ -111,7 +109,7 @@
             {:else}
               <strong class="reading" style:--characters={form === 'fraction' ? 1 : value.length}>
                 {#if form === 'fraction'}
-                  <span class="stack-frac" aria-label={fraction(row.count)}><span>{parts[0]}</span><span>{parts[1]}</span></span>
+                  <span class="stack-frac" aria-label={ratio}><span>{parts[0]}</span><span>{parts[1]}</span></span>
                   <i class="fraction-disc" aria-hidden="true" style:--angle={row.count * 3.6 + 'deg'}></i>
                 {:else}{value}{/if}
               </strong>
@@ -122,7 +120,7 @@
       </div>
     {/each}
     {#if !classroom || revealed.includes(selected + '-decimal')}
-      <NumberLine {count} {colour} onchange={changeCount} onbegin={remember}/>
+      <NumberLine value={count / 100} {colour} bar onchange={value => changeCount(Math.round(value * 100))}/>
     {/if}
     {#if classroom}
       <button class="quiet reveal-all" disabled={!rows.length} onclick={() => revealed = allRevealed ? [] : [...visibleKeys]}>{allRevealed ? 'Cover all' : 'Reveal all'}</button>

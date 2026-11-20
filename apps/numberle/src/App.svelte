@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { exitDoorPath } from '../../../packages/navigation-icons/index'
   import { onMount } from 'svelte'
   import { defaults, display, hardError, localDay, newGame, normalize, outcome, restoreGame, score, validate, type Game, type Mark, type Operator, type Settings } from './game'
 
@@ -156,7 +157,7 @@
 
 <div class:dark={settings.dark} class:contrast={settings.contrast} class="app-shell">
   <header>
-    <a class="hub-link" href={`${rootBase}numeracy-tools/`}>← Numeracy Tools</a>
+    <a class="hub-link" href={`${rootBase}numeracy-tools/`} aria-label="Return to Numeracy Tools" title="Return to Numeracy Tools"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d={exitDoorPath} /></svg> Numeracy Tools</a>
     <div class="toolbar">
       <h1><span class="logo" aria-hidden="true">=</span>Numberle</h1>
       <nav aria-label="Game controls">

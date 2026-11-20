@@ -583,7 +583,7 @@
 <main class="app-shell">
   <header class="topbar">
     <a class="home-button" href={homeHref} aria-label="Back to app hub" title="Back to app hub">
-      <svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="home-icon" viewBox="1.5 1.5 21 21" aria-hidden="true">
         <path d="M3.5 10.5L12 3.75l8.5 6.75" />
         <path d="M6.5 9.75V20.25h11V9.75" />
         <path d="M10 20.25v-5.5h4v5.5" />
