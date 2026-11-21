@@ -93,6 +93,10 @@
 }
 @media(max-width:48rem) {
   .workspace { grid-template-columns:minmax(0,1fr); }
+  .workspace:not(.practice) .board-panel {
+    width:min(100%, max(10rem, calc(100svh - clamp(24.5rem, 64vw, 32rem))));
+    justify-self:center;
+  }
   .studio-inner { max-width:38rem; }.class-prompt { flex-wrap:wrap; }
 }
 @media(max-width:28rem) {

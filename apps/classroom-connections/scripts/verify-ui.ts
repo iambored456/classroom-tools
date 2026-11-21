@@ -102,7 +102,7 @@ try {
   assert.equal(await page.locator('.group-card').count(), 0)
   assert.equal(await page.locator('.tier-section-actions').count(), 0)
   assert.equal(await page.getByText('Saved on this device', { exact: true }).count(), 0)
-  assert.match(await page.locator('.enabled-summary').innerText(), /24\s+of 96 groups enabled/i)
+  assert.match(await page.locator('.enabled-summary').innerText(), /36\s+of 108 groups enabled/i)
   for (const difficulty of ['Easy', 'Medium', 'Hard', 'Tricky']) {
     const inclusion = page.getByRole('checkbox', { name: `Include ${difficulty} groups`, exact: true })
     assert.equal(await inclusion.isChecked(), difficulty === 'Easy')
@@ -110,9 +110,9 @@ try {
   const mediumSwitch = page.getByRole('checkbox', { name: 'Include Medium groups', exact: true })
   await mediumSwitch.focus()
   await page.keyboard.press('Space')
-  assert.match(await page.locator('.enabled-summary').innerText(), /48\s+of 96 groups enabled/i)
+  assert.match(await page.locator('.enabled-summary').innerText(), /60\s+of 108 groups enabled/i)
   await page.keyboard.press('Space')
-  assert.match(await page.locator('.enabled-summary').innerText(), /24\s+of 96 groups enabled/i)
+  assert.match(await page.locator('.enabled-summary').innerText(), /36\s+of 108 groups enabled/i)
 
   for (const difficulty of ['Easy', 'Medium', 'Hard', 'Tricky']) {
     const toggle = page.getByRole('button', { name: difficulty, exact: true })
@@ -120,7 +120,7 @@ try {
     await toggle.click()
     assert.equal(await toggle.getAttribute('aria-expanded'), 'true')
   }
-  assert.equal(await page.locator('.group-card').count(), 96)
+  assert.equal(await page.locator('.group-card').count(), 108)
   const mediumSection = page.locator('.tier-section').nth(1)
   await page.getByRole('button', { name: /Add group/ }).click()
   assert.equal(await page.locator('.difficulty-field select').inputValue(), 'easy')
@@ -137,16 +137,16 @@ try {
   )
   const copiedEasyGroups = await page.evaluate(() => navigator.clipboard.readText())
   const copiedEasyLines = copiedEasyGroups.split(/\r?\n/)
-  assert.equal(copiedEasyLines.length, 24)
+  assert.equal(copiedEasyLines.length, 36)
   assert.equal(copiedEasyLines[0], 'Bugs:(Ladybug,Ant,Beetle,Firefly)')
   assert.ok(copiedEasyLines.includes('Workshop tools:(Hammer,Screwdriver,Drill,Saw)'))
   assert.ok(copiedEasyLines.includes('Vegetables:(Carrot,Peas,Corn,Broccoli)'))
 
   await easySection.getByRole('button', { name: 'Disable all' }).click()
-  assert.match(await page.locator('.enabled-summary').innerText(), /0\s+of 96 groups enabled/i)
+  assert.match(await page.locator('.enabled-summary').innerText(), /0\s+of 108 groups enabled/i)
   assert.equal(await easySection.locator('.switch-label input:checked').count(), 0)
   await easySection.getByRole('button', { name: 'Enable all' }).click()
-  assert.match(await page.locator('.enabled-summary').innerText(), /24\s+of 96 groups enabled/i)
+  assert.match(await page.locator('.enabled-summary').innerText(), /36\s+of 108 groups enabled/i)
 
   await page.getByRole('button', { name: 'Close question library' }).click()
   await page.evaluate(() => {
@@ -168,13 +168,13 @@ try {
   }
   await page.getByRole('button', { name: 'Add to library' }).click()
   await page.getByText('Things in a garden', { exact: true }).waitFor()
-  assert.match(await page.locator('.enabled-summary').innerText(), /25\s+of 97 groups enabled/i)
+  assert.match(await page.locator('.enabled-summary').innerText(), /37\s+of 109 groups enabled/i)
   await page.screenshot({ path: libraryShot, fullPage: false })
 
   await page.getByRole('button', { name: 'Close question library' }).click()
   await page.reload({ waitUntil: 'networkidle' })
   await page.getByRole('button', { name: 'Question Library' }).click()
-  assert.match(await page.locator('.enabled-summary').innerText(), /25\s+of 97 groups enabled/i)
+  assert.match(await page.locator('.enabled-summary').innerText(), /37\s+of 109 groups enabled/i)
   await page.getByRole('button', { name: 'Close question library' }).click()
 
   await page.getByRole('button', { name: 'Play', exact: true }).click()

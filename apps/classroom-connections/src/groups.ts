@@ -274,6 +274,35 @@ const STARTER_GROUPS: StarterGroup[] = [
     words: ['Duck', 'Crane', 'Seal', 'Bear'],
     difficulty: 'tricky',
   },
+
+  {
+    title: 'Days of the week',
+    words: ['Monday', 'Tuesday', 'Wednesday', 'Thursday'],
+    difficulty: 'easy',
+  },
+  { title: 'Feelings', words: ['Happy', 'Sad', 'Angry', 'Scared'], difficulty: 'easy' },
+  { title: 'Odd numbers', words: ['Three', 'Five', 'Seven', 'Nine'], difficulty: 'easy' },
+  { title: 'Cleaning chores', words: ['Sweep', 'Mop', 'Vacuum', 'Dust'], difficulty: 'easy' },
+  {
+    title: 'Kitchen appliances',
+    words: ['Fridge', 'Oven', 'Microwave', 'Dishwasher'],
+    difficulty: 'easy',
+  },
+  { title: 'Greetings', words: ['Hello', 'Hi', 'Hey', 'Yo'], difficulty: 'easy' },
+  { title: 'Ways to move on foot', words: ['Walk', 'Jog', 'Hop', 'Skip'], difficulty: 'easy' },
+  {
+    title: 'Sounds your body makes',
+    words: ['Cough', 'Sneeze', 'Hiccup', 'Burp'],
+    difficulty: 'easy',
+  },
+  {
+    title: 'Video controls',
+    words: ['Play', 'Pause', 'Rewind', 'Fast Forward'],
+    difficulty: 'easy',
+  },
+  { title: 'Words for size', words: ['Tiny', 'Small', 'Big', 'Huge'], difficulty: 'easy' },
+  { title: 'Dishes and drinkware', words: ['Plate', 'Bowl', 'Cup', 'Mug'], difficulty: 'easy' },
+  { title: 'Eating utensils', words: ['Fork', 'Spoon', 'Knife', 'Chopsticks'], difficulty: 'easy' },
 ]
 
 // Keep the original bank as the migration baseline so existing teacher edits are
@@ -310,6 +339,10 @@ const STARTER_REVISIONS: Record<string, Pick<StarterGroup, 'title' | 'words'>> =
   'At the library': {
     title: 'Library borrowing',
     words: ['Library Card', 'Due Date', 'Renewal', 'Book Return'],
+  },
+  'Begin with a silent K': {
+    title: 'Begin with a silent K',
+    words: ['Kneel', 'Knuckle', 'Knot', 'Knack'],
   },
   Clothing: { title: 'Summer clothing', words: ['T-shirt', 'Shorts', 'Sandals', 'Sunhat'] },
   Vehicles: { title: 'Road vehicles', words: ['Car', 'Truck', 'Motorcycle', 'Van'] },
@@ -349,16 +382,17 @@ const originalStarterGroups = new Map(
   STARTER_GROUPS.map((group, index) => [toId(group.title, index), group]),
 )
 
-/** Refresh only untouched Easy/Medium starter content, preserving teacher settings. */
+/** Refresh untouched starter content, preserving teacher settings. */
 export const refreshStarterGroup = (saved: WordGroup): WordGroup => {
   const original = originalStarterGroups.get(saved.id)
   const revision = original && STARTER_REVISIONS[original.title]
   if (
     !original || !revision || saved.custom ||
-    (original.difficulty !== 'easy' && original.difficulty !== 'medium') ||
     saved.difficulty !== original.difficulty || saved.title !== original.title ||
     saved.words.length !== original.words.length ||
-    saved.words.some((word, index) => word !== original.words[index])
+    (saved.words.some((word, index) => word !== original.words[index]) &&
+      !(original.title === 'Begin with a silent K' &&
+        saved.words.every((word, index) => word === ['Kneel', 'Knight', 'Knot', 'Knack'][index])))
   ) return saved
 
   return { ...saved, ...revision, words: [...revision.words] }

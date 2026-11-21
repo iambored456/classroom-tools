@@ -4,15 +4,29 @@ import { loadGroups } from '../src/storage'
 import { DIFFICULTIES, type WordGroup } from '../src/types'
 
 const groups = createStarterGroups()
-assert.equal(groups.length, 96)
-assert.equal(new Set(groups.map((group) => group.id)).size, 96)
+assert.equal(groups.length, 108)
+assert.equal(new Set(groups.map((group) => group.id)).size, groups.length)
 for (const difficulty of DIFFICULTIES) {
-  assert.equal(groups.filter((group) => group.difficulty === difficulty).length, 24)
+  assert.equal(groups.filter((group) => group.difficulty === difficulty).length, difficulty === 'easy' ? 36 : 24)
 }
 for (const group of groups) {
   assert.equal(group.words.length, 4)
   assert.equal(new Set(group.words.map((word) => word.trim().toLowerCase())).size, 4)
 }
+
+const greetings = groups.find((group) => group.title === 'Greetings')!
+assert.deepEqual(greetings.words, ['Hello', 'Hi', 'Hey', 'Yo'])
+
+const eatingUtensils = groups.find((group) => group.title === 'Eating utensils')!
+assert.deepEqual(eatingUtensils.words, ['Fork', 'Spoon', 'Knife', 'Chopsticks'])
+
+const silentK = groups.find((group) => group.id === 'starter-32-begin-with-a-silent-k')!
+assert.deepEqual(silentK.words, ['Kneel', 'Knuckle', 'Knot', 'Knack'])
+const oldSilentK = { ...silentK, words: ['Knife', 'Knight', 'Knot', 'Knack'], enabled: true }
+const previousSilentK = { ...oldSilentK, words: ['Kneel', 'Knight', 'Knot', 'Knack'] }
+assert.deepEqual(refreshStarterGroup(previousSilentK), { ...silentK, enabled: true })
+const editedSilentK = { ...oldSilentK, words: ['Knife', 'Knight', 'Knot', 'Knock'] }
+assert.equal(refreshStarterGroup(editedSilentK), editedSilentK, 'Preserve teacher-edited Silent K answers')
 
 const fruits = groups.find((group) => group.id === 'starter-3-fruits')!
 assert.deepEqual(fruits.words, ['Apple', 'Banana', 'Grape', 'Pear'])
@@ -34,7 +48,7 @@ for (const edited of [
   assert.equal(refreshStarterGroup(edited), edited, 'Preserve teacher-edited starter groups')
 }
 for (const group of groups.filter(({ difficulty }) => difficulty === 'hard' || difficulty === 'tricky')) {
-  assert.equal(refreshStarterGroup(group), group, 'Leave Hard and Tricky entries unchanged')
+  assert.equal(refreshStarterGroup(group), group, 'Leave current Hard and Tricky entries unchanged')
 }
 
 const roadVehicles = groups.find((group) => group.id === 'starter-52-vehicles')!
@@ -54,11 +68,17 @@ Object.defineProperty(globalThis, 'localStorage', {
 try {
   const key = 'classroom-connections:library:v1'
   const custom = { ...oldFruits, id: 'custom-fruits', custom: true }
-  const saved = groups.map((group) => group.id === oldFruits.id ? oldFruits :
-    group.id === oldVehicles.id ? oldVehicles : group)
+  const savedVersions = new Map([
+    [oldFruits.id, oldFruits],
+    [oldVehicles.id, oldVehicles],
+    [oldSilentK.id, oldSilentK],
+  ])
+  const saved = groups.slice(0, 96).map((group) => savedVersions.get(group.id) ?? group)
   entries.set(key, JSON.stringify([...saved, custom]))
   const loaded = loadGroups()
-  assert.equal(loaded.length, 97)
+  assert.equal(loaded.length, 109)
+  assert.deepEqual(loaded.slice(-12), groups.slice(-12), 'Append the newly added Easy groups')
+  assert.deepEqual(loaded.find((group) => group.id === silentK.id), { ...silentK, enabled: true })
   assert.deepEqual(loaded.find((group) => group.id === oldFruits.id), refreshedFruits)
   assert.deepEqual(loaded.find((group) => group.id === oldVehicles.id), { ...roadVehicles, enabled: false })
   assert.deepEqual(loaded.find((group) => group.id === custom.id), custom)

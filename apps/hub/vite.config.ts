@@ -29,6 +29,7 @@ export default defineConfig({
       '/numberle': { target: 'http://localhost:5196', changeOrigin: true },
       '/paper-airplane-visualizer': { target: 'http://localhost:5193', changeOrigin: true },
       '/open-middle': { target: 'http://localhost:5194', changeOrigin: true },
+      '/class-group-shuffler': { target: 'http://localhost:5199', changeOrigin: true },
       '/class-clock': {
         target: 'http://localhost:5174',
         changeOrigin: true,

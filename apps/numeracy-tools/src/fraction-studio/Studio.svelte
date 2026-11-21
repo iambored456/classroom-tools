@@ -7,6 +7,7 @@
 </script>
 <script lang="ts">
   import { onDestroy } from 'svelte'
+  import { setAppFullscreen } from '../fullscreen'
   import Workspace from './Workspace.svelte'
   import Practice from './Practice.svelte'
   import Icon from './Icon.svelte'
@@ -19,8 +20,7 @@
   })
   async function fullscreen() {
     try {
-      if (document.fullscreenElement) await document.exitFullscreen()
-      else await studio.closest('.app')?.requestFullscreen()
+      await setAppFullscreen(studio, !document.fullscreenElement)
     } catch { screenMessage = 'Use the browser’s full-screen option to enlarge the classroom view.' }
   }
 </script>

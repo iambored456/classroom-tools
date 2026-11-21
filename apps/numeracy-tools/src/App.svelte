@@ -9,6 +9,8 @@
 
   import Studio, { studioModes } from './fraction-studio/Studio.svelte'
   import StudioIcon from './fraction-studio/Icon.svelte'
+  import DiceRoller from './dice-roller/DiceRoller.svelte'
+  import DieIcon from './dice-roller/DieIcon.svelte'
   import ExploreNumberLine from './number-line/ExploreNumberLine.svelte'
   let studioMode = $state(0)
   let studioMenuOpen = $state(false)
@@ -17,6 +19,8 @@
   let simplifyFractions = $state(false)
   const simplifyFractionsKey = 'numeracy-tools.fraction-studio.simplify-fractions'
 
+  const diceRoute = 'dice-roller'
+  let diceOpen = $state(window.location.hash === '#' + diceRoute)
   const numberLineRoute = 'number-line'
   let numberLineOpen = $state(window.location.hash === '#' + numberLineRoute)
   const studioRoute = 'fraction-studio'
@@ -28,8 +32,8 @@
   let zerosOpen = $state(window.location.hash === '#zeros-cannonball')
   let diagnosticOpen = $state(window.location.hash === `#${diagnosticRoute}`)
   let diagnosticComponent: Promise<typeof import('./diagnostic/Diagnostic.svelte')> | undefined = $state()
-  const toolOpen = $derived(numberLineOpen || studioOpen || substitutionOpen || transformationsOpen || zerosOpen || diagnosticOpen)
-  const toolTitle = $derived(numberLineOpen ? 'Number Line' : studioOpen ? 'Fraction Studio' : transformationsOpen ? 'Transformations Visualization' : substitutionOpen ? 'Substitution Visualization' : zerosOpen ? 'Zeros Cannonball' : diagnosticOpen ? diagnosticTitle : '')
+  const toolOpen = $derived(diceOpen || numberLineOpen || studioOpen || substitutionOpen || transformationsOpen || zerosOpen || diagnosticOpen)
+  const toolTitle = $derived(diceOpen ? 'Dice Roller' : numberLineOpen ? 'Number Line' : studioOpen ? 'Fraction Studio' : transformationsOpen ? 'Transformations Visualization' : substitutionOpen ? 'Substitution Visualization' : zerosOpen ? 'Zeros Cannonball' : diagnosticOpen ? diagnosticTitle : '')
   let settingsOpen = $state(false)
   let substitution: { openSettings: () => void } | undefined = $state()
   let transformations: { openSettings: () => void } | undefined = $state()
@@ -37,6 +41,7 @@
   let zerosLesson = $state(factorQuadratic(defaultExample))
   function syncRoute() {
     settingsOpen = false
+    diceOpen = window.location.hash === '#' + diceRoute
     numberLineOpen = window.location.hash === '#' + numberLineRoute
     studioOpen = window.location.hash === '#' + studioRoute
     studioMenuOpen = false
@@ -60,6 +65,7 @@
     { id: 'open-middle', name: 'Open Middle Math', topic: 'Math', description: 'Solve interactive, open-ended math problems.', image: 'OpenMiddle-preview.svg', color: '#e5dcf2' },
   ]
   const tools = [
+    { id: diceRoute, name: 'Dice Roller', topic: 'Probability', description: 'Roll a handful of dice and explore the individual values and their sum.', image: '', color: '#cce3d5' },
     { id: numberLineRoute, name: 'Number Line', topic: 'Math', description: 'Pan and zoom to explore negative numbers, decimals, and place value.', image: '', color: '#dcf0e6' },
     { id: studioRoute, name: 'Fraction Studio', topic: 'Workplace numeracy', description: 'Paint tiles and practise fractions, decimals, percents, and money.', image: '', color: '#d8e9d9' },
     { id: 'transformations-visualization', name: 'Transformations Visualization', topic: 'Functions', description: 'Move, stretch, and reflect a parabola by changing its equation.', image: '', color: '#dceaf1' },
@@ -183,7 +189,7 @@
       <button class="icon-button" type="button" title="Show QR code" use:qrShare={{
         app: 'numeracy-tools',
         title: toolTitle || 'Numeracy Tools',
-        hash: numberLineOpen ? numberLineRoute : studioOpen ? studioRoute : transformationsOpen ? 'transformations-visualization' : substitutionOpen ? 'substitution-visualization' : zerosOpen ? 'zeros-cannonball' : diagnosticOpen ? diagnosticRoute : '',
+        hash: diceOpen ? diceRoute : numberLineOpen ? numberLineRoute : studioOpen ? studioRoute : transformationsOpen ? 'transformations-visualization' : substitutionOpen ? 'substitution-visualization' : zerosOpen ? 'zeros-cannonball' : diagnosticOpen ? diagnosticRoute : '',
       }}></button>
       {#if !studioOpen}
       <button class="icon-button" onclick={toggleTheme} aria-label={darkMode ? 'Use light mode' : 'Use dark mode'} title={darkMode ? 'Use light mode' : 'Use dark mode'}>
@@ -202,6 +208,8 @@
       </form>
     </dialog>
     <Studio mode={studioMode} {simplifyFractions} />
+  {:else if diceOpen}
+    <DiceRoller />
   {:else if numberLineOpen}
     <ExploreNumberLine />
   {:else if transformationsOpen}
@@ -230,7 +238,11 @@
         {/if}
         <a class="set-card" href={tool.image ? `${hubUrl}${tool.id}/` : `#${tool.id}`} aria-label={`Open ${tool.name}`}>
           <span class="set-preview" style={`--preview-background: ${tool.color}`}>
-            {#if tool.id === numberLineRoute}
+            {#if tool.id === diceRoute}
+              <div class="text-preview dice-preview" aria-hidden="true">
+                <DieIcon sides={4} numbered /><DieIcon sides={6} numbered /><DieIcon sides={20} numbered />
+              </div>
+            {:else if tool.id === numberLineRoute}
               <div class="text-preview line-preview" aria-hidden="true">
                 <div>{#each ['−5','0','5','10'] as label}<span>{label}</span>{/each}</div>
               </div>
@@ -296,6 +308,9 @@
 </div>
 
 <style>
+  .dice-preview { display:flex; align-items:center; justify-content:center; background:#205447; }
+  .dice-preview :global(svg) { width:26%; max-height:75%; }
+  .dice-preview :global(svg:nth-child(2)) { width:38%; }
   .line-preview { background:#f9faf0; color:#153f31; font-size:clamp(.8rem, min(9cqw, 14cqh), 2.4rem); }
   .line-preview div { width:86%; display:flex; justify-content:space-between; border-top:2px solid #153f31; }
   .line-preview span { position:relative; padding-top:.3em; }

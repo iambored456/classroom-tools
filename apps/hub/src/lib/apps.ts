@@ -77,6 +77,16 @@ export const hubEntries: HubEntry[] = [
   },
   {
     kind: 'app',
+    id: 'class-group-shuffler',
+    name: 'Class Group Shuffler',
+    description: 'Shuffle class lists into balanced groups using attendance and pairing rules.',
+    href: withBase('class-group-shuffler/'),
+    preview: withBase('images/ClassGroupShuffler-preview.png'),
+    tags: ['Classroom'],
+    accent: '#6951a8',
+  },
+  {
+    kind: 'app',
     id: 'class-clock',
     name: "ClassClock",
     description: "Visually show students the time and how much time is left in the current period.",

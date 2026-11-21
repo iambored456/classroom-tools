@@ -40,7 +40,8 @@ body {
   padding-inline-end: 3.5rem;
 }
 
-.hub-switch {
+.hub-switch,
+.hub-settings-button {
   position: absolute;
   top: -0.75rem;
   right: 0;
@@ -54,12 +55,15 @@ body {
 }
 
 .hub-switch:hover,
-.hub-switch:focus-visible {
+.hub-switch:focus-visible,
+.hub-settings-button:hover,
+.hub-settings-button:focus-visible {
   color: #ede7db;
   background: rgba(255, 255, 255, 0.06);
 }
 
-.hub-switch:focus-visible {
+.hub-switch:focus-visible,
+.hub-settings-button:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 3px;
 }
@@ -228,22 +232,13 @@ body {
 
 .hero .eyebrow { padding-inline-end: 7rem; }
 .hub-settings-button {
-  position: absolute;
-  top: -.75rem;
   right: 3.25rem;
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
   padding: 0;
-  border: 1px solid #696158;
-  border-radius: 50%;
-  color: #ede7db;
-  background: #211b15;
+  border: 0;
+  background: transparent;
   cursor: pointer;
 }
-.hub-settings-button:hover { background: #352a20; }
-.hub-settings-button:focus-visible,
+
 .hub-settings button:focus-visible,
 .hub-settings input:focus-visible { outline: 3px solid #e0a379; outline-offset: 3px; }
 .hub-settings {

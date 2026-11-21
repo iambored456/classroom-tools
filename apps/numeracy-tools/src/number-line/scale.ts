@@ -5,17 +5,24 @@ export const spans = [
   500, 200, 100, 50, 20, 15, 10, 5, 2, 1, .5, .2, .1, .05, .02, .01, .005, .002,
   .001, .0005, .0002, .0001, .00005, .00002, .00001,
 ]
+// Split each zoom interval into three equal steps on the logarithmic scale.
+export const wheelSpans = spans.flatMap((span, i) => {
+  const next = spans[i + 1]
+  if (next === undefined) return [span]
+  const ratio = Math.cbrt(next / span)
+  return [span, span * ratio, span * ratio ** 2]
+})
 export const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 export const display = (value: number) => Number(value.toFixed(7)).toFixed(7).replace(/\.?0+$/, '')
 
-export function zoomStep(span: number, direction: number, narrowest: number) {
+export function zoomStep(span: number, direction: number, narrowest: number, levels = spans) {
   if (direction > 0) {
-    return Math.max(narrowest, spans.find(step => step < span * (1 - 1e-9)) ?? narrowest)
+    return Math.max(narrowest, levels.find(step => step < span * (1 - 1e-9)) ?? narrowest)
   }
-  for (let i = spans.length - 1; i >= 0; i--) {
-    if (spans[i] > span * (1 + 1e-9)) return spans[i]
+  for (let i = levels.length - 1; i >= 0; i--) {
+    if (levels[i] > span * (1 + 1e-9)) return levels[i]
   }
-  return spans[0]
+  return levels[0]
 }
 
 export function decimalPlaces(step: number) {
